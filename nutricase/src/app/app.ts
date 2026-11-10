@@ -1,4 +1,5 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { MatIconRegistry } from '@angular/material/icon';
 
 @Component({
   selector: 'app-root',
@@ -7,5 +8,10 @@ import { Component, signal } from '@angular/core';
   templateUrl: './app.html',
 })
 export class App {
-  protected readonly title = signal('nutricase');
+  protected readonly title = 'NutriCase';
+
+  constructor() {
+    // index.html carrega a fonte Material Symbols Outlined, não a Material Icons padrão.
+    inject(MatIconRegistry).setDefaultFontSetClass('material-symbols-outlined');
+  }
 }

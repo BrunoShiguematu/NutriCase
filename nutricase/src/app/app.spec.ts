@@ -1,18 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { RouterModule } from '@angular/router';
 import { App } from './app';
+import { AppModule } from './app-module';
 
+// O spec importa o AppModule (Material + RouterModule com as rotas reais) em vez de redeclarar o App:
+// o builder de testes só compila os arquivos alcançados pelos specs, e o App precisa do escopo do AppModule.
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        RouterModule.forRoot([])
-      ],
-      declarations: [
-        App
-      ],
-    })
-      .compileComponents();
+      imports: [AppModule],
+    }).compileComponents();
   });
 
   it('should create the app', () => {
@@ -21,10 +17,10 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('should render the brand name in the toolbar', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, nutricase');
+    expect(compiled.querySelector('.brand')?.textContent).toContain('NutriCase');
   });
 });

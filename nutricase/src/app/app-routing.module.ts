@@ -13,7 +13,7 @@ const routes: Routes = [
   },
   {
     path: 'alimentos',
-    loadChildren: () => import('./alimentos/alimentos-module').then((m) => m.AlimentosModule),
+    loadChildren: () => import('./pages/alimentos/alimentos.module').then((m) => m.AlimentosModule),
   },
   { path: '**', redirectTo: 'dashboard' },
 ];

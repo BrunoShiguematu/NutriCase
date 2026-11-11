@@ -8,8 +8,8 @@ import { MatSelectHarness } from '@angular/material/select/testing';
 import { MatTableHarness } from '@angular/material/table/testing';
 import { Alimento } from '../../core/models';
 import { AlimentoService, CARREGADOR_TACO, CarregadorTaco } from '../../core/services/alimento.service';
-import { AlimentosModule } from '../alimentos-module';
-import { AlimentosPage } from './alimentos-page';
+import { AlimentosModule } from './alimentos.module';
+import { AlimentosComponent } from './alimentos.component';
 
 function alimento(n: number, nome: string, grupo: string, kcal = 100): Alimento {
   return {
@@ -35,8 +35,8 @@ const ALIMENTOS: Alimento[] = [
   ...Array.from({ length: 16 }, (_, i) => alimento(7 + i, `Arroz, variedade ${i + 1}`, 'Cereais e derivados')),
 ];
 
-describe('AlimentosPage', () => {
-  let fixture: ComponentFixture<AlimentosPage>;
+describe('AlimentosComponent', () => {
+  let fixture: ComponentFixture<AlimentosComponent>;
   let loader: HarnessLoader;
 
   const el = (): HTMLElement => fixture.nativeElement as HTMLElement;
@@ -50,7 +50,7 @@ describe('AlimentosPage', () => {
       imports: [AlimentosModule],
       providers: [{ provide: CARREGADOR_TACO, useValue: carregarTaco }],
     }).compileComponents();
-    fixture = TestBed.createComponent(AlimentosPage);
+    fixture = TestBed.createComponent(AlimentosComponent);
     loader = TestbedHarnessEnvironment.loader(fixture);
     await fixture.whenStable();
   }

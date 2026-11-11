@@ -6,12 +6,12 @@ import { AlimentoService } from '../../core/services/alimento.service';
 const TODOS = '';
 
 @Component({
-  selector: 'app-alimentos-page',
+  selector: 'app-alimentos',
   standalone: false,
-  styleUrl: './alimentos-page.scss',
-  templateUrl: './alimentos-page.html',
+  styleUrl: './alimentos.component.scss',
+  templateUrl: './alimentos.component.html',
 })
-export class AlimentosPage implements OnInit {
+export class AlimentosComponent implements OnInit {
   private readonly alimentoService = inject(AlimentoService);
 
   protected readonly colunas = ['nome', 'grupo', 'kcal', 'carboidrato', 'proteina', 'gordura', 'origem'];

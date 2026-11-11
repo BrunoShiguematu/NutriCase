@@ -1,1 +1,68 @@
-<h1 class="page-title">Casos</h1>
+<header class="page-header">
+  <h1 class="page-title">Casos</h1>
+  <a mat-flat-button class="gestao-link" routerLink="/casos/gestao">Gestão de casos</a>
+</header>
+
+<section class="filtros" aria-label="Filtros do catálogo">
+  <mat-form-field class="filtro filtro-nivel">
+    <mat-label>Nível</mat-label>
+    <mat-select [value]="nivelSelecionado()" (selectionChange)="nivelSelecionado.set($event.value)">
+      <mat-option [value]="todos">Todos</mat-option>
+      @for (nivel of niveis; track nivel) {
+        <mat-option [value]="nivel">{{ nivel }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="filtro filtro-modalidade">
+    <mat-label>Modalidade</mat-label>
+    <mat-select
+      [value]="modalidadeSelecionada()"
+      (selectionChange)="modalidadeSelecionada.set($event.value)"
+    >
+      <mat-option [value]="todos">Todos</mat-option>
+      @for (modalidade of modalidades(); track modalidade) {
+        <mat-option [value]="modalidade">{{ modalidade }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</section>
+
+<section class="resultado">
+  @let total = casosFiltrados().length;
+  <p class="resultado-status" [class.sem-resultado]="total === 0" aria-live="polite">
+    @if (total === 0) {
+      Nenhum caso encontrado
+    } @else {
+      {{ total }} {{ total === 1 ? 'caso encontrado' : 'casos encontrados' }}
+    }
+  </p>
+
+  @if (total > 0) {
+    <div class="lista-casos">
+      @for (caso of casosFiltrados(); track caso.id) {
+        <mat-card class="caso-card" appearance="outlined">
+          <mat-card-header>
+            <mat-card-title class="caso-titulo">{{ caso.titulo }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <dl class="caso-detalhes">
+              <div class="caso-detalhe caso-nivel">
+                <dt>Nível</dt>
+                <dd>{{ caso.nivel }}</dd>
+              </div>
+              <div class="caso-detalhe caso-modalidade">
+                <dt>Modalidade</dt>
+                <dd>{{ caso.modalidade }}</dd>
+              </div>
+              <div class="caso-detalhe caso-competencia">
+                <dt>Competência</dt>
+                <dd>{{ caso.competencia }}</dd>
+              </div>
+            </dl>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+</section>

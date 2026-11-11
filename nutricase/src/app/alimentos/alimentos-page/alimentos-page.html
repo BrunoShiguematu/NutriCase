@@ -1,0 +1,133 @@
+<header class="page-header">
+  <h1 class="page-title" #titulo tabindex="-1">Base de alimentos</h1>
+</header>
+
+@switch (estado()) {
+  @case ('erro') {
+    <section class="estado-erro" role="alert">
+      <p class="mensagem-erro">Não foi possível carregar a base de alimentos.</p>
+      <button mat-flat-button type="button" class="tentar-de-novo" (click)="tentarDeNovo(titulo)">
+        Tentar de novo
+      </button>
+    </section>
+  }
+  @case ('pronto') {
+    <section class="filtros" aria-label="Busca e filtro">
+      <mat-form-field class="filtro filtro-busca">
+        <mat-label>Buscar alimento</mat-label>
+        <input
+          #campo
+          matInput
+          type="search"
+          autocomplete="off"
+          [value]="busca()"
+          (input)="buscar(campo.value)"
+        />
+      </mat-form-field>
+
+      <mat-form-field class="filtro filtro-grupo">
+        <mat-label>Grupo</mat-label>
+        <mat-select [value]="grupoSelecionado()" (selectionChange)="filtrarGrupo($event.value)">
+          <mat-option [value]="todos">Todos</mat-option>
+          @for (grupo of grupos(); track grupo) {
+            <mat-option [value]="grupo">{{ grupo }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </section>
+
+    <section class="resultado">
+      @let total = resultados().length;
+      <p class="resultado-status" [class.sem-resultado]="total === 0" aria-live="polite">
+        @if (total === 0) {
+          Nenhum alimento encontrado
+        } @else {
+          {{ total }} {{ total === 1 ? 'alimento encontrado' : 'alimentos encontrados' }}
+        }
+      </p>
+
+      @if (total > 0) {
+        <p class="tabela-nota">Valores por 100 g de parte comestível.</p>
+        <table
+          mat-table
+          class="tabela-alimentos"
+          aria-label="Base de alimentos TACO"
+          [dataSource]="paginaAtual()"
+        >
+          <ng-container matColumnDef="nome">
+            <th mat-header-cell *matHeaderCellDef>Alimento</th>
+            <td mat-cell class="coluna-nome" *matCellDef="let alimento">{{ alimento.nome }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="grupo">
+            <th mat-header-cell *matHeaderCellDef>Grupo</th>
+            <td mat-cell class="coluna-grupo" *matCellDef="let alimento">{{ alimento.grupo }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="kcal">
+            <th mat-header-cell *matHeaderCellDef>Energia (kcal)</th>
+            <td mat-cell class="coluna-kcal" *matCellDef="let alimento">{{ formatar(alimento.kcal) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="carboidrato">
+            <th mat-header-cell *matHeaderCellDef>Carboidrato (g)</th>
+            <td mat-cell class="coluna-carboidrato" *matCellDef="let alimento">
+              {{ formatar(alimento.carboidrato) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="proteina">
+            <th mat-header-cell *matHeaderCellDef>Proteína (g)</th>
+            <td mat-cell class="coluna-proteina" *matCellDef="let alimento">
+              {{ formatar(alimento.proteina) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="gordura">
+            <th mat-header-cell *matHeaderCellDef>Gordura (g)</th>
+            <td mat-cell class="coluna-gordura" *matCellDef="let alimento">
+              {{ formatar(alimento.gordura) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="origem">
+            <th mat-header-cell *matHeaderCellDef>Origem</th>
+            <td mat-cell class="coluna-origem" *matCellDef="let alimento">{{ alimento.origem }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+          <tr mat-row class="linha-alimento" *matRowDef="let alimento; columns: colunas"></tr>
+        </table>
+
+        <mat-paginator
+          aria-label="Páginas da base de alimentos"
+          [length]="total"
+          [pageIndex]="indicePagina()"
+          [pageSize]="tamanhoPagina()"
+          [pageSizeOptions]="opcoesPorPagina"
+          (page)="mudarPagina($event)"
+        />
+      }
+    </section>
+  }
+  @default {
+    <mat-progress-bar
+      class="carregando"
+      mode="indeterminate"
+      aria-label="Carregando a base de alimentos"
+    />
+  }
+}
+
+<footer class="rodape-taco">
+  <p class="citacao-taco">
+    Fonte: NÚCLEO DE ESTUDOS E PESQUISAS EM ALIMENTAÇÃO (NEPA).
+    <cite>Tabela Brasileira de Composição de Alimentos (TACO)</cite>. 4. ed. rev. e ampl. Campinas:
+    NEPA-UNICAMP, 2011.
+  </p>
+  <p class="aviso-taco">
+    Cinco alimentos da TACO não estão nesta base porque a tabela não publica valores para eles: leite
+    de vaca integral, leite de vaca desnatado UHT, coco verde cru, iogurte sabor abacaxi e aguardente
+    de cana.
+  </p>
+</footer>

@@ -2,15 +2,20 @@
   <mat-sidenav class="side" mode="side" opened #sidenav>
     <nav aria-label="Navegação principal">
       <mat-nav-list>
-        <a mat-list-item routerLink="/dashboard" routerLinkActive ariaCurrentWhenActive="page" #rlaDashboard="routerLinkActive"
+        <a mat-list-item class="menu-dashboard" routerLink="/dashboard" routerLinkActive ariaCurrentWhenActive="page" #rlaDashboard="routerLinkActive"
            [activated]="rlaDashboard.isActive">
           <mat-icon matListItemIcon>dashboard</mat-icon>
           <span matListItemTitle>Dashboard</span>
         </a>
-        <a mat-list-item routerLink="/casos" routerLinkActive ariaCurrentWhenActive="page" #rlaCasos="routerLinkActive"
-           [activated]="rlaCasos.isActive">
+        <a mat-list-item class="menu-casos" routerLink="/casos" routerLinkActive ariaCurrentWhenActive="page" #rlaCasos="routerLinkActive"
+           [routerLinkActiveOptions]="{ exact: true }" [activated]="rlaCasos.isActive">
           <mat-icon matListItemIcon>folder_open</mat-icon>
           <span matListItemTitle>Casos</span>
+        </a>
+        <a mat-list-item class="menu-gestao" routerLink="/casos/gestao" routerLinkActive ariaCurrentWhenActive="page" #rlaGestao="routerLinkActive"
+           [activated]="rlaGestao.isActive">
+          <mat-icon matListItemIcon>edit_note</mat-icon>
+          <span matListItemTitle>Gestão de casos</span>
         </a>
       </mat-nav-list>
     </nav>

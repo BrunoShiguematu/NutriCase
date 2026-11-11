@@ -32,15 +32,18 @@ describe('App', () => {
 
     afterEach(() => localStorage.clear());
 
-    it('tem os três links do menu, com o texto "Gestão de casos" apontando para /casos/gestao', () => {
+    it('tem os quatro links do menu, com "Gestão de casos" em /casos/gestao e "Base de alimentos" em /alimentos', () => {
       const fixture = TestBed.createComponent(App);
       fixture.detectChanges();
       const dom = fixture.nativeElement as HTMLElement;
 
-      expect(dom.querySelectorAll('nav a[mat-list-item]').length).toBe(3);
+      expect(dom.querySelectorAll('nav a[mat-list-item]').length).toBe(4);
       const gestao = dom.querySelector('.menu-gestao') as HTMLAnchorElement;
       expect(gestao.textContent).toContain('Gestão de casos');
       expect(gestao.getAttribute('href')).toBe('/casos/gestao');
+      const alimentos = dom.querySelector('.menu-alimentos') as HTMLAnchorElement;
+      expect(alimentos.textContent).toContain('Base de alimentos');
+      expect(alimentos.getAttribute('href')).toBe('/alimentos');
     });
 
     it('/dashboard ativa só Dashboard', async () => {
@@ -57,6 +60,10 @@ describe('App', () => {
 
     it('/casos/gestao/novo mantém só Gestão de casos ativo', async () => {
       expect(await ativosEm('/casos/gestao/novo')).toEqual(['menu-gestao']);
+    });
+
+    it('/alimentos ativa só Base de alimentos', async () => {
+      expect(await ativosEm('/alimentos')).toEqual(['menu-alimentos']);
     });
 
     it('/casos/gestao/:id/editar mantém só Gestão de casos ativo', async () => {

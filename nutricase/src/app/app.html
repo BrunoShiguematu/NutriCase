@@ -17,6 +17,11 @@
           <mat-icon matListItemIcon>edit_note</mat-icon>
           <span matListItemTitle>Gestão de casos</span>
         </a>
+        <a mat-list-item class="menu-alimentos" routerLink="/alimentos" routerLinkActive ariaCurrentWhenActive="page" #rlaAlimentos="routerLinkActive"
+           [activated]="rlaAlimentos.isActive">
+          <mat-icon matListItemIcon>nutrition</mat-icon>
+          <span matListItemTitle>Base de alimentos</span>
+        </a>
       </mat-nav-list>
     </nav>
   </mat-sidenav>

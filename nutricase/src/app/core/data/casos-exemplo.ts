@@ -6,7 +6,7 @@
 // Atenção: editar um exemplo pela tela mantém o id "exemplo-...", então a troca de versão
 // sobrescreve a edição. Para guardar uma alteração de forma permanente, crie um caso novo.
 
-import { Atleta, Caso } from '../models';
+import { Atleta, Caso, TOLERANCIA_DIETA_PADRAO } from '../models';
 
 export const VERSAO_CASOS_EXEMPLO = 1;
 
@@ -26,6 +26,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     competencia: 'Gasto energético total',
     descricao: 'Atleta de 28 anos treinando 90 min/dia para a primeira maratona.',
     comentarioReferencia: COMENTARIO_REFERENCIA,
+    toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
     id: 'exemplo-caso-2',
@@ -36,6 +37,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     competencia: 'Distribuição de macronutrientes',
     descricao: 'Volume alto de treinos em dois períodos por dia.',
     comentarioReferencia: COMENTARIO_REFERENCIA,
+    toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
     id: 'exemplo-caso-3',
@@ -46,6 +48,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     competencia: 'Periodização nutricional',
     descricao: 'Provas de 200 m e treino às 05h00.',
     comentarioReferencia: COMENTARIO_REFERENCIA,
+    toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
     id: 'exemplo-caso-4',
@@ -56,6 +59,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     competencia: 'Ajuste de meta proteica',
     descricao: 'Treino de força cinco vezes por semana, com superávit calórico moderado.',
     comentarioReferencia: COMENTARIO_REFERENCIA,
+    toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
     id: 'exemplo-caso-5',
@@ -66,6 +70,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     competencia: 'Restrições alimentares',
     descricao: 'Prova de 10 km e intolerância à lactose.',
     comentarioReferencia: COMENTARIO_REFERENCIA,
+    toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
     id: 'exemplo-caso-6',
@@ -76,6 +81,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     competencia: 'Conversão de unidades',
     descricao: 'Adolescente em fase de crescimento.',
     comentarioReferencia: COMENTARIO_REFERENCIA,
+    toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
     id: 'exemplo-caso-7',
@@ -86,6 +92,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     competencia: 'Hidratação e carboidrato no treino',
     descricao: 'Treinos longos de até 4 h aos fins de semana.',
     comentarioReferencia: COMENTARIO_REFERENCIA,
+    toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
     id: 'exemplo-caso-8',
@@ -96,6 +103,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     competencia: 'Escolha de equação',
     descricao: 'Atleta de 45 anos que treina 3x por semana.',
     comentarioReferencia: COMENTARIO_REFERENCIA,
+    toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
 ];
 

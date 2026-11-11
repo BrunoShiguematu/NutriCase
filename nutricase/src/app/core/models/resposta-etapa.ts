@@ -13,11 +13,12 @@ export interface RespostaEtapa {
   id: string;
   resolucaoId: string;
   etapaId: string;
-  /** Opção escolhida, ex.: a equação de TMB; vazio em etapas só numéricas. */
-  escolha?: string;
-  /** Valor calculado pelo estudante; vazio em etapas só de escolha. */
-  valor?: number;
-  classificacao: Classificacao;
-  /** Só preenchido quando a classificação é "erro de fato". */
+  /** Parâmetro escolhido: o nome da equação na TMB; o fator de atividade ou os g/kg/dia nas outras etapas. */
+  parametro: string | number;
+  /** Valor calculado pelo estudante (kcal/dia na TMB e no GET; g/dia nas outras etapas). */
+  valor: number;
+  /** Só preenchida na submissão: antes disso nada de certo ou errado aparece (RF09). */
+  classificacao?: Classificacao;
+  /** Só preenchido na submissão, quando a classificação é "erro de fato". */
   tipoErro?: TipoErro;
 }

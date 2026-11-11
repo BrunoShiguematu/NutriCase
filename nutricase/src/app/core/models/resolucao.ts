@@ -8,4 +8,6 @@ export interface Resolucao {
   data: string;
   status: StatusResolucao;
   justificativa: string;
+  /** Data e hora da submissão em ISO 8601; só existe quando o status é "submetida". */
+  submetidaEm?: string;
 }

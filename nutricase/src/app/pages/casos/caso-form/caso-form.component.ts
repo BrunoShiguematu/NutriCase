@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, NonNullableFormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Nivel, Sexo } from '../../../core/models';
+import { Nivel, Sexo, TOLERANCIA_DIETA_PADRAO } from '../../../core/models';
 import { CasoComAtleta, CasoService, DadosAtleta, DadosCaso } from '../../../core/services/caso.service';
 
 /** Texto obrigatório: espaços sozinhos não valem. */
@@ -47,6 +47,12 @@ export class CasoFormComponent {
 
   /** Id do caso em edição; `null` no cadastro. */
   protected readonly idEmEdicao = signal<string | null>(null);
+
+  /**
+   * Tolerância da dieta do caso. Ainda não tem campo na tela (entra na gestão de etapas):
+   * no cadastro vale o padrão e, na edição, o formulário preserva o valor que o caso já tem.
+   */
+  private toleranciaDieta = TOLERANCIA_DIETA_PADRAO;
 
   protected readonly form = this.fb.group({
     // Caso
@@ -114,6 +120,7 @@ export class CasoFormComponent {
   private carregar(id: string | null): void {
     if (id === null) {
       this.idEmEdicao.set(null);
+      this.toleranciaDieta = TOLERANCIA_DIETA_PADRAO;
       this.form.reset();
       return;
     }
@@ -128,6 +135,7 @@ export class CasoFormComponent {
   }
 
   private preencher({ caso, atleta }: CasoComAtleta): void {
+    this.toleranciaDieta = caso.toleranciaDieta;
     this.form.reset({
       titulo: caso.titulo,
       modalidade: caso.modalidade,
@@ -164,6 +172,7 @@ export class CasoFormComponent {
         competencia: v.competencia.trim(),
         descricao: v.descricao.trim(),
         comentarioReferencia: v.comentarioReferencia.trim(),
+        toleranciaDieta: this.toleranciaDieta,
       },
       atleta: {
         nome: v.nome.trim(),

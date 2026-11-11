@@ -163,6 +163,7 @@ describe('CasoFormComponent', () => {
       expect(criado).toBeDefined();
       expect(criado?.nivel).toBe('Intermediário');
       expect(criado?.modalidade).toBe('Remo');
+      expect(criado?.toleranciaDieta).toBe(10);
 
       const atleta = service.buscarPorId(criado!.id)?.atleta;
       expect(atleta?.nome).toBe('Ana Teste');
@@ -242,6 +243,21 @@ describe('CasoFormComponent', () => {
 
       expect(await avisos()).toEqual(['Caso não encontrado']);
       expect(navegar).toHaveBeenCalledWith(['/casos/gestao']);
+    });
+  });
+
+  describe('tolerância da dieta (sem campo na tela)', () => {
+    it('ao editar, o formulário preserva a tolerância que o caso já tem', async () => {
+      // O serviço só é criado em montar(); o localStorage limpo no beforeEach faz o CasoService começar com os exemplos.
+      const preparo = new CasoService(new StorageService());
+      const { caso, atleta } = preparo.buscarPorId(CASO_COM_RESTRICAO.id)!;
+      preparo.atualizar(caso.id, { ...caso, toleranciaDieta: 15 }, atleta);
+
+      await montar(CASO_COM_RESTRICAO.id);
+      await escrever('titulo', 'Título novo');
+      await salvar();
+
+      expect(service.buscarPorId(CASO_COM_RESTRICAO.id)?.caso.toleranciaDieta).toBe(15);
     });
   });
 

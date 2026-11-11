@@ -20,6 +20,7 @@ function dadosCaso(titulo = 'Caso de teste'): DadosCaso {
     competencia: 'Gasto energético total',
     descricao: 'Descrição de teste.',
     comentarioReferencia: 'Referência de teste.',
+    toleranciaDieta: 10,
   };
 }
 

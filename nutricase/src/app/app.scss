@@ -1,0 +1,10 @@
+// Shell com altura total: o container ocupa a janela inteira.
+// O menu (mat-sidenav) e o conteúdo (mat-sidenav-content) rolam cada um por conta própria.
+:host {
+  display: block;
+  height: 100%;
+}
+
+.shell {
+  height: 100%;
+}

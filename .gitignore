@@ -21,17 +21,3 @@ nutricase-front-antigo/
 
 # Configuração local do Maestri (papéis e canvas)
 .maestri/
-
-# Arquivos internos da equipe (fora do repositório)
-/agentes/
-/CLAUDE.md
-/.claude/
-/git-hooks/
-/nutricase-contexto-completo.md
-/nutricase-instrucoes-do-projeto.md
-/Roteiro-NutriCase.md
-/NutriCase-apresentacao.pptx
-/PI_4º_Termo_-_ERS_NutriCase.md
-/Projeto_Integrador__IV_-_NutriCase.md
-/brand/
-/mensagem-orquestrador-alinhar-modelo.txt

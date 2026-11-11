@@ -9,7 +9,7 @@ const routes: Routes = [
   },
   {
     path: 'casos',
-    loadChildren: () => import('./casos/casos-module').then((m) => m.CasosModule),
+    loadChildren: () => import('./pages/casos/casos.module').then((m) => m.CasosModule),
   },
   {
     path: 'alimentos',

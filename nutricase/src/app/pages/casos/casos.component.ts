@@ -6,12 +6,12 @@ import { CasoService } from '../../core/services/caso.service';
 const TODOS = '';
 
 @Component({
-  selector: 'app-casos-page',
+  selector: 'app-casos',
   standalone: false,
-  styleUrl: './casos-page.scss',
-  templateUrl: './casos-page.html',
+  styleUrl: './casos.component.scss',
+  templateUrl: './casos.component.html',
 })
-export class CasosPage {
+export class CasosComponent {
   private readonly casoService = inject(CasoService);
 
   protected readonly niveis: Nivel[] = ['Iniciante', 'Intermediário', 'Avançado'];

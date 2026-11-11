@@ -9,9 +9,9 @@ export interface DadosConfirmarExclusao {
 @Component({
   selector: 'app-confirmar-exclusao',
   standalone: false,
-  styleUrl: './confirmar-exclusao.scss',
-  templateUrl: './confirmar-exclusao.html',
+  styleUrl: './confirmar-exclusao.component.scss',
+  templateUrl: './confirmar-exclusao.component.html',
 })
-export class ConfirmarExclusao {
+export class ConfirmarExclusaoComponent {
   protected readonly dados = inject<DadosConfirmarExclusao>(MAT_DIALOG_DATA);
 }

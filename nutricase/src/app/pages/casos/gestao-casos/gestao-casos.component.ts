@@ -1,17 +1,17 @@
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Caso } from '../../core/models';
-import { CasoService } from '../../core/services/caso.service';
-import { ConfirmarExclusao, DadosConfirmarExclusao } from '../confirmar-exclusao/confirmar-exclusao';
+import { Caso } from '../../../core/models';
+import { CasoService } from '../../../core/services/caso.service';
+import { ConfirmarExclusaoComponent, DadosConfirmarExclusao } from '../confirmar-exclusao/confirmar-exclusao.component';
 
 @Component({
   selector: 'app-gestao-casos',
   standalone: false,
-  styleUrl: './gestao-casos.scss',
-  templateUrl: './gestao-casos.html',
+  styleUrl: './gestao-casos.component.scss',
+  templateUrl: './gestao-casos.component.html',
 })
-export class GestaoCasos {
+export class GestaoCasosComponent {
   private readonly casoService = inject(CasoService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -22,7 +22,7 @@ export class GestaoCasos {
 
   protected excluir(caso: Caso): void {
     this.dialog
-      .open<ConfirmarExclusao, DadosConfirmarExclusao, boolean>(ConfirmarExclusao, {
+      .open<ConfirmarExclusaoComponent, DadosConfirmarExclusao, boolean>(ConfirmarExclusaoComponent, {
         data: { titulo: caso.titulo },
       })
       .afterClosed()

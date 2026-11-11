@@ -7,18 +7,18 @@ import { MatDialogHarness } from '@angular/material/dialog/testing';
 import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { MatTableHarness } from '@angular/material/table/testing';
 import { provideRouter } from '@angular/router';
-import { CASOS_EXEMPLO } from '../../core/data/casos-exemplo';
-import { Caso } from '../../core/models';
-import { CasoService } from '../../core/services/caso.service';
-import { StorageService } from '../../core/services/storage.service';
-import { CasosModule } from '../casos-module';
-import { GestaoCasos } from './gestao-casos';
+import { CASOS_EXEMPLO } from '../../../core/data/casos-exemplo';
+import { Caso } from '../../../core/models';
+import { CasoService } from '../../../core/services/caso.service';
+import { StorageService } from '../../../core/services/storage.service';
+import { CasosModule } from '../casos.module';
+import { GestaoCasosComponent } from './gestao-casos.component';
 
 const CHAVE = 'nutricase.casos';
 const PRIMEIRO = CASOS_EXEMPLO[0];
 
-describe('GestaoCasos', () => {
-  let fixture: ComponentFixture<GestaoCasos>;
+describe('GestaoCasosComponent', () => {
+  let fixture: ComponentFixture<GestaoCasosComponent>;
   let loader: HarnessLoader;
   let raiz: HarnessLoader;
   let service: CasoService;
@@ -50,7 +50,7 @@ describe('GestaoCasos', () => {
     }).compileComponents();
 
     service = TestBed.inject(CasoService);
-    fixture = TestBed.createComponent(GestaoCasos);
+    fixture = TestBed.createComponent(GestaoCasosComponent);
     loader = TestbedHarnessEnvironment.loader(fixture);
     raiz = TestbedHarnessEnvironment.documentRootLoader(fixture);
     await fixture.whenStable();

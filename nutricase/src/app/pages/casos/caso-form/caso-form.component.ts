@@ -3,8 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, NonNullableFormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Nivel, Sexo } from '../../core/models';
-import { CasoComAtleta, CasoService, DadosAtleta, DadosCaso } from '../../core/services/caso.service';
+import { Nivel, Sexo } from '../../../core/models';
+import { CasoComAtleta, CasoService, DadosAtleta, DadosCaso } from '../../../core/services/caso.service';
 
 /** Texto obrigatório: espaços sozinhos não valem. */
 function textoObrigatorio(controle: AbstractControl): ValidationErrors | null {
@@ -29,10 +29,10 @@ function listaDeTexto(texto: string): string[] {
 @Component({
   selector: 'app-caso-form',
   standalone: false,
-  styleUrl: './caso-form.scss',
-  templateUrl: './caso-form.html',
+  styleUrl: './caso-form.component.scss',
+  templateUrl: './caso-form.component.html',
 })
-export class CasoForm {
+export class CasoFormComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly casoService = inject(CasoService);
   private readonly route = inject(ActivatedRoute);

@@ -4,11 +4,11 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { provideRouter } from '@angular/router';
 import { CASOS_EXEMPLO } from '../../core/data/casos-exemplo';
-import { CasosModule } from '../casos-module';
-import { CasosPage } from './casos-page';
+import { CasosModule } from './casos.module';
+import { CasosComponent } from './casos.component';
 
-describe('CasosPage', () => {
-  let fixture: ComponentFixture<CasosPage>;
+describe('CasosComponent', () => {
+  let fixture: ComponentFixture<CasosComponent>;
   let loader: HarnessLoader;
 
   const titulosNaTela = (): string[] =>
@@ -40,7 +40,7 @@ describe('CasosPage', () => {
       providers: [provideRouter([])],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(CasosPage);
+    fixture = TestBed.createComponent(CasosComponent);
     loader = TestbedHarnessEnvironment.loader(fixture);
     await fixture.whenStable();
   });

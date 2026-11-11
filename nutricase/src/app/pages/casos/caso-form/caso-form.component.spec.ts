@@ -8,17 +8,17 @@ import { MatSelectHarness } from '@angular/material/select/testing';
 import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { CASOS_EXEMPLO } from '../../core/data/casos-exemplo';
-import { CasoService } from '../../core/services/caso.service';
-import { StorageService } from '../../core/services/storage.service';
-import { CasosModule } from '../casos-module';
-import { CasoForm } from './caso-form';
+import { CASOS_EXEMPLO } from '../../../core/data/casos-exemplo';
+import { CasoService } from '../../../core/services/caso.service';
+import { StorageService } from '../../../core/services/storage.service';
+import { CasosModule } from '../casos.module';
+import { CasoFormComponent } from './caso-form.component';
 
 const CHAVE = 'nutricase.casos';
 const CASO_COM_RESTRICAO = CASOS_EXEMPLO[4];
 
-describe('CasoForm', () => {
-  let fixture: ComponentFixture<CasoForm>;
+describe('CasoFormComponent', () => {
+  let fixture: ComponentFixture<CasoFormComponent>;
   let loader: HarnessLoader;
   let raiz: HarnessLoader;
   let service: CasoService;
@@ -40,7 +40,7 @@ describe('CasoForm', () => {
     // Espiona antes de criar o componente: o id inexistente navega já no construtor.
     navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
-    fixture = TestBed.createComponent(CasoForm);
+    fixture = TestBed.createComponent(CasoFormComponent);
     loader = TestbedHarnessEnvironment.loader(fixture);
     raiz = TestbedHarnessEnvironment.documentRootLoader(fixture);
     await fixture.whenStable();

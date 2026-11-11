@@ -2,12 +2,12 @@ import { Component, inject } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-root',
+  selector: 'app-layout',
   standalone: false,
-  styleUrl: './app.scss',
-  templateUrl: './app.html',
+  styleUrl: './layout.component.scss',
+  templateUrl: './layout.component.html',
 })
-export class App {
+export class LayoutComponent {
   protected readonly title = 'NutriCase';
 
   constructor() {

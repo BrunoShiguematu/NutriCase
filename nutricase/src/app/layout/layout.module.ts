@@ -1,30 +1,23 @@
-import { NgModule, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { AppRoutingModule } from './app-routing-module';
-import { App } from './app';
+import { LayoutComponent } from './layout.component';
 
 // O shell importa só o que usa; o MaterialModule (shared/) fica nos módulos lazy para não pesar no bundle inicial.
 @NgModule({
-  declarations: [
-    App
-  ],
+  declarations: [LayoutComponent],
   imports: [
-    BrowserModule,
-    AppRoutingModule,
+    RouterModule,
     MatSidenavModule,
     MatToolbarModule,
     MatListModule,
     MatIconModule,
     MatButtonModule
   ],
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-  ],
-  bootstrap: [App]
+  exports: [LayoutComponent]
 })
-export class AppModule { }
+export class LayoutModule { }

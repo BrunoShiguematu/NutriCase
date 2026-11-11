@@ -1,19 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { App } from './app';
-import { AppModule } from './app-module';
+import { LayoutComponent } from './layout.component';
+import { AppModule } from '../app.module';
 
-// O spec importa o AppModule (Material + RouterModule com as rotas reais) em vez de redeclarar o App:
-// o builder de testes só compila os arquivos alcançados pelos specs, e o App precisa do escopo do AppModule.
-describe('App', () => {
+// O spec importa o AppModule (Material + RouterModule com as rotas reais) em vez de redeclarar o LayoutComponent:
+// o builder de testes só compila os arquivos alcançados pelos specs, e o LayoutComponent precisa do escopo do LayoutModule (importado pelo AppModule).
+describe('LayoutComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppModule],
     }).compileComponents();
   });
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(App);
+  it('should create the layout', () => {
+    const fixture = TestBed.createComponent(LayoutComponent);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
   });
@@ -22,7 +22,7 @@ describe('App', () => {
     /** Navega e devolve as classes `menu-*` dos links marcados como página atual. */
     async function ativosEm(url: string): Promise<string[]> {
       localStorage.clear();
-      const fixture = TestBed.createComponent(App);
+      const fixture = TestBed.createComponent(LayoutComponent);
       await TestBed.inject(Router).navigateByUrl(url);
       fixture.detectChanges();
       await fixture.whenStable();
@@ -33,7 +33,7 @@ describe('App', () => {
     afterEach(() => localStorage.clear());
 
     it('tem os quatro links do menu, com "Gestão de casos" em /casos/gestao e "Base de alimentos" em /alimentos', () => {
-      const fixture = TestBed.createComponent(App);
+      const fixture = TestBed.createComponent(LayoutComponent);
       fixture.detectChanges();
       const dom = fixture.nativeElement as HTMLElement;
 
@@ -72,7 +72,7 @@ describe('App', () => {
   });
 
   it('should render the brand name in the toolbar', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(LayoutComponent);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand')?.textContent).toContain('NutriCase');

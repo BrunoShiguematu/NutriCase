@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
-import { MaterialModule } from '../../shared/material-module';
+import { MaterialModule } from '../../shared/material.module';
 import { CasosComponent } from './casos.component';
 import { GestaoCasosComponent } from './gestao-casos/gestao-casos.component';
 import { ConfirmarExclusaoComponent } from './confirmar-exclusao/confirmar-exclusao.component';

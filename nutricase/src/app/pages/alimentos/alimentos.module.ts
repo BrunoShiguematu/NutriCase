@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatPaginatorIntl } from '@angular/material/paginator';
 
-import { MaterialModule } from '../../shared/material-module';
+import { MaterialModule } from '../../shared/material.module';
 import { AlimentosComponent } from './alimentos.component';
 
 /** Textos do paginador em português (o padrão do Angular Material é em inglês). */

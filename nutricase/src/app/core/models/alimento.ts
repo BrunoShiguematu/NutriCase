@@ -15,6 +15,4 @@ export interface Alimento {
   gordura: number;
   /** Quem cadastrou o alimento: vindo da tabela TACO ou criado pelo aluno. */
   origem: OrigemAlimento;
-  /** Referência da fonte em texto livre, ex.: "TACO 4ª ed.". */
-  fonte: string;
 }

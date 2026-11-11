@@ -146,6 +146,22 @@ describe('GestaoCasos', () => {
     expect((await snackBars()).length).toBe(0);
   });
 
+  it('se o serviço não conseguir excluir (devolve false), mostra aviso de erro e não "Caso excluído"', async () => {
+    vi.spyOn(service, 'excluir').mockReturnValue(false);
+
+    await (await botaoExcluir(PRIMEIRO.titulo)).click();
+    await (await (await dialogo()).getHarness(MatButtonHarness.with({ text: 'Excluir' }))).click();
+
+    const avisos = await snackBars();
+    expect(avisos.length).toBe(1);
+    expect(await avisos[0].getMessage()).toBe('Não foi possível excluir: caso não encontrado');
+  });
+
+  it('a tabela tem aria-label "Casos cadastrados"', () => {
+    const tabela = (fixture.nativeElement as HTMLElement).querySelector('table');
+    expect(tabela?.getAttribute('aria-label')).toBe('Casos cadastrados');
+  });
+
   it('um caso excluído continua excluído quando o app é aberto de novo', async () => {
     await (await botaoExcluir(PRIMEIRO.titulo)).click();
     await (await (await dialogo()).getHarness(MatButtonHarness.with({ text: 'Excluir' }))).click();

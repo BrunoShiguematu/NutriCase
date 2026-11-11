@@ -28,8 +28,12 @@ export class GestaoCasos {
       .afterClosed()
       .subscribe((confirmou) => {
         if (confirmou === true) {
-          this.casoService.excluir(caso.id);
-          this.snackBar.open('Caso excluído', 'Fechar', { duration: 4000 });
+          const excluiu = this.casoService.excluir(caso.id);
+          this.snackBar.open(
+            excluiu ? 'Caso excluído' : 'Não foi possível excluir: caso não encontrado',
+            'Fechar',
+            { duration: 4000 },
+          );
         }
       });
   }

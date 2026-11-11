@@ -3,7 +3,7 @@
   <a mat-flat-button class="novo-caso" routerLink="/casos/gestao/novo">Novo caso</a>
 </header>
 
-<table mat-table class="tabela-casos" [dataSource]="casos()">
+<table mat-table class="tabela-casos" aria-label="Casos cadastrados" [dataSource]="casos()">
   <ng-container matColumnDef="titulo">
     <th mat-header-cell *matHeaderCellDef>Título</th>
     <td mat-cell class="coluna-titulo" *matCellDef="let caso">{{ caso.titulo }}</td>

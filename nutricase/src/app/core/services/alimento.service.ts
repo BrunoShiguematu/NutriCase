@@ -72,7 +72,9 @@ export class AlimentoService {
       // O reset da carga fica aqui, depois da atribuição: dentro de executarCarga ele seria
       // sobrescrito se o carregador falhasse de forma síncrona (antes do primeiro await).
       this.carga = this.executarCarga().then(() => {
-
+        if (this._estado() === 'erro') {
+          this.carga = null;
+        }
       });
     }
     return this.carga;
@@ -129,7 +131,6 @@ export class AlimentoService {
       // Sem a TACO nova, mostra o que o navegador já tinha, se tinha algo, e permite tentar de novo.
       this.dados.set(salvos?.alimentos ?? []);
       this._estado.set('erro');
-      this.carga = null;
     }
   }
 

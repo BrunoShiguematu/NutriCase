@@ -16,8 +16,5 @@ nutricase-front-antigo/
 !.vscode/extensions.json
 .idea/
 
-# Configurações locais do Claude Code
-.claude/settings.local.json
-
 # Configuração local do Maestri (papéis e canvas)
 .maestri/

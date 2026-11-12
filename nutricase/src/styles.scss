@@ -76,6 +76,16 @@ body {
   height: 100%;
 }
 
+// Foco do teclado (RNF04): anel verde de 3 px nos botões do Material (classe .mat-focus-indicator). O menu
+// lateral é verde e tem o próprio anel branco, em layout.component.scss.
+@include mat.strong-focus-indicators(
+  (
+    border-color: m.$verde,
+    border-width: 3px,
+    border-radius: 8px,
+  )
+);
+
 // A fonte de ícones vem do pacote npm (angular.json), mas o pacote não traz a classe que o mat-icon usa.
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';

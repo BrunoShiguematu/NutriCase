@@ -25,10 +25,9 @@ $trilha-contorno: #8a928d;
 $fonte-titulo: 'Figtree', 'Noto Sans', sans-serif;
 $fonte-texto: 'Noto Sans', sans-serif;
 
-// Página inteira: respiro em volta (o shell ainda não dá) e título.
+// Página inteira: bloco e título. O respiro em volta (padding) é do shell, em layout.component.scss.
 @mixin pagina {
   display: block;
-  padding: 1.5rem 2rem 2.5rem;
 
   .page-header {
     margin-bottom: 1.25rem;

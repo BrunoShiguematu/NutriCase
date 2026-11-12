@@ -1,5 +1,12 @@
-// Shell com altura total: o container ocupa a janela inteira.
-// O menu (mat-sidenav) e o conteúdo (mat-sidenav-content) rolam cada um por conta própria.
+@use '../shared/styles/marca' as m;
+
+// Altura do cabeçalho fixo (barra superior + aviso). As telas que fixam algo na janela, como a ficha do atleta
+// do resolver, descontam esse valor por --altura-cabecalho.
+$barra: 3.5rem;
+$aviso: 2.25rem;
+
+// Shell com altura total: o container ocupa a janela inteira. O menu fica fixo na lateral; no conteúdo,
+// a barra e o aviso ficam parados no topo e só a página (main) rola.
 :host {
   display: block;
   height: 100%;
@@ -7,4 +14,78 @@
 
 .shell {
   height: 100%;
+}
+
+// Menu lateral: 256 px, verde da marca (30%), texto e ícones brancos (9,74:1). O item da página atual fica
+// com fundo mais claro e texto em negrito, para não depender só da cor.
+.side {
+  --mat-sidenav-container-width: 16rem;
+  --mat-sidenav-container-background-color: #{m.$verde};
+  --mat-sidenav-container-text-color: #fff;
+  --mat-sidenav-container-shape: 0;
+  --mat-sidenav-container-divider-color: transparent;
+  --mat-list-list-item-label-text-color: #fff;
+  --mat-list-list-item-leading-icon-color: #fff;
+  --mat-list-list-item-hover-label-text-color: #fff;
+  --mat-list-list-item-hover-leading-icon-color: #fff;
+  --mat-list-list-item-focus-label-text-color: #fff;
+  --mat-list-list-item-hover-state-layer-color: #fff;
+  --mat-list-list-item-focus-state-layer-color: #fff;
+  --mat-list-active-indicator-color: rgba(255, 255, 255, 0.2);
+  // O anel verde de foco do Material (styles.scss) não apareceria sobre o menu verde: aqui ele fica desligado
+  // e vale o contorno branco abaixo.
+  --mat-focus-indicator-display: none;
+  padding-top: 0.75rem;
+
+  a[aria-current='page'] {
+    --mat-list-list-item-label-text-weight: 700;
+  }
+
+  // Foco do teclado (RNF04): contorno branco de 3 px dentro do item.
+  a:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: -3px;
+  }
+}
+
+.content {
+  --altura-cabecalho: #{$barra + $aviso};
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.top {
+  --mat-toolbar-standard-height: #{$barra};
+  --mat-toolbar-container-background-color: #fff;
+  --mat-toolbar-container-text-color: #{m.$verde};
+  flex: none;
+  border-bottom: 1px solid m.$borda;
+}
+
+.brand {
+  margin-left: 0.5rem;
+  font: 700 1.25rem/1 var(--fonte-titulo);
+}
+
+// Aviso educacional (RNF06): fixo abaixo da barra, na mesma margem lateral do conteúdo.
+.disclaimer {
+  display: flex;
+  flex: none;
+  align-items: center;
+  box-sizing: border-box;
+  height: $aviso;
+  margin: 0;
+  padding: 0 2rem;
+  background: m.$verde-claro;
+  color: m.$texto;
+  font-size: 0.8125rem;
+}
+
+// Área da página: rola sozinha e dá o respiro lateral e inferior a todas as telas.
+.page {
+  flex: 1;
+  min-height: 0;
+  padding: 1.5rem 2rem 2.5rem;
+  overflow: auto;
 }

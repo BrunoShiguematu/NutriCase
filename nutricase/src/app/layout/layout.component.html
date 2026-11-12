@@ -12,6 +12,11 @@
           <mat-icon matListItemIcon>folder_open</mat-icon>
           <span matListItemTitle>Casos</span>
         </a>
+        <a mat-list-item class="menu-resolucoes" routerLink="/resolucoes" routerLinkActive ariaCurrentWhenActive="page" #rlaResolucoes="routerLinkActive"
+           [activated]="rlaResolucoes.isActive">
+          <mat-icon matListItemIcon>assignment</mat-icon>
+          <span matListItemTitle>Minhas resoluções</span>
+        </a>
         <a mat-list-item class="menu-gestao" routerLink="/casos/gestao" routerLinkActive ariaCurrentWhenActive="page" #rlaGestao="routerLinkActive"
            [activated]="rlaGestao.isActive">
           <mat-icon matListItemIcon>edit_note</mat-icon>

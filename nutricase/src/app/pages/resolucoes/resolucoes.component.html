@@ -1,2 +1,89 @@
-<h1 class="page-title">Minhas resoluções</h1>
-<p class="em-construcao">Em construção.</p>
+<header class="page-header">
+  <h1 class="page-title">Minhas resoluções</h1>
+</header>
+
+@if (linhas().length === 0) {
+  <section class="sem-resolucoes" aria-labelledby="sem-resolucoes-titulo">
+    <h2 id="sem-resolucoes-titulo" class="sem-resolucoes-titulo">Você ainda não resolveu nenhum caso</h2>
+    <p>Escolha um caso no catálogo e comece a primeira resolução.</p>
+    <a mat-flat-button class="ir-catalogo" routerLink="/casos">Ver casos</a>
+  </section>
+} @else {
+  <table mat-table class="tabela-resolucoes" aria-label="Minhas resoluções" [dataSource]="linhas()">
+    <ng-container matColumnDef="caso">
+      <th mat-header-cell *matHeaderCellDef>Caso</th>
+      <td mat-cell class="coluna-caso" *matCellDef="let linha">{{ linha.caso }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="data">
+      <th mat-header-cell *matHeaderCellDef>Data</th>
+      <td mat-cell class="coluna-data" *matCellDef="let linha">{{ linha.dataTexto }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell class="coluna-status" *matCellDef="let linha">{{ statusTexto(linha.resolucao) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="etapas">
+      <th mat-header-cell *matHeaderCellDef>Etapas</th>
+      <td mat-cell class="coluna-etapas" *matCellDef="let linha">
+        @if (linha.contagem; as c) {
+          <span class="etapas-corretas">{{ c.corretas }} {{ c.corretas === 1 ? 'correta' : 'corretas' }}</span>,
+          <span class="etapas-divergentes">{{ c.divergentes }} {{ c.divergentes === 1 ? 'divergente' : 'divergentes' }}</span>,
+          <span class="etapas-erro">{{ c.comErro }} com erro</span>
+        } @else {
+          <span class="etapas-pendente">Aguardando submissão</span>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="acoes">
+      <th mat-header-cell *matHeaderCellDef>Ações</th>
+      <td mat-cell class="coluna-acoes" *matCellDef="let linha">
+        @if (linha.resolucao.status === 'em andamento') {
+          <button
+            mat-button
+            type="button"
+            class="acao-continuar"
+            [attr.aria-label]="'Continuar ' + linha.caso"
+            (click)="continuar(linha.resolucao)"
+          >
+            Continuar
+          </button>
+        } @else {
+          <button
+            mat-button
+            type="button"
+            class="acao-resultado"
+            [attr.aria-label]="'Ver resultado de ' + linha.caso"
+            (click)="verResultado(linha.resolucao)"
+          >
+            Ver resultado
+          </button>
+        }
+        <button
+          mat-button
+          type="button"
+          class="acao-refazer"
+          [attr.aria-label]="'Refazer ' + linha.caso"
+          (click)="refazer(linha.resolucao)"
+        >
+          Refazer
+        </button>
+        <button
+          mat-button
+          type="button"
+          class="acao-excluir"
+          [attr.aria-label]="'Excluir resolução de ' + linha.caso"
+          (click)="excluir(linha)"
+        >
+          Excluir
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+    <tr mat-row class="linha-resolucao" *matRowDef="let linha; columns: colunas"></tr>
+  </table>
+}

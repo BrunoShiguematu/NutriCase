@@ -4,6 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { MaterialModule } from '../../shared/material.module';
+import { ConfirmarExclusaoResolucaoComponent } from './confirmar-exclusao-resolucao/confirmar-exclusao-resolucao.component';
 import { FichaAtletaComponent } from './ficha-atleta/ficha-atleta.component';
 import { BuscaAlimentoComponent } from './passo-dieta/busca-alimento/busca-alimento.component';
 import { ConfirmarExclusaoRefeicaoComponent } from './passo-dieta/confirmar-exclusao-refeicao/confirmar-exclusao-refeicao.component';
@@ -19,6 +20,7 @@ import { ResultadoComponent } from './resultado/resultado.component';
 @NgModule({
   declarations: [
     ResolucoesComponent,
+    ConfirmarExclusaoResolucaoComponent,
     ResolverComponent,
     FichaAtletaComponent,
     PassoEtapasComponent,

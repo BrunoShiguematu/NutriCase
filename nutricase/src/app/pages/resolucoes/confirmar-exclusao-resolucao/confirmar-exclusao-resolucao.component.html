@@ -1,0 +1,12 @@
+<h2 mat-dialog-title>Excluir resolução?</h2>
+
+<mat-dialog-content class="confirmar-texto">
+  Você vai excluir a {{ dados.submetida ? 'resolução submetida' : 'resolução em andamento' }} de
+  <strong class="confirmar-caso">{{ dados.caso }}</strong> ({{ dados.data }}), com as respostas, a dieta
+  {{ dados.submetida ? 'e o resultado' : 'e a justificativa' }}. Esta ação não pode ser desfeita.
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="confirmar-acoes">
+  <button mat-button type="button" class="confirmar-cancelar" [mat-dialog-close]="false" cdkFocusInitial>Cancelar</button>
+  <button mat-flat-button type="button" class="confirmar-excluir" [mat-dialog-close]="true">Excluir</button>
+</mat-dialog-actions>

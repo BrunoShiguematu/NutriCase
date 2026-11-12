@@ -32,12 +32,15 @@ describe('LayoutComponent', () => {
 
     afterEach(() => localStorage.clear());
 
-    it('tem os quatro links do menu, com "Gestão de casos" em /casos/gestao e "Base de alimentos" em /alimentos', () => {
+    it('tem os cinco links do menu, com "Minhas resoluções" em /resolucoes, "Gestão de casos" em /casos/gestao e "Base de alimentos" em /alimentos', () => {
       const fixture = TestBed.createComponent(LayoutComponent);
       fixture.detectChanges();
       const dom = fixture.nativeElement as HTMLElement;
 
-      expect(dom.querySelectorAll('nav a[mat-list-item]').length).toBe(4);
+      expect(dom.querySelectorAll('nav a[mat-list-item]').length).toBe(5);
+      const resolucoes = dom.querySelector('.menu-resolucoes') as HTMLAnchorElement;
+      expect(resolucoes.textContent).toContain('Minhas resoluções');
+      expect(resolucoes.getAttribute('href')).toBe('/resolucoes');
       const gestao = dom.querySelector('.menu-gestao') as HTMLAnchorElement;
       expect(gestao.textContent).toContain('Gestão de casos');
       expect(gestao.getAttribute('href')).toBe('/casos/gestao');
@@ -64,6 +67,15 @@ describe('LayoutComponent', () => {
 
     it('/alimentos ativa só Base de alimentos', async () => {
       expect(await ativosEm('/alimentos')).toEqual(['menu-alimentos']);
+    });
+
+    it('/resolucoes ativa só Minhas resoluções', async () => {
+      expect(await ativosEm('/resolucoes')).toEqual(['menu-resolucoes']);
+    });
+
+    it('/resolucoes/:id e o resultado dela mantêm só Minhas resoluções ativo', async () => {
+      expect(await ativosEm('/resolucoes/qualquer')).toEqual(['menu-resolucoes']);
+      expect(await ativosEm('/resolucoes/qualquer/resultado')).toEqual(['menu-resolucoes']);
     });
 
     it('/casos/gestao/:id/editar mantém só Gestão de casos ativo', async () => {

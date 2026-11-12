@@ -53,6 +53,32 @@ function copiarEtapa(etapa: EtapaCalculo): EtapaCalculo {
 
 const porOrdem = (a: EtapaCalculo, b: EtapaCalculo): number => a.ordem - b.ordem;
 
+const ehNumero = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+
+/**
+ * A forma do critério que cada tipo de etapa precisa ter para o motor funcionar:
+ *  - TMB: referência em texto e uma lista não vazia de equações (textos) em `opcoesAceitaveis`;
+ *  - GET, CHO, PTN e LIP: referência numérica e `faixaAceitavel` com `min` e `max` numéricos, `min ≤ max`.
+ * Só a forma conta (o que está dentro da faixa e o que o docente pode escolher é com o formulário).
+ */
+function criterioBemFormado(etapa: Partial<EtapaCalculo>): boolean {
+  if (etapa.tipo === 'TMB') {
+    const opcoes: unknown = etapa.opcoesAceitaveis;
+    return (
+      typeof etapa.parametroReferencia === 'string' &&
+      Array.isArray(opcoes) &&
+      opcoes.length > 0 &&
+      opcoes.every((o) => typeof o === 'string')
+    );
+  }
+  const faixa: unknown = etapa.faixaAceitavel;
+  if (!ehNumero(etapa.parametroReferencia) || typeof faixa !== 'object' || faixa === null) {
+    return false;
+  }
+  const { min, max } = faixa as { min?: unknown; max?: unknown };
+  return ehNumero(min) && ehNumero(max) && min <= max;
+}
+
 /** Dado salvo que parece uma etapa; o que vier torto é descartado na carga, sem quebrar. */
 function etapaBemFormada(e: unknown): e is EtapaCalculo {
   const etapa = e as Partial<EtapaCalculo> | null;
@@ -64,8 +90,10 @@ function etapaBemFormada(e: unknown): e is EtapaCalculo {
     typeof etapa.ordem === 'number' &&
     TIPOS_ETAPA.includes(etapa.tipo as EtapaCalculo['tipo']) &&
     (typeof etapa.parametroReferencia === 'string' || Number.isFinite(etapa.parametroReferencia)) &&
-    Number.isFinite(etapa.tolerancia) &&
-    typeof etapa.criterioReferencia === 'string'
+    ehNumero(etapa.tolerancia) &&
+    etapa.tolerancia > 0 &&
+    typeof etapa.criterioReferencia === 'string' &&
+    criterioBemFormado(etapa)
   );
 }
 
@@ -232,6 +260,7 @@ export class CasoService {
    * Deixa os dados salvos no formato atual, sem perder nada do usuário:
    *  - caso sem `toleranciaDieta` (ou com valor inválido): recebe `TOLERANCIA_DIETA_PADRAO`;
    *  - caso sem as 5 etapas completas: recebe `etapasPadrao`;
+   *  - etapa com a forma do critério errada (veja `criterioBemFormado`): descartada, e o caso volta às 5 etapas padrão;
    *  - etapa de caso que não existe mais: descartada.
    * `alterado` diz se algo mudou, para só regravar quando preciso.
    */

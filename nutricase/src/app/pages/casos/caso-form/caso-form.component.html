@@ -152,6 +152,88 @@
     </fieldset>
   </section>
 
+  <section class="secao secao-etapas" aria-labelledby="titulo-secao-etapas">
+    <h2 id="titulo-secao-etapas" class="secao-titulo">Etapas de cálculo</h2>
+    <p class="aviso-validacao" role="note">Valores de exemplo, aguardam validação docente.</p>
+
+    <fieldset class="grupo grupo-dieta">
+      <legend>Dieta</legend>
+      <div class="campos">
+        <mat-form-field class="campo campo-tolerancia-dieta">
+          <mat-label>Tolerância da dieta (%)</mat-label>
+          <input matInput type="number" step="any" formControlName="toleranciaDieta" required />
+          <mat-hint>Margem aceita entre a dieta e as metas que o estudante calculou</mat-hint>
+          <mat-error>{{ mensagemErro('toleranciaDieta') }}</mat-error>
+        </mat-form-field>
+      </div>
+    </fieldset>
+
+    <div formArrayName="etapas">
+      @for (tipo of tipos; track tipo; let i = $index) {
+        <fieldset class="grupo etapa-form" [class]="'grupo etapa-form etapa-' + tipo.toLowerCase()" [formGroupName]="i">
+          <legend>{{ i + 1 }}. {{ campos[tipo].titulo }}</legend>
+          <div class="campos">
+            @if (tipo === 'TMB') {
+              <mat-form-field class="campo campo-referencia">
+                <mat-label>Equação de referência</mat-label>
+                <mat-select formControlName="referencia" required>
+                  @for (equacao of equacoes; track equacao) {
+                    <mat-option [value]="equacao">{{ equacao }}</mat-option>
+                  }
+                </mat-select>
+                <mat-error>{{ mensagemEtapa(i, 'referencia') }}</mat-error>
+              </mat-form-field>
+
+              <mat-form-field class="campo campo-opcoes">
+                <mat-label>Equações aceitas</mat-label>
+                <mat-select formControlName="opcoes" multiple required>
+                  @for (equacao of equacoes; track equacao) {
+                    <mat-option [value]="equacao">{{ equacao }}</mat-option>
+                  }
+                </mat-select>
+                <mat-hint>Escolher outra equação é erro de escolha de equação</mat-hint>
+                <mat-error>{{ mensagemEtapa(i, 'opcoes') }}</mat-error>
+              </mat-form-field>
+            } @else {
+              <mat-form-field class="campo campo-referencia">
+                <mat-label>
+                  {{ campos[tipo].parametroRotulo }} de referência{{ campos[tipo].parametroUnidade ? ' (' + campos[tipo].parametroUnidade + ')' : '' }}
+                </mat-label>
+                <input matInput type="number" step="any" formControlName="referencia" required />
+                <mat-error>{{ mensagemEtapa(i, 'referencia') }}</mat-error>
+              </mat-form-field>
+
+              <mat-form-field class="campo campo-minimo">
+                <mat-label>Mínimo aceito</mat-label>
+                <input matInput type="number" step="any" formControlName="min" required />
+                <mat-error>{{ mensagemEtapa(i, 'min') }}</mat-error>
+              </mat-form-field>
+
+              <mat-form-field class="campo campo-maximo">
+                <mat-label>Máximo aceito</mat-label>
+                <input matInput type="number" step="any" formControlName="max" required />
+                <mat-error>{{ mensagemEtapa(i, 'max') }}</mat-error>
+              </mat-form-field>
+            }
+
+            <mat-form-field class="campo campo-tolerancia">
+              <mat-label>Tolerância (%)</mat-label>
+              <input matInput type="number" step="any" formControlName="tolerancia" required />
+              <mat-error>{{ mensagemEtapa(i, 'tolerancia') }}</mat-error>
+            </mat-form-field>
+
+            <mat-form-field class="campo campo-criterio">
+              <mat-label>Critério de referência</mat-label>
+              <textarea matInput formControlName="criterio" rows="2" required></textarea>
+              <mat-hint>Aparece para o estudante quando a etapa fica divergente</mat-hint>
+              <mat-error>{{ mensagemEtapa(i, 'criterio') }}</mat-error>
+            </mat-form-field>
+          </div>
+        </fieldset>
+      }
+    </div>
+  </section>
+
   <div class="acoes-form">
     <a mat-button class="cancelar" routerLink="/casos/gestao">Cancelar</a>
     <button mat-flat-button type="submit" class="salvar">Salvar</button>

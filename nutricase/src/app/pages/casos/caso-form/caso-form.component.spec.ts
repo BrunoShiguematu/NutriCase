@@ -8,7 +8,8 @@ import { MatSelectHarness } from '@angular/material/select/testing';
 import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { CASOS_EXEMPLO } from '../../../core/data/casos-exemplo';
+import { CASOS_EXEMPLO, etapasPadrao } from '../../../core/data/casos-exemplo';
+import { TipoEtapa } from '../../../core/models';
 import { CasoService } from '../../../core/services/caso.service';
 import { StorageService } from '../../../core/services/storage.service';
 import { CasosModule } from '../casos.module';
@@ -56,6 +57,17 @@ describe('CasoFormComponent', () => {
     await select.open();
     await select.clickOptions({ text: opcao });
   };
+  const ehTipo = (tipo: TipoEtapa): string => `.etapa-${tipo.toLowerCase()}`;
+  const campoEtapa = (tipo: TipoEtapa, nome: string): Promise<MatInputHarness> =>
+    loader.getHarness(MatInputHarness.with({ selector: `${ehTipo(tipo)} [formControlName="${nome}"]` }));
+  const seletorEtapa = (tipo: TipoEtapa, nome: string): Promise<MatSelectHarness> =>
+    loader.getHarness(MatSelectHarness.with({ selector: `${ehTipo(tipo)} [formControlName="${nome}"]` }));
+  const escreverEtapa = async (tipo: TipoEtapa, nome: string, valor: string): Promise<void> =>
+    (await campoEtapa(tipo, nome)).setValue(valor);
+  const errosDaEtapa = (tipo: TipoEtapa): string[] =>
+    Array.from((fixture.nativeElement as HTMLElement).querySelectorAll(`${ehTipo(tipo)} mat-error`), (e) => e.textContent?.trim() ?? '');
+  const errosDaDieta = (): string[] =>
+    Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.grupo-dieta mat-error'), (e) => e.textContent?.trim() ?? '');
   const salvar = async (): Promise<void> =>
     (await loader.getHarness(MatButtonHarness.with({ selector: '.salvar' }))).click();
   const erros = (): string[] =>
@@ -246,18 +258,348 @@ describe('CasoFormComponent', () => {
     });
   });
 
-  describe('tolerância da dieta (sem campo na tela)', () => {
-    it('ao editar, o formulário preserva a tolerância que o caso já tem', async () => {
-      // O serviço só é criado em montar(); o localStorage limpo no beforeEach faz o CasoService começar com os exemplos.
-      const preparo = new CasoService(new StorageService());
-      const { caso, atleta } = preparo.buscarPorId(CASO_COM_RESTRICAO.id)!;
-      preparo.atualizar(caso.id, { ...caso, toleranciaDieta: 15 }, atleta);
+  describe('etapas de cálculo', () => {
+    describe('cadastro', () => {
+      beforeEach(() => montar());
 
-      await montar(CASO_COM_RESTRICAO.id);
-      await escrever('titulo', 'Título novo');
-      await salvar();
+      it('tem a seção com o aviso fixo e as 5 etapas na ordem TMB, GET, CHO, PTN, LIP', () => {
+        const dom = fixture.nativeElement as HTMLElement;
+        expect(dom.querySelector('.secao-etapas h2')?.textContent).toContain('Etapas de cálculo');
+        expect(dom.querySelector('.aviso-validacao')?.textContent?.trim()).toBe('Valores de exemplo, aguardam validação docente.');
+        const legendas = Array.from(dom.querySelectorAll('.etapa-form legend'), (l) => l.textContent?.trim());
+        expect(legendas).toEqual([
+          '1. Taxa metabólica basal (TMB)',
+          '2. Gasto energético total (GET)',
+          '3. Meta de carboidrato',
+          '4. Meta de proteína',
+          '5. Meta de gordura',
+        ]);
+      });
 
-      expect(service.buscarPorId(CASO_COM_RESTRICAO.id)?.caso.toleranciaDieta).toBe(15);
+      it('a TMB tem equação de referência e equações aceitas, e as outras têm referência e faixa mín/máx', () => {
+        const dom = fixture.nativeElement as HTMLElement;
+        const controles = (tipo: TipoEtapa) =>
+          Array.from(dom.querySelectorAll(`${ehTipo(tipo)} [formControlName]`), (c) => c.getAttribute('formControlName'));
+        expect(controles('TMB')).toEqual(['referencia', 'opcoes', 'tolerancia', 'criterio']);
+        for (const tipo of ['GET', 'CHO', 'PTN', 'LIP'] as const) {
+          expect(controles(tipo), tipo).toEqual(['referencia', 'min', 'max', 'tolerancia', 'criterio']);
+        }
+      });
+
+      it('começa com as 5 etapas padrão e a tolerância padrão da dieta', async () => {
+        expect(await (await campo('toleranciaDieta')).getValue()).toBe('10');
+        expect(await (await seletorEtapa('TMB', 'referencia')).getValueText()).toBe('Mifflin-St Jeor');
+        expect(await (await seletorEtapa('TMB', 'opcoes')).getValueText()).toBe('Harris-Benedict revisada, Mifflin-St Jeor, Cunningham');
+        const padrao = etapasPadrao('novo');
+        for (const etapa of padrao.filter((e) => e.tipo !== 'TMB')) {
+          expect(await (await campoEtapa(etapa.tipo, 'referencia')).getValue(), etapa.tipo).toBe(String(etapa.parametroReferencia));
+          expect(await (await campoEtapa(etapa.tipo, 'min')).getValue(), etapa.tipo).toBe(String(etapa.faixaAceitavel?.min));
+          expect(await (await campoEtapa(etapa.tipo, 'max')).getValue(), etapa.tipo).toBe(String(etapa.faixaAceitavel?.max));
+        }
+        for (const etapa of padrao) {
+          expect(await (await campoEtapa(etapa.tipo, 'tolerancia')).getValue(), etapa.tipo).toBe('5');
+          expect(await (await campoEtapa(etapa.tipo, 'criterio')).getValue(), etapa.tipo).toBe(etapa.criterioReferencia);
+        }
+      });
+
+      it('salvar sem mexer nas etapas deixa o caso novo com as 5 padrão', async () => {
+        await preencherTudo();
+        await salvar();
+
+        const criado = service.listar().find((c) => c.titulo === 'Remador em preparação')!;
+        expect(service.listarEtapas(criado.id)).toEqual(etapasPadrao(criado.id));
+        expect(criado.toleranciaDieta).toBe(10);
+      });
+
+      it('salvar com etapas e tolerância da dieta alteradas guarda tudo no caso novo, também no navegador', async () => {
+        await preencherTudo();
+        await escrever('toleranciaDieta', '12.5');
+        await escreverEtapa('CHO', 'referencia', '7');
+        await escreverEtapa('CHO', 'min', '5');
+        await escreverEtapa('CHO', 'max', '9');
+        await escreverEtapa('CHO', 'tolerancia', '3');
+        await escreverEtapa('CHO', 'criterio', '  Carboidrato alto para treino longo.  ');
+        const tmbReferencia = await seletorEtapa('TMB', 'referencia');
+        await tmbReferencia.open();
+        await tmbReferencia.clickOptions({ text: 'Cunningham' });
+        const opcoes = await seletorEtapa('TMB', 'opcoes');
+        await opcoes.open();
+        await opcoes.clickOptions({ text: 'Harris-Benedict revisada' }); // desmarca
+        await opcoes.close();
+
+        await salvar();
+
+        const criado = service.listar().find((c) => c.titulo === 'Remador em preparação')!;
+        expect(criado.toleranciaDieta).toBe(12.5);
+        const etapas = service.listarEtapas(criado.id);
+        const padrao = etapasPadrao(criado.id);
+        expect(etapas[0]).toMatchObject({ parametroReferencia: 'Cunningham', opcoesAceitaveis: ['Mifflin-St Jeor', 'Cunningham'] });
+        expect(etapas[2]).toEqual({
+          ...padrao[2],
+          parametroReferencia: 7,
+          faixaAceitavel: { min: 5, max: 9 },
+          tolerancia: 3,
+          criterioReferencia: 'Carboidrato alto para treino longo.',
+        });
+        expect([etapas[1], etapas[3], etapas[4]]).toEqual([padrao[1], padrao[3], padrao[4]]);
+        expect(await avisos()).toEqual(['Caso criado']);
+        const reaberto = new CasoService(new StorageService());
+        expect(reaberto.listarEtapas(criado.id)[2].faixaAceitavel).toEqual({ min: 5, max: 9 });
+      });
+    });
+
+    describe('validação (cadastro)', () => {
+      beforeEach(async () => {
+        await montar();
+        await preencherTudo();
+      });
+
+      async function naoSalva(): Promise<void> {
+        const antes = service.listar().length;
+        await salvar();
+        expect(service.listar().length).toBe(antes);
+        expect(navegar).not.toHaveBeenCalled();
+        expect(await avisos()).toEqual([]);
+      }
+
+      it('referência abaixo do mínimo: mensagem na referência e nada é salvo', async () => {
+        await escreverEtapa('GET', 'referencia', '1.2');
+        await naoSalva();
+
+        expect(errosDaEtapa('GET')).toEqual(['A referência deve estar entre o mínimo e o máximo']);
+        expect(erros()).toEqual(['A referência deve estar entre o mínimo e o máximo']);
+      });
+
+      it('referência acima do máximo: mesma mensagem', async () => {
+        await escreverEtapa('PTN', 'referencia', '2.5');
+        await naoSalva();
+
+        expect(errosDaEtapa('PTN')).toEqual(['A referência deve estar entre o mínimo e o máximo']);
+      });
+
+      it('a referência igual ao mínimo ou ao máximo vale', async () => {
+        await escreverEtapa('LIP', 'referencia', '0.5'); // mínimo
+        await escreverEtapa('CHO', 'referencia', '10'); // máximo
+        await salvar();
+
+        expect(erros()).toEqual([]);
+        expect(await avisos()).toEqual(['Caso criado']);
+      });
+
+      it('mínimo maior que o máximo: mensagem no mínimo e no máximo', async () => {
+        await escreverEtapa('CHO', 'min', '9');
+        await escreverEtapa('CHO', 'max', '5');
+        await naoSalva();
+
+        // A referência (6) também fica fora de uma faixa invertida (de 9 a 5).
+        expect(errosDaEtapa('CHO')).toEqual([
+          'A referência deve estar entre o mínimo e o máximo',
+          'O mínimo não pode ser maior que o máximo',
+          'O máximo não pode ser menor que o mínimo',
+        ]);
+      });
+
+      it('faixa com mínimo igual ao máximo (e à referência) vale', async () => {
+        await escreverEtapa('CHO', 'min', '7');
+        await escreverEtapa('CHO', 'max', '7');
+        await escreverEtapa('CHO', 'referencia', '7');
+        await salvar();
+
+        expect(errosDaEtapa('CHO')).toEqual([]);
+        const criado = service.listar().find((c) => c.titulo === 'Remador em preparação')!;
+        expect(service.listarEtapas(criado.id)[2].faixaAceitavel).toEqual({ min: 7, max: 7 });
+      });
+
+      it('corrigir o máximo tira o erro da referência (os campos da faixa se revalidam entre si)', async () => {
+        await escreverEtapa('GET', 'max', '1.5'); // referência 1,7 passa do máximo
+        await salvar();
+        expect(errosDaEtapa('GET')).toEqual(['A referência deve estar entre o mínimo e o máximo']);
+
+        await escreverEtapa('GET', 'max', '2.2');
+
+        expect(errosDaEtapa('GET')).toEqual([]);
+      });
+
+      it('corrigir o mínimo tira o erro do máximo e o da referência', async () => {
+        await escreverEtapa('GET', 'min', '2.5'); // passa do máximo (2,2) e da referência (1,7)
+        await salvar();
+        expect(errosDaEtapa('GET').length).toBe(3);
+
+        await escreverEtapa('GET', 'min', '1.4');
+
+        expect(errosDaEtapa('GET')).toEqual([]);
+      });
+
+      it('tolerância zero, negativa ou vazia não vale', async () => {
+        await escreverEtapa('GET', 'tolerancia', '0');
+        await escreverEtapa('CHO', 'tolerancia', '-2');
+        await escreverEtapa('PTN', 'tolerancia', '');
+        await naoSalva();
+
+        expect(errosDaEtapa('GET')).toEqual(['Informe um número maior que zero']);
+        expect(errosDaEtapa('CHO')).toEqual(['Informe um número maior que zero']);
+        expect(errosDaEtapa('PTN')).toEqual(['Campo obrigatório']);
+        expect(errosDaEtapa('TMB')).toEqual([]);
+      });
+
+      it('faixa e referência vazias ou zero não valem', async () => {
+        await escreverEtapa('LIP', 'referencia', '');
+        await escreverEtapa('LIP', 'min', '0');
+        await escreverEtapa('LIP', 'max', '');
+        await naoSalva();
+
+        expect(errosDaEtapa('LIP')).toContain('Campo obrigatório');
+        expect(errosDaEtapa('LIP')).toContain('Informe um número maior que zero');
+      });
+
+      it('TMB sem nenhuma equação aceita não vale', async () => {
+        const opcoes = await seletorEtapa('TMB', 'opcoes');
+        await opcoes.open();
+        for (const opcao of await opcoes.getOptions()) {
+          await opcao.click();
+        }
+        await opcoes.close();
+        await naoSalva();
+
+        expect(errosDaEtapa('TMB')).toEqual(['Escolha pelo menos uma equação']);
+      });
+
+      it('critério vazio ou só com espaços não vale', async () => {
+        await escreverEtapa('TMB', 'criterio', '   ');
+        await escreverEtapa('PTN', 'criterio', '');
+        await naoSalva();
+
+        expect(errosDaEtapa('TMB')).toEqual(['Campo obrigatório']);
+        expect(errosDaEtapa('PTN')).toEqual(['Campo obrigatório']);
+      });
+
+      it('tolerância da dieta zero ou vazia não vale', async () => {
+        await escrever('toleranciaDieta', '0');
+        await naoSalva();
+        expect(errosDaDieta()).toEqual(['Informe um número maior que zero']);
+
+        await escrever('toleranciaDieta', '');
+        await salvar();
+        expect(errosDaDieta()).toEqual(['Campo obrigatório']);
+      });
+
+      it('com tudo corrigido, salva', async () => {
+        await escreverEtapa('GET', 'referencia', '1.2');
+        await salvar();
+        expect(navegar).not.toHaveBeenCalled();
+
+        await escreverEtapa('GET', 'referencia', '1.8');
+        await salvar();
+
+        expect(navegar).toHaveBeenCalledWith(['/casos/gestao']);
+      });
+    });
+
+    describe('edição', () => {
+      const CASO_7 = 'exemplo-caso-7'; // CHO de referência 8 g/kg
+
+      beforeEach(() => montar(CASO_7));
+
+      it('abre com os critérios e a tolerância da dieta do caso', async () => {
+        const salvas = service.listarEtapas(CASO_7);
+        const cho = salvas[2];
+        expect(await (await campo('toleranciaDieta')).getValue()).toBe(String(service.buscarPorId(CASO_7)!.caso.toleranciaDieta));
+        expect(await (await campoEtapa('CHO', 'referencia')).getValue()).toBe('8');
+        expect(await (await campoEtapa('CHO', 'min')).getValue()).toBe(String(cho.faixaAceitavel!.min));
+        expect(await (await campoEtapa('CHO', 'max')).getValue()).toBe(String(cho.faixaAceitavel!.max));
+        expect(await (await campoEtapa('CHO', 'criterio')).getValue()).toBe(cho.criterioReferencia);
+        expect(await (await seletorEtapa('TMB', 'referencia')).getValueText()).toBe(String(salvas[0].parametroReferencia));
+      });
+
+      it('mudar uma faixa e salvar atualiza só aquela etapa, com os mesmos ids', async () => {
+        const antes = service.listarEtapas(CASO_7);
+
+        await escreverEtapa('PTN', 'min', '1.0');
+        await escreverEtapa('PTN', 'max', '2.4');
+        await salvar();
+
+        const depois = service.listarEtapas(CASO_7);
+        expect(depois.map((e) => e.id)).toEqual(antes.map((e) => e.id));
+        expect(depois[3].faixaAceitavel).toEqual({ min: 1, max: 2.4 });
+        expect([depois[0], depois[1], depois[2], depois[4]]).toEqual([antes[0], antes[1], antes[2], antes[4]]);
+        expect(await avisos()).toEqual(['Caso atualizado']);
+        expect(new CasoService(new StorageService()).listarEtapas(CASO_7)[3].faixaAceitavel).toEqual({ min: 1, max: 2.4 });
+      });
+
+      it('mudar a TMB (equação de referência e aceitas) e salvar', async () => {
+        const referencia = await seletorEtapa('TMB', 'referencia');
+        await referencia.open();
+        await referencia.clickOptions({ text: 'Harris-Benedict revisada' });
+        const opcoes = await seletorEtapa('TMB', 'opcoes');
+        await opcoes.open();
+        await opcoes.clickOptions({ text: 'Cunningham' }); // desmarca
+        await opcoes.close();
+        await salvar();
+
+        expect(service.listarEtapas(CASO_7)[0]).toMatchObject({
+          parametroReferencia: 'Harris-Benedict revisada',
+          opcoesAceitaveis: ['Harris-Benedict revisada', 'Mifflin-St Jeor'],
+        });
+      });
+
+      it('editar só o título não mexe nas etapas nem na tolerância da dieta', async () => {
+        const preparo = service.buscarPorId(CASO_7)!;
+        const etapasAntes = service.listarEtapas(CASO_7);
+
+        await escrever('titulo', 'Outro título');
+        await salvar();
+
+        expect(service.listarEtapas(CASO_7)).toEqual(etapasAntes);
+        expect(service.buscarPorId(CASO_7)!.caso.toleranciaDieta).toBe(preparo.caso.toleranciaDieta);
+      });
+
+      it('uma etapa inválida impede de salvar e nada muda', async () => {
+        const etapasAntes = service.listarEtapas(CASO_7);
+
+        await escreverEtapa('CHO', 'min', '12'); // acima da referência 8 e do máximo
+        await salvar();
+
+        expect(errosDaEtapa('CHO').length).toBeGreaterThan(0);
+        expect(service.listarEtapas(CASO_7)).toEqual(etapasAntes);
+        expect(navegar).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('tolerância da dieta', () => {
+      it('ao editar, mostra e preserva a tolerância que o caso já tem', async () => {
+        // O serviço só é criado em montar(); o localStorage limpo no beforeEach faz o CasoService começar com os exemplos.
+        const preparo = new CasoService(new StorageService());
+        const { caso, atleta } = preparo.buscarPorId(CASO_COM_RESTRICAO.id)!;
+        preparo.atualizar(caso.id, { ...caso, toleranciaDieta: 15 }, atleta);
+
+        await montar(CASO_COM_RESTRICAO.id);
+        expect(await (await campo('toleranciaDieta')).getValue()).toBe('15');
+        await escrever('titulo', 'Título novo');
+        await salvar();
+
+        expect(service.buscarPorId(CASO_COM_RESTRICAO.id)?.caso.toleranciaDieta).toBe(15);
+      });
+
+      it('mudar o campo e salvar grava a nova tolerância', async () => {
+        await montar(CASO_COM_RESTRICAO.id);
+
+        await escrever('toleranciaDieta', '20');
+        await salvar();
+
+        expect(service.buscarPorId(CASO_COM_RESTRICAO.id)?.caso.toleranciaDieta).toBe(20);
+      });
+    });
+
+    describe('dados salvos com texto de equação desconhecido', () => {
+      it('a tela abre sem quebrar, só com as equações que conhece marcadas', async () => {
+        const preparo = new CasoService(new StorageService());
+        const [tmb, ...resto] = preparo.listarEtapas(CASO_COM_RESTRICAO.id);
+        preparo.atualizarEtapas(CASO_COM_RESTRICAO.id, [{ ...tmb, opcoesAceitaveis: ['Mifflin-St Jeor', 'Equação inventada'] }, ...resto]);
+
+        await montar(CASO_COM_RESTRICAO.id);
+
+        expect(await (await seletorEtapa('TMB', 'opcoes')).getValueText()).toBe('Mifflin-St Jeor');
+      });
     });
   });
 

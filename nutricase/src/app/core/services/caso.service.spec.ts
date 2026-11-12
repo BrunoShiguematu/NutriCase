@@ -587,6 +587,27 @@ describe('CasoService', () => {
         }
       });
 
+      it('critério com a forma errada: TMB sem opções, faixa torta ou min > max, referência do tipo errado, tolerância zero', () => {
+        for (const [i, mudanca] of [
+          [0, { opcoesAceitaveis: [] }],
+          [0, { opcoesAceitaveis: undefined }],
+          [0, { opcoesAceitaveis: ['Mifflin-St Jeor', 3] }],
+          [0, { opcoesAceitaveis: 'Mifflin-St Jeor' }],
+          [0, { parametroReferencia: 1.5 }],
+          [1, { faixaAceitavel: undefined }],
+          [1, { faixaAceitavel: { min: 1.4 } }],
+          [1, { faixaAceitavel: { min: '1,4', max: 2.2 } }],
+          [1, { faixaAceitavel: { min: 3, max: 2 } }],
+          [1, { faixaAceitavel: 'x' }],
+          [2, { parametroReferencia: 'seis' }],
+          [3, { tolerancia: 0 }],
+          [3, { tolerancia: -5 }],
+        ] as [number, Partial<EtapaCalculo>][]) {
+          const torta = editadas('exemplo-caso-1').map((e, j) => (j === i ? ({ ...e, ...mudanca } as EtapaCalculo) : e));
+          semMudanca(service.atualizarEtapas('exemplo-caso-1', torta));
+        }
+      });
+
       it('etapa malformada (tolerância não numérica)', () => {
         const torta = editadas('exemplo-caso-1').map((e, i) => (i === 2 ? { ...e, tolerancia: NaN } : e));
         semMudanca(service.atualizarEtapas('exemplo-caso-1', torta));
@@ -724,6 +745,63 @@ describe('CasoService', () => {
         expect(reaberto.listar().length).toBe(CASOS_EXEMPLO.length);
         expect(reaberto.listarEtapas('exemplo-caso-1')).toEqual(etapasPadrao('exemplo-caso-1'));
       }
+    });
+
+    describe('forma do critério (faixaAceitavel e opcoesAceitaveis)', () => {
+      /** Grava os dados com a etapa `indice` do caso 1 alterada, reabre o serviço e devolve as etapas dele. */
+      function reabrirComEtapaAlterada(indice: number, mudanca: Record<string, unknown>) {
+        const salvos = lerLocalStorage() as Salvos;
+        const doCaso1 = salvos.etapas.filter((e) => e.casoId === 'exemplo-caso-1');
+        const alvo = doCaso1[indice].id;
+        gravar({ ...salvos, etapas: salvos.etapas.map((e) => (e.id === alvo ? { ...e, ...mudanca } : e)) });
+        return reabrir();
+      }
+
+      const formasInvalidas: [string, number, Record<string, unknown>][] = [
+        ['TMB sem a lista de opções', 0, { opcoesAceitaveis: undefined }],
+        ['TMB com a lista de opções vazia', 0, { opcoesAceitaveis: [] }],
+        ['TMB com opções que não são texto', 0, { opcoesAceitaveis: ['Mifflin-St Jeor', 7] }],
+        ['TMB com opções que não são lista', 0, { opcoesAceitaveis: 'Mifflin-St Jeor' }],
+        ['TMB com referência numérica', 0, { parametroReferencia: 1.7 }],
+        ['GET sem faixa', 1, { faixaAceitavel: undefined }],
+        ['GET com faixa sem max', 1, { faixaAceitavel: { min: 1.4 } }],
+        ['GET com faixa em texto', 1, { faixaAceitavel: { min: '1,4', max: '2,2' } }],
+        ['GET com faixa nula', 1, { faixaAceitavel: null }],
+        ['CHO com min maior que max', 2, { faixaAceitavel: { min: 10, max: 4 } }],
+        ['PTN com referência em texto', 3, { parametroReferencia: 'um e meio' }],
+        ['LIP com tolerância zero', 4, { tolerancia: 0 }],
+        ['LIP com tolerância negativa', 4, { tolerancia: -2 }],
+      ];
+
+      for (const [nome, indice, mudanca] of formasInvalidas) {
+        it(`${nome}: as 5 etapas do caso voltam ao padrão, sem quebrar, e o resto fica`, () => {
+          const reaberto = reabrirComEtapaAlterada(indice, mudanca);
+
+          expect(reaberto.listarEtapas('exemplo-caso-1')).toEqual(etapasPadrao('exemplo-caso-1'));
+          expect(reaberto.listarEtapas('exemplo-caso-2')).toEqual(etapasPadrao('exemplo-caso-2'));
+          expect(reaberto.listar().length).toBe(CASOS_EXEMPLO.length);
+          expect(lerLocalStorage()?.etapas.find((e) => e.casoId === 'exemplo-caso-1' && e.ordem === indice + 1)).toEqual(
+            etapasPadrao('exemplo-caso-1')[indice],
+          );
+        });
+      }
+
+      it('faixa com min igual a max é uma forma válida e é mantida', () => {
+        const reaberto = reabrirComEtapaAlterada(1, { faixaAceitavel: { min: 1.7, max: 1.7 } });
+
+        expect(reaberto.listarEtapas('exemplo-caso-1')[1].faixaAceitavel).toEqual({ min: 1.7, max: 1.7 });
+      });
+
+      it('só o caso com a etapa torta volta ao padrão: um caso do usuário editado ao lado é mantido', () => {
+        const { caso } = service.criar(dadosCaso('Meu caso'), dadosAtleta());
+        const [primeira, ...resto] = service.listarEtapas(caso.id);
+        service.atualizarEtapas(caso.id, [{ ...primeira, tolerancia: 8 }, ...resto]);
+
+        const reaberto = reabrirComEtapaAlterada(1, { faixaAceitavel: { min: 3, max: 2 } });
+
+        expect(reaberto.listarEtapas('exemplo-caso-1')).toEqual(etapasPadrao('exemplo-caso-1'));
+        expect(reaberto.listarEtapas(caso.id)[0].tolerancia).toBe(8);
+      });
     });
 
     it('conjunto incompleto de um caso é refeito; etapa de caso que não existe é descartada; conjunto completo editado é mantido', () => {

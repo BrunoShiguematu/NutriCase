@@ -1,0 +1,87 @@
+@use '../../shared/styles/marca' as m;
+
+:host {
+  @include m.pagina;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+}
+
+.filtro-busca {
+  width: 24rem;
+}
+
+.filtro-grupo {
+  width: 16rem;
+}
+
+.resultado-status {
+  margin: 0.25rem 0 0.25rem;
+  font-weight: 600;
+  color: m.$suave;
+}
+
+.sem-resultado {
+  padding: 1rem;
+  border: 1px dashed m.$borda;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.tabela-nota {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: m.$suave;
+}
+
+// Tabela e paginador formam um bloco só, com a mesma borda arredondada.
+.tabela-alimentos {
+  width: 100%;
+  border: 1px solid m.$borda;
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+}
+
+mat-paginator {
+  border: 1px solid m.$borda;
+  border-radius: 0 0 12px 12px;
+}
+
+// Números alinhados à direita, com algarismos de mesma largura, para comparar valores de cima para baixo.
+.mat-column-kcal,
+.mat-column-carboidrato,
+.mat-column-proteina,
+.mat-column-gordura {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.estado-erro {
+  @include m.aviso(m.$vinho, m.$vinho-claro);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+
+  p {
+    margin: 0;
+  }
+}
+
+.rodape-taco {
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: m.$suave;
+}
+
+.citacao-taco {
+  margin: 0 0 0.75rem;
+}
+
+.aviso-taco {
+  @include m.aviso(m.$verde, m.$verde-claro);
+  margin: 0;
+}

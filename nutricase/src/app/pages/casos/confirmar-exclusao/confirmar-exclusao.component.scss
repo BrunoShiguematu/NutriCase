@@ -1,0 +1,10 @@
+@use '../../../shared/styles/marca' as m;
+
+:host {
+  display: block;
+}
+
+.confirmar-excluir {
+  --mat-button-filled-container-color: #{m.$vinho};
+  --mat-button-filled-label-text-color: #fff;
+}

@@ -3,7 +3,13 @@
 // Altura do cabeçalho fixo (barra superior + aviso). As telas que fixam algo na janela, como a ficha do atleta
 // do resolver, descontam esse valor por --altura-cabecalho.
 $barra: 3.5rem;
+// O aviso tem altura mínima de 1 linha (2,25 rem); se o texto quebrar em duas (janela estreita ou zoom de 200%),
+// ele cresce e --altura-cabecalho passa para o valor de 2 linhas (2 × 13 px × 1,3 + 1 rem de padding).
 $aviso: 2.25rem;
+$aviso-duas-linhas: 3.1rem;
+// Largura da janela abaixo da qual o texto do aviso quebra, com o menu aberto (menu 16 rem + 2 × 2 rem de
+// margem + o texto, de cerca de 24 rem).
+$janela-aviso-quebra: 44rem;
 
 // Shell com altura total: o container ocupa a janela inteira. O menu fica fixo na lateral; no conteúdo,
 // a barra e o aviso ficam parados no topo e só a página (main) rola.
@@ -53,6 +59,10 @@ $aviso: 2.25rem;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  @media (max-width: $janela-aviso-quebra) {
+    --altura-cabecalho: #{$barra + $aviso-duas-linhas};
+  }
 }
 
 .top {
@@ -74,12 +84,13 @@ $aviso: 2.25rem;
   flex: none;
   align-items: center;
   box-sizing: border-box;
-  height: $aviso;
+  min-height: $aviso;
   margin: 0;
-  padding: 0 2rem;
+  padding: 0.5rem 2rem;
   background: m.$verde-claro;
   color: m.$texto;
   font-size: 0.8125rem;
+  line-height: 1.3;
 }
 
 // Área da página: rola sozinha e dá o respiro lateral e inferior a todas as telas.

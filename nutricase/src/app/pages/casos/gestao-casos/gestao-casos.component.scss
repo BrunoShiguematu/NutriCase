@@ -1,0 +1,40 @@
+@use '../../../shared/styles/marca' as m;
+
+:host {
+  @include m.pagina;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tabela-casos {
+  width: 100%;
+  border: 1px solid m.$borda;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+// Editar e Excluir juntos, sem quebrar; a coluna encolhe ao tamanho deles e fica à direita.
+.coluna-acoes,
+.mat-column-acoes {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.acao-excluir {
+  --mat-button-text-label-text-color: #{m.$vinho};
+}
+
+.sem-casos {
+  margin: 1rem 0 0;
+  padding: 1rem;
+  border: 1px dashed m.$borda;
+  border-radius: 8px;
+  color: m.$suave;
+  text-align: center;
+}

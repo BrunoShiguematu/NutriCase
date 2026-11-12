@@ -9,8 +9,9 @@ import {
   Refeicao,
   Resolucao,
   RespostaEtapa,
+  ResumoErros,
   StatusResolucao,
-  TipoErro,
+  TIPOS_ERRO,
 } from '../models';
 import { AlimentoService } from './alimento.service';
 import { CasoService } from './caso.service';
@@ -19,17 +20,9 @@ import { StorageService } from './storage.service';
 const CHAVE = 'nutricase.resolucoes';
 const VERSAO = 1;
 
-/** Os 5 tipos de erro do resumo (RF34), na ordem em que aparecem. */
-export const TIPOS_ERRO: readonly TipoErro[] = [
-  'conversão de unidade',
-  'escolha de equação',
-  'aritmética',
-  'meta fora de faixa',
-  'dieta fora das metas',
-];
-
-/** Quantos erros de cada tipo a tentativa teve; "dieta fora das metas" vale 0 ou 1. */
-export type ResumoErros = Record<TipoErro, number>;
+// Movidos para os modelos para o cálculo dos KPIs (sem Angular) importá-los; o serviço os reexporta.
+export { TIPOS_ERRO };
+export type { ResumoErros };
 
 /** Algo que impede submeter (UC06, fluxo 2a). */
 export interface Pendencia {

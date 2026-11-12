@@ -22,3 +22,15 @@ export interface RespostaEtapa {
   /** Só preenchido na submissão, quando a classificação é "erro de fato". */
   tipoErro?: TipoErro;
 }
+
+/** Os 5 tipos de erro do resumo (RF34), na ordem em que aparecem. */
+export const TIPOS_ERRO: readonly TipoErro[] = [
+  'conversão de unidade',
+  'escolha de equação',
+  'aritmética',
+  'meta fora de faixa',
+  'dieta fora das metas',
+];
+
+/** Quantos erros de cada tipo a tentativa teve; "dieta fora das metas" vale 0 ou 1. */
+export type ResumoErros = Record<TipoErro, number>;

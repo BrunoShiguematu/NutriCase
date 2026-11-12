@@ -5,13 +5,25 @@ import { RouterModule } from '@angular/router';
 
 import { MaterialModule } from '../../shared/material.module';
 import { FichaAtletaComponent } from './ficha-atleta/ficha-atleta.component';
+import { BuscaAlimentoComponent } from './passo-dieta/busca-alimento/busca-alimento.component';
+import { ConfirmarExclusaoRefeicaoComponent } from './passo-dieta/confirmar-exclusao-refeicao/confirmar-exclusao-refeicao.component';
+import { PassoDietaComponent } from './passo-dieta/passo-dieta.component';
 import { PassoEtapasComponent } from './passo-etapas/passo-etapas.component';
 import { ResolucoesComponent } from './resolucoes.component';
 import { ResolverComponent } from './resolver/resolver.component';
 import { ResultadoComponent } from './resultado/resultado.component';
 
 @NgModule({
-  declarations: [ResolucoesComponent, ResolverComponent, FichaAtletaComponent, PassoEtapasComponent, ResultadoComponent],
+  declarations: [
+    ResolucoesComponent,
+    ResolverComponent,
+    FichaAtletaComponent,
+    PassoEtapasComponent,
+    PassoDietaComponent,
+    BuscaAlimentoComponent,
+    ConfirmarExclusaoRefeicaoComponent,
+    ResultadoComponent,
+  ],
   imports: [
     CommonModule,
     ReactiveFormsModule,

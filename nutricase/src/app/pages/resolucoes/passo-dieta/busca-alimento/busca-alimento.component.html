@@ -1,0 +1,27 @@
+<form #formulario="ngForm" class="busca-alimento" [formGroup]="grupo" (ngSubmit)="adicionar()" novalidate>
+  <mat-form-field class="campo campo-busca">
+    <mat-label>Buscar alimento</mat-label>
+    <input matInput type="text" autocomplete="off" formControlName="busca" [matAutocomplete]="lista" />
+    <mat-autocomplete #lista="matAutocomplete" [displayWith]="exibir">
+      @for (alimento of sugestoes(); track alimento.id) {
+        <mat-option [value]="alimento">
+          {{ alimento.nome }} <span class="sugestao-grupo">({{ alimento.grupo }})</span>
+        </mat-option>
+      }
+      @if (semResultado()) {
+        <mat-option class="sem-resultado" [disabled]="true">Nenhum alimento encontrado</mat-option>
+      }
+    </mat-autocomplete>
+    <mat-hint>Digite ao menos 2 letras e escolha da lista</mat-hint>
+    <mat-error>Escolha um alimento da lista</mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="campo campo-quantidade">
+    <mat-label>Quantidade</mat-label>
+    <input matInput type="number" step="any" inputmode="decimal" formControlName="quantidade" />
+    <span matTextSuffix>g</span>
+    <mat-error>{{ mensagemQuantidade() }}</mat-error>
+  </mat-form-field>
+
+  <button mat-flat-button type="submit" class="busca-incluir">Incluir alimento</button>
+</form>

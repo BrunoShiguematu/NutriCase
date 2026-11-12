@@ -112,13 +112,19 @@ describe('ResolverComponent', () => {
       expect(texto('.ficha-modalidade dd')).toBe(CASO.modalidade);
     });
 
-    it('o stepper tem os passos Etapas, Dieta, Justificativa e Revisar; o primeiro já tem o passo de etapas, os outros ainda estão "em construção"', async () => {
+    it('o stepper tem os passos Etapas, Dieta, Justificativa e Revisar; Etapas e Dieta já têm o conteúdo, os outros ainda estão "em construção"', async () => {
       const stepper = await loader.getHarness(MatStepperHarness);
       const passos = await stepper.getSteps();
 
       expect(await Promise.all(passos.map((p) => p.getLabel()))).toEqual(['Etapas', 'Dieta', 'Justificativa', 'Revisar']);
       expect(raiz().querySelectorAll('app-passo-etapas').length).toBe(1);
-      expect(raiz().querySelectorAll('.em-construcao').length).toBe(3); // Dieta, Justificativa e Revisar
+      expect(raiz().querySelectorAll('app-passo-dieta').length).toBe(1);
+      expect(raiz().querySelectorAll('.em-construcao').length).toBe(2); // Justificativa e Revisar
+    });
+
+    it('o passo Dieta recebe a mesma tentativa: começa sem refeições', () => {
+      expect(texto('app-passo-dieta .sem-refeicoes')).toBe('Nenhuma refeição ainda. Adicione a primeira acima.');
+      expect(texto('app-passo-dieta .secao-titulo')).toBe('Nova refeição');
     });
 
     it('o passo Etapas começa na etapa 1 de 5 da tentativa', () => {

@@ -1,0 +1,185 @@
+<section class="passo-dieta" aria-label="Montagem da dieta">
+  @switch (estadoAlimentos()) {
+    @case ('pronto') {}
+    @case ('erro') {
+      <div class="alimentos-erro" role="alert">
+        <p>Não foi possível carregar a base de alimentos.</p>
+        <button mat-button type="button" class="alimentos-tentar" (click)="tentarDeNovo()">Tentar de novo</button>
+      </div>
+    }
+    @default {
+      <p class="alimentos-carregando" role="status">Carregando a base de alimentos…</p>
+    }
+  }
+
+  <form #formularioRefeicao="ngForm" class="refeicao-form" [formGroup]="formRefeicao" (ngSubmit)="salvarRefeicao()" novalidate>
+    <h2 class="secao-titulo">{{ editandoId() ? 'Editar refeição' : 'Nova refeição' }}</h2>
+
+    <mat-form-field class="campo campo-nome">
+      <mat-label>Nome da refeição</mat-label>
+      <input matInput type="text" formControlName="nome" />
+      <mat-error>Campo obrigatório</mat-error>
+    </mat-form-field>
+
+    <mat-form-field class="campo campo-horario">
+      <mat-label>Horário</mat-label>
+      <input matInput type="text" inputmode="numeric" maxlength="5" placeholder="HH:mm" formControlName="horario" />
+      <mat-hint>Formato HH:mm, de 00:00 a 23:59</mat-hint>
+      <mat-error>
+        {{ formRefeicao.controls.horario.hasError('required') ? 'Campo obrigatório' : 'Use o formato HH:mm, de 00:00 a 23:59' }}
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field class="campo campo-marcador">
+      <mat-label>Marcador</mat-label>
+      <mat-select formControlName="marcador">
+        @for (marcador of marcadores; track marcador.valor) {
+          <mat-option [value]="marcador.valor">{{ marcador.rotulo }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="refeicao-acoes">
+      <button mat-flat-button type="submit" class="refeicao-salvar">
+        {{ editandoId() ? 'Salvar refeição' : 'Adicionar refeição' }}
+      </button>
+      @if (editandoId()) {
+        <button mat-button type="button" class="refeicao-cancelar" (click)="cancelarEdicao()">Cancelar</button>
+      }
+    </div>
+  </form>
+
+  @if (cartoes().length === 0) {
+    <p class="sem-refeicoes">Nenhuma refeição ainda. Adicione a primeira acima.</p>
+  }
+
+  @for (cartao of cartoes(); track cartao.refeicao.id) {
+    <mat-card class="refeicao" appearance="outlined">
+      <mat-card-header>
+        <mat-card-title class="refeicao-nome">{{ cartao.refeicao.nome }}</mat-card-title>
+        <mat-card-subtitle class="refeicao-detalhe">
+          <span class="refeicao-horario">{{ cartao.refeicao.horario }}</span>
+          @if (cartao.refeicao.marcador !== 'nenhum') {
+            · <span class="refeicao-marcador">{{ cartao.rotuloMarcador }}</span>
+          }
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        @if (cartao.itens.length === 0) {
+          <p class="sem-itens">Sem alimentos nesta refeição.</p>
+        } @else {
+          <ul class="itens">
+            @for (linha of cartao.itens; track linha.item.id) {
+              <li class="item">
+                <span class="item-nome">{{ linha.alimento ? linha.alimento.nome : 'Alimento não encontrado na base' }}</span>
+                <mat-form-field class="item-quantidade" [formGroup]="formularioDoItem(linha.item)">
+                  <input
+                    matInput
+                    type="number"
+                    step="any"
+                    inputmode="decimal"
+                    formControlName="quantidade"
+                    [attr.aria-label]="'Quantidade de ' + (linha.alimento ? linha.alimento.nome : 'alimento')"
+                    (change)="alterarQuantidade(linha.item)"
+                    (keydown.enter)="alterarQuantidade(linha.item)"
+                  />
+                  <span matTextSuffix>g</span>
+                  <mat-error>{{ mensagemQuantidade(formularioDoItem(linha.item).controls.quantidade) }}</mat-error>
+                </mat-form-field>
+                @if (linha.incompleto && estadoAlimentos() === 'pronto') {
+                  <span class="item-incompleto">Sem dados completos na base: não entra nos totais.</span>
+                }
+                <button
+                  mat-button
+                  type="button"
+                  class="item-remover"
+                  [attr.aria-label]="'Remover ' + (linha.alimento ? linha.alimento.nome : 'alimento')"
+                  (click)="removerItem(linha.item)"
+                >
+                  Remover
+                </button>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (estadoAlimentos() === 'pronto') {
+          <app-busca-alimento (incluir)="incluirItem(cartao.refeicao.id, $event)" />
+          <p class="refeicao-totais" [attr.aria-label]="'Total da refeição ' + cartao.refeicao.nome">
+            Total da refeição:
+            <span class="total-kcal">{{ numero(cartao.totais.kcal) }} kcal</span> ·
+            <span class="total-cho">CHO {{ numero(cartao.totais.cho) }} g</span> ·
+            <span class="total-ptn">PTN {{ numero(cartao.totais.ptn) }} g</span> ·
+            <span class="total-lip">LIP {{ numero(cartao.totais.lip) }} g</span>
+          </p>
+        }
+      </mat-card-content>
+
+      <mat-card-actions>
+        <button
+          mat-button
+          type="button"
+          class="refeicao-editar"
+          [attr.aria-label]="'Editar a refeição ' + cartao.refeicao.nome"
+          (click)="editar(cartao.refeicao)"
+        >
+          Editar
+        </button>
+        <button
+          mat-button
+          type="button"
+          class="refeicao-excluir"
+          [attr.aria-label]="'Excluir a refeição ' + cartao.refeicao.nome"
+          (click)="excluirRefeicao(cartao.refeicao)"
+        >
+          Excluir
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  }
+
+  @if (estadoAlimentos() === 'pronto') {
+    <section class="dia" aria-labelledby="dia-titulo">
+      <h2 id="dia-titulo" class="secao-titulo">Dieta do dia</h2>
+      <p class="dia-totais">
+        Total do dia:
+        <span class="total-kcal">{{ numero(totais().dia.kcal) }} kcal</span> ·
+        <span class="total-cho">CHO {{ numero(totais().dia.cho) }} g</span> ·
+        <span class="total-ptn">PTN {{ numero(totais().dia.ptn) }} g</span> ·
+        <span class="total-lip">LIP {{ numero(totais().dia.lip) }} g</span>
+      </p>
+
+      <h3 class="comparativo-titulo">Total do dia e as metas que você calculou</h3>
+      <table class="comparativo" aria-label="Total do dia e metas calculadas">
+        <thead>
+          <tr>
+            <th scope="col">Nutriente</th>
+            <th scope="col">Total da dieta</th>
+            <th scope="col">Sua meta</th>
+            <th scope="col">Diferença</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (linha of comparativo(); track linha.nutriente) {
+            <tr class="comparativo-linha comparativo-{{ linha.nutriente }}">
+              <th scope="row">{{ linha.rotulo }}</th>
+              <td class="comparativo-total">{{ numero(linha.total) }} {{ linha.unidade }}</td>
+              @if (linha.meta === undefined) {
+                <td class="comparativo-meta comparativo-pendente" colspan="2">Preencha a etapa {{ linha.etapaFaltante }}</td>
+              } @else {
+                <td class="comparativo-meta">{{ numero(linha.meta) }} {{ linha.unidade }}</td>
+                <td class="comparativo-diferenca">
+                  {{ comSinal(linha.diferenca!) }} {{ linha.unidade }}
+                  @if (linha.percentual !== undefined) {
+                    ({{ comSinal(linha.percentual) }} %)
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+</section>

@@ -1,0 +1,11 @@
+<h2 mat-dialog-title>Excluir refeição?</h2>
+
+<mat-dialog-content class="confirmar-texto">
+  Você vai excluir a refeição <strong class="confirmar-nome">{{ dados.nome }}</strong>
+  e {{ dados.itens === 1 ? 'o item dela' : 'os ' + dados.itens + ' itens dela' }}. Esta ação não pode ser desfeita.
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="confirmar-acoes">
+  <button mat-button type="button" class="confirmar-cancelar" [mat-dialog-close]="false" cdkFocusInitial>Cancelar</button>
+  <button mat-flat-button type="button" class="confirmar-excluir" [mat-dialog-close]="true">Excluir</button>
+</mat-dialog-actions>

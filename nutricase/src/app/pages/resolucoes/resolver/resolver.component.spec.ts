@@ -3,6 +3,8 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { MatExpansionPanelHarness } from '@angular/material/expansion/testing';
+import { MatInputHarness } from '@angular/material/input/testing';
+import { MatSelectHarness } from '@angular/material/select/testing';
 import { MatStepperHarness } from '@angular/material/stepper/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
@@ -110,12 +112,43 @@ describe('ResolverComponent', () => {
       expect(texto('.ficha-modalidade dd')).toBe(CASO.modalidade);
     });
 
-    it('o stepper tem os passos Etapas, Dieta, Justificativa e Revisar, cada um "em construção"', async () => {
+    it('o stepper tem os passos Etapas, Dieta, Justificativa e Revisar; o primeiro já tem o passo de etapas, os outros ainda estão "em construção"', async () => {
       const stepper = await loader.getHarness(MatStepperHarness);
       const passos = await stepper.getSteps();
 
       expect(await Promise.all(passos.map((p) => p.getLabel()))).toEqual(['Etapas', 'Dieta', 'Justificativa', 'Revisar']);
-      expect(raiz().querySelectorAll('mat-step .em-construcao, .em-construcao').length).toBeGreaterThanOrEqual(4);
+      expect(raiz().querySelectorAll('app-passo-etapas').length).toBe(1);
+      expect(raiz().querySelectorAll('.em-construcao').length).toBe(3); // Dieta, Justificativa e Revisar
+    });
+
+    it('o passo Etapas começa na etapa 1 de 5 da tentativa', () => {
+      expect(texto('app-passo-etapas .etapa-numero')).toBe('Etapa 1 de 5');
+      expect(texto('app-passo-etapas .etapa-titulo')).toBe('Taxa metabólica basal (TMB)');
+    });
+
+    it('ao sair do passo Etapas pelo cabeçalho do stepper, salva a etapa que estava na tela', async () => {
+      const [tmbEtapa] = casos.listarEtapas(CASO.id);
+      const resolucaoId = service.listar()[0].id;
+      const select = await loader.getHarness(MatSelectHarness);
+      await select.open();
+      await select.clickOptions({ text: 'Mifflin-St Jeor' });
+      await (await loader.getHarness(MatInputHarness.with({ selector: '[formControlName="valor"]' }))).setValue('1671.25');
+      expect(service.listarRespostas(resolucaoId)).toEqual([]); // ainda não saiu do passo
+
+      await (await (await loader.getHarness(MatStepperHarness)).getSteps())[1].select();
+
+      expect(service.listarRespostas(resolucaoId)).toEqual([
+        expect.objectContaining({ etapaId: tmbEtapa.id, parametro: 'Mifflin-St Jeor', valor: 1671.25 }),
+      ]);
+    });
+
+    it('sair do passo com a etapa inválida não salva', async () => {
+      const resolucaoId = service.listar()[0].id;
+      await (await loader.getHarness(MatInputHarness.with({ selector: '[formControlName="valor"]' }))).setValue('0');
+
+      await (await (await loader.getHarness(MatStepperHarness)).getSteps())[2].select();
+
+      expect(service.listarRespostas(resolucaoId)).toEqual([]);
     });
 
     it('não é linear: dá para ir ao último passo sem preencher os anteriores, e voltar', async () => {

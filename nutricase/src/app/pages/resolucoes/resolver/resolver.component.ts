@@ -1,10 +1,12 @@
-import { Component, computed, effect, inject } from '@angular/core';
+import { StepperSelectionEvent } from '@angular/cdk/stepper';
+import { Component, computed, effect, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 import { EquacaoTmb, EQUACOES_TMB } from '../../../core/avaliacao/formulas';
 import { TipoEtapa } from '../../../core/models';
 import { CasoService } from '../../../core/services/caso.service';
+import { PassoEtapasComponent } from '../passo-etapas/passo-etapas.component';
 import { ResolucaoService } from '../../../core/services/resolucao.service';
 
 /**
@@ -68,19 +70,26 @@ export class ResolverComponent {
     return resolucao ? this.casoService.buscarPorId(resolucao.casoId) : undefined;
   });
 
+  /** As 5 etapas do caso, na ordem; alimentam o passo Etapas e o material de referência. */
+  protected readonly etapas = computed(() => {
+    const doCaso = this.doCaso();
+    return doCaso ? this.casoService.listarEtapas(doCaso.caso.id) : [];
+  });
+
   /**
    * Faixas aceitáveis das etapas numéricas do caso, para o material de referência. Só a faixa: a referência
    * do caso e o critério ficam para o resultado.
    */
-  protected readonly faixas = computed(() => {
-    const doCaso = this.doCaso();
-    return (doCaso ? this.casoService.listarEtapas(doCaso.caso.id) : [])
+  protected readonly faixas = computed(() =>
+    this.etapas()
       .filter((etapa) => etapa.faixaAceitavel !== undefined)
       .map((etapa) => ({
         rotulo: ROTULO_FAIXA[etapa.tipo] ?? etapa.tipo,
         faixa: `${this.numero(etapa.faixaAceitavel!.min)} a ${this.numero(etapa.faixaAceitavel!.max)}`,
-      }));
-  });
+      })),
+  );
+
+  private readonly passoEtapas = viewChild(PassoEtapasComponent);
 
   /** `nao-encontrada`: id que não existe; `sem-caso`: o caso foi excluído; `submetida`: vai para o resultado. */
   protected readonly estado = computed<'nao-encontrada' | 'sem-caso' | 'submetida' | 'pronta'>(() => {
@@ -102,6 +111,13 @@ export class ResolverComponent {
         void this.router.navigate(['/resolucoes', resolucao.id, 'resultado'], { replaceUrl: true });
       }
     });
+  }
+
+  /** Ao sair do passo Etapas (pelo cabeçalho do stepper), salva a etapa que estava na tela. */
+  protected aoMudarPasso(evento: StepperSelectionEvent): void {
+    if (evento.previouslySelectedIndex === 0) {
+      this.passoEtapas()?.salvarAtual();
+    }
   }
 
   protected numero(valor: number): string {

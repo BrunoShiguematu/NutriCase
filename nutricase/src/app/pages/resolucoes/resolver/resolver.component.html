@@ -44,9 +44,9 @@
       </aside>
 
       <section class="resolver-passos" aria-label="Passos da resolução">
-        <mat-stepper class="resolver-stepper" [linear]="false">
+        <mat-stepper class="resolver-stepper" [linear]="false" (selectionChange)="aoMudarPasso($event)">
           <mat-step label="Etapas">
-            <p class="em-construcao">Em construção.</p>
+            <app-passo-etapas [resolucao]="resolucao()!" [etapas]="etapas()" />
           </mat-step>
           <mat-step label="Dieta">
             <p class="em-construcao">Em construção.</p>

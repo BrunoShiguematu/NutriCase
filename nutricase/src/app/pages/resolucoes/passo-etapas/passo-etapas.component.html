@@ -1,0 +1,73 @@
+<section class="passo-etapas" aria-label="Etapas de cálculo">
+  @if (!noResumo()) {
+    @for (etapa of etapaVisivel(); track etapa.id) {
+      @let campo = campos[etapa.tipo];
+      @let form = formulario(indice());
+      <h2 class="etapa-numero" aria-live="polite">Etapa {{ indice() + 1 }} de {{ total() }}</h2>
+      <p class="etapa-titulo">{{ campo.titulo }}</p>
+
+      <form class="etapa-form" [formGroup]="form" (ngSubmit)="avancar()" novalidate>
+        <mat-form-field class="campo campo-parametro">
+          <mat-label>{{ campo.parametroRotulo }}</mat-label>
+          @if (etapa.tipo === 'TMB') {
+            <mat-select formControlName="parametro">
+              @for (equacao of equacoes; track equacao) {
+                <mat-option [value]="equacao">{{ equacao }}</mat-option>
+              }
+            </mat-select>
+          } @else {
+            <input matInput type="number" step="any" inputmode="decimal" formControlName="parametro" />
+            @if (campo.parametroUnidade) {
+              <span matTextSuffix>{{ campo.parametroUnidade }}</span>
+            } @else {
+              <mat-hint>Sem unidade</mat-hint>
+            }
+          }
+          <mat-error>{{ mensagem(form.controls.parametro, etapa.tipo === 'TMB') }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field class="campo campo-valor">
+          <mat-label>{{ campo.valorRotulo }}</mat-label>
+          <input matInput type="number" step="any" inputmode="decimal" formControlName="valor" />
+          <span matTextSuffix>{{ campo.valorUnidade }}</span>
+          <mat-error>{{ mensagem(form.controls.valor, false) }}</mat-error>
+        </mat-form-field>
+
+        <div class="etapa-acoes">
+          <button mat-button type="button" class="etapa-anterior" [disabled]="indice() === 0" (click)="voltar()">Anterior</button>
+          <button mat-flat-button type="submit" class="etapa-proxima">Próxima</button>
+        </div>
+      </form>
+    }
+  } @else {
+    <h2 class="etapa-numero" aria-live="polite">Resumo das respostas</h2>
+    <dl class="resumo">
+      @for (item of resumo(); track item.numero) {
+        <div class="resumo-item">
+          <dt>Etapa {{ item.numero }}: {{ item.titulo }}</dt>
+          <dd class="resumo-resposta">
+            @if (item.parametro !== undefined && item.valor !== undefined) {
+              <span class="resumo-parametro">{{ item.parametroRotulo }}: {{ item.parametro }}</span>
+              <span class="resumo-separador" aria-hidden="true"> · </span>
+              <span class="resumo-valor">{{ item.valorRotulo }}: {{ item.valor }}</span>
+            } @else {
+              <span class="resumo-vazio">Não respondida</span>
+            }
+            <button
+              mat-button
+              type="button"
+              class="resumo-alterar"
+              [attr.aria-label]="'Alterar a etapa ' + item.numero"
+              (click)="irPara(item.indice)"
+            >
+              Alterar
+            </button>
+          </dd>
+        </div>
+      }
+    </dl>
+    <div class="etapa-acoes">
+      <button mat-button type="button" class="etapa-anterior" (click)="voltar()">Anterior</button>
+    </div>
+  }
+</section>

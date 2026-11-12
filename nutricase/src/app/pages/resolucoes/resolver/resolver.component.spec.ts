@@ -1,11 +1,14 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatButtonHarness } from '@angular/material/button/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
+import { MatDialogHarness } from '@angular/material/dialog/testing';
 import { MatExpansionPanelHarness } from '@angular/material/expansion/testing';
 import { MatInputHarness } from '@angular/material/input/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { MatStepperHarness } from '@angular/material/stepper/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { EQUACOES_TMB } from '../../../core/avaliacao/formulas';
@@ -14,6 +17,7 @@ import { Alimento } from '../../../core/models';
 import { CARREGADOR_TACO } from '../../../core/services/alimento.service';
 import { CasoService } from '../../../core/services/caso.service';
 import { ResolucaoService } from '../../../core/services/resolucao.service';
+import { PassoJustificativaComponent } from '../passo-justificativa/passo-justificativa.component';
 import { ResolucoesModule } from '../resolucoes.module';
 import { ResolverComponent } from './resolver.component';
 
@@ -112,14 +116,16 @@ describe('ResolverComponent', () => {
       expect(texto('.ficha-modalidade dd')).toBe(CASO.modalidade);
     });
 
-    it('o stepper tem os passos Etapas, Dieta, Justificativa e Revisar; Etapas e Dieta já têm o conteúdo, os outros ainda estão "em construção"', async () => {
+    it('o stepper tem os passos Etapas, Dieta, Justificativa e Revisar, cada um já com o seu conteúdo', async () => {
       const stepper = await loader.getHarness(MatStepperHarness);
       const passos = await stepper.getSteps();
 
       expect(await Promise.all(passos.map((p) => p.getLabel()))).toEqual(['Etapas', 'Dieta', 'Justificativa', 'Revisar']);
       expect(raiz().querySelectorAll('app-passo-etapas').length).toBe(1);
       expect(raiz().querySelectorAll('app-passo-dieta').length).toBe(1);
-      expect(raiz().querySelectorAll('.em-construcao').length).toBe(2); // Justificativa e Revisar
+      expect(raiz().querySelectorAll('app-passo-justificativa').length).toBe(1);
+      expect(raiz().querySelectorAll('app-passo-revisar').length).toBe(1);
+      expect(raiz().querySelectorAll('.em-construcao').length).toBe(0); // nenhum passo em construção
     });
 
     it('o passo Dieta recebe a mesma tentativa: começa sem refeições', () => {
@@ -185,6 +191,130 @@ describe('ResolverComponent', () => {
       expect(ficha?.closest('.resolver-lateral')).not.toBeNull();
       expect(stepper?.closest('.resolver-passos')).not.toBeNull();
       expect(ficha?.closest('.resolver-layout')).toBe(stepper?.closest('.resolver-layout'));
+    });
+  });
+
+  describe('passos Justificativa e Revisar', () => {
+    let resolucaoId: string;
+
+    beforeEach(async () => {
+      resolucaoId = service.listar().length > 0 ? service.listar()[0].id : service.iniciar(CASO.id)!.id;
+      await abrir(resolucaoId);
+    });
+
+    const passos = async () => (await loader.getHarness(MatStepperHarness)).getSteps();
+    const justificativa = () => loader.getHarness(MatInputHarness.with({ selector: 'app-passo-justificativa textarea' }));
+    const botao = async (seletor: string, indice = 0) => (await loader.getAllHarnesses(MatButtonHarness.with({ selector: seletor })))[indice];
+
+    it('o passo Justificativa mostra o campo e o aviso de que não há avaliação automática', async () => {
+      await (await passos())[2].select();
+
+      expect(texto('app-passo-justificativa .aviso-justificativa')).toBe('A justificativa não recebe avaliação automática.');
+      expect(raiz().querySelectorAll('app-passo-justificativa textarea').length).toBe(1);
+    });
+
+    it('ao sair do passo Justificativa pelo cabeçalho do stepper, salva o texto digitado', async () => {
+      const todos = await passos();
+      await todos[2].select();
+      await (await justificativa()).setValue('Escolhas feitas pelo volume de treino.');
+      expect(service.buscar(resolucaoId)!.justificativa).toBe('');
+
+      await todos[3].select();
+
+      expect(service.buscar(resolucaoId)!.justificativa).toBe('Escolhas feitas pelo volume de treino.');
+      expect(texto('app-passo-revisar .justificativa-texto')).toBe('Escolhas feitas pelo volume de treino.');
+    });
+
+    it('o resolver salva a justificativa ao sair do passo mesmo sem o campo ter perdido o foco (ligação do selectionChange)', async () => {
+      const todos = await passos();
+      await todos[2].select();
+      // altera o controle direto, sem passar pelo (blur) do campo: só o resolver pode salvar aqui
+      const passo = fixture.debugElement.query(By.directive(PassoJustificativaComponent)).componentInstance as PassoJustificativaComponent;
+      const controle = (passo as unknown as { formulario(): { controls: { texto: { setValue(v: string): void; markAsDirty(): void } } } }).formulario().controls.texto;
+      controle.setValue('Salvo pelo resolver');
+      controle.markAsDirty();
+      expect(service.buscar(resolucaoId)!.justificativa).toBe('');
+
+      await todos[3].select();
+
+      expect(service.buscar(resolucaoId)!.justificativa).toBe('Salvo pelo resolver');
+    });
+
+    it('"Próxima" no passo Justificativa vai para Revisar, salvando o texto; "Anterior" volta', async () => {
+      const todos = await passos();
+      await todos[2].select();
+      await (await justificativa()).setValue('Texto');
+
+      await (await botao('.passo-proximo')).click();
+
+      expect(await todos[3].isSelected()).toBe(true);
+      expect(service.buscar(resolucaoId)!.justificativa).toBe('Texto');
+
+      await (await botao('.passo-anterior', 1)).click(); // o Anterior do passo Revisar
+      expect(await todos[2].isSelected()).toBe(true);
+    });
+
+    it('"Anterior" no passo Justificativa volta para a Dieta', async () => {
+      const todos = await passos();
+      await todos[2].select();
+
+      await (await botao('.passo-anterior', 0)).click();
+
+      expect(await todos[1].isSelected()).toBe(true);
+    });
+
+    it('o passo Revisar lista as pendências, e cada botão leva ao passo certo (etapas = 1º, dieta = 2º)', async () => {
+      const todos = await passos();
+      await todos[3].select();
+      expect(raiz().querySelectorAll('app-passo-revisar .pendencia-texto').length).toBe(6);
+
+      await (await botao('.pendencia-ir', 5)).click(); // a dieta
+      expect(await todos[1].isSelected()).toBe(true);
+
+      await todos[3].select();
+      await (await botao('.pendencia-ir', 0)).click(); // a etapa 1
+      expect(await todos[0].isSelected()).toBe(true);
+    });
+
+    it('com pendências, o Submeter fica desativado no passo Revisar', async () => {
+      await (await passos())[3].select();
+
+      expect(await (await botao('.revisar-submeter')).isDisabled()).toBe(true);
+      expect(texto('app-passo-revisar .submeter-explicacao')).toContain('resolva as 6 pendências');
+    });
+  });
+
+  describe('submeter pela tela do resolver', () => {
+    const dialogoDoDoc = () => TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MatDialogHarness);
+
+    it('tentativa completa: Revisar → Submeter → confirmar leva ao resultado', async () => {
+      const id = criarCompleta();
+      service.salvarJustificativa(id, 'Justificativa de teste.');
+      await abrir(id);
+      await (await (await loader.getHarness(MatStepperHarness)).getSteps())[3].select();
+      const submeter = await loader.getHarness(MatButtonHarness.with({ selector: '.revisar-submeter' }));
+      expect(await submeter.isDisabled()).toBe(false);
+
+      await submeter.click();
+      await (await (await dialogoDoDoc()).getHarness(MatButtonHarness.with({ selector: '.confirmar-submeter' }))).click();
+      await fixture.whenStable();
+
+      expect(service.buscar(id)!.status).toBe('submetida');
+      expect(navegar).toHaveBeenCalledWith(['/resolucoes', id, 'resultado'], { replaceUrl: true });
+    });
+
+    it('cancelar no diálogo deixa a tentativa em andamento e na tela', async () => {
+      const id = criarCompleta();
+      await abrir(id);
+      await (await (await loader.getHarness(MatStepperHarness)).getSteps())[3].select();
+      await (await loader.getHarness(MatButtonHarness.with({ selector: '.revisar-submeter' }))).click();
+
+      await (await (await dialogoDoDoc()).getHarness(MatButtonHarness.with({ selector: '.confirmar-cancelar' }))).click();
+      await fixture.whenStable();
+
+      expect(service.buscar(id)!.status).toBe('em andamento');
+      expect(navegar).not.toHaveBeenCalled();
+      expect(raiz().querySelector('mat-stepper')).not.toBeNull();
     });
   });
 

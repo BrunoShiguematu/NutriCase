@@ -1,0 +1,116 @@
+<section class="passo-revisar" aria-label="Revisão antes de submeter">
+  <section class="revisar-pendencias" aria-labelledby="revisar-pendencias-titulo" aria-live="polite">
+    <h2 id="revisar-pendencias-titulo" class="secao-titulo">Pendências</h2>
+    @if (pendencias().length === 0) {
+      <p class="sem-pendencias">Nenhuma pendência: tudo está preenchido.</p>
+    } @else {
+      <ul class="pendencias">
+        @for (pendencia of pendencias(); track pendencia.texto) {
+          <li class="pendencia">
+            <span class="pendencia-texto">{{ pendencia.texto }}</span>
+            <button
+              mat-button
+              type="button"
+              class="pendencia-ir"
+              [attr.aria-label]="(pendencia.tipo === 'etapa' ? 'Ir para as etapas: ' : 'Ir para a dieta: ') + pendencia.texto"
+              (click)="levarAoPasso(pendencia)"
+            >
+              {{ pendencia.tipo === 'etapa' ? 'Ir para as etapas' : 'Ir para a dieta' }}
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="revisar-respostas" aria-labelledby="revisar-respostas-titulo">
+    <h2 id="revisar-respostas-titulo" class="secao-titulo">Respostas das etapas</h2>
+    <dl class="resumo">
+      @for (item of respostas(); track item.numero) {
+        <div class="resumo-item">
+          <dt>Etapa {{ item.numero }}: {{ item.titulo }}</dt>
+          <dd class="resumo-resposta">
+            @if (item.parametro !== undefined && item.valor !== undefined) {
+              <span class="resumo-parametro">{{ item.parametro }}</span>
+              <span class="resumo-separador" aria-hidden="true"> · </span>
+              <span class="resumo-valor">{{ item.valor }}</span>
+            } @else {
+              <span class="resumo-vazio">Não respondida</span>
+            }
+          </dd>
+        </div>
+      }
+    </dl>
+  </section>
+
+  <section class="revisar-dieta" aria-labelledby="revisar-dieta-titulo">
+    <h2 id="revisar-dieta-titulo" class="secao-titulo">Dieta</h2>
+    @if (dieta().length === 0) {
+      <p class="sem-refeicoes">Nenhuma refeição.</p>
+    } @else {
+      <ul class="refeicoes">
+        @for (cartao of dieta(); track cartao.refeicao.id) {
+          <li class="refeicao">
+            <span class="refeicao-nome">{{ cartao.refeicao.nome }}</span>
+            <span class="refeicao-detalhe">
+              {{ cartao.refeicao.horario }}@if (cartao.marcador) {
+                · {{ cartao.marcador }}
+              }
+            </span>
+            @if (cartao.itens.length === 0) {
+              <span class="sem-itens">Sem alimentos.</span>
+            } @else {
+              <ul class="itens">
+                @for (item of cartao.itens; track $index) {
+                  <li class="item">{{ item.nome }}: {{ item.gramas }} g</li>
+                }
+              </ul>
+            }
+          </li>
+        }
+      </ul>
+    }
+    @if (estadoAlimentos() === 'pronto') {
+      <p class="revisar-total-dia">Total do dia: {{ totalDoDia() }}</p>
+    } @else if (estadoAlimentos() === 'erro') {
+      <p class="alimentos-erro" role="alert">
+        Não foi possível carregar a base de alimentos.
+        <button mat-button type="button" class="alimentos-tentar" (click)="tentarCarregarAlimentos()">Tentar de novo</button>
+      </p>
+    } @else {
+      <p class="alimentos-carregando" role="status">Carregando a base de alimentos…</p>
+    }
+  </section>
+
+  <section class="revisar-justificativa" aria-labelledby="revisar-justificativa-titulo">
+    <h2 id="revisar-justificativa-titulo" class="secao-titulo">Justificativa</h2>
+    @if (justificativa()) {
+      <p class="justificativa-texto">{{ justificativa() }}</p>
+    } @else {
+      <p class="sem-justificativa">Sem justificativa (ela é opcional).</p>
+    }
+  </section>
+
+  <section class="revisar-submissao" aria-label="Submissão">
+    @if (erroSubmissao()) {
+      <p class="erro-submissao" role="alert">
+        Não foi possível submeter agora. Verifique se a base de alimentos carregou e tente de novo.
+      </p>
+    }
+    @if (pendencias().length > 0) {
+      <p class="submeter-explicacao" id="submeter-explicacao">
+        Para submeter, resolva {{ pendencias().length === 1 ? 'a pendência acima' : 'as ' + pendencias().length + ' pendências acima' }}.
+      </p>
+    }
+    <button
+      mat-flat-button
+      type="button"
+      class="revisar-submeter"
+      [disabled]="pendencias().length > 0 || submetendo()"
+      [attr.aria-describedby]="pendencias().length > 0 ? 'submeter-explicacao' : null"
+      (click)="submeter()"
+    >
+      {{ submetendo() ? 'Submetendo…' : 'Submeter' }}
+    </button>
+  </section>
+</section>

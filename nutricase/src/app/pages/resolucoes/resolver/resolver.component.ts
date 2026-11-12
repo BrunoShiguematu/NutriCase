@@ -1,12 +1,14 @@
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { Component, computed, effect, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MatStepper } from '@angular/material/stepper';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 import { EquacaoTmb, EQUACOES_TMB } from '../../../core/avaliacao/formulas';
 import { TipoEtapa } from '../../../core/models';
 import { CasoService } from '../../../core/services/caso.service';
 import { PassoEtapasComponent } from '../passo-etapas/passo-etapas.component';
+import { PassoJustificativaComponent } from '../passo-justificativa/passo-justificativa.component';
 import { ResolucaoService } from '../../../core/services/resolucao.service';
 
 /**
@@ -34,6 +36,10 @@ const EQUACOES_REFERENCIA: Record<EquacaoTmb, { fonte: string; formulas: string[
     ],
   },
 };
+
+/** Posição dos passos no stepper. */
+const PASSO_ETAPAS = 0;
+const PASSO_JUSTIFICATIVA = 2;
 
 const ROTULO_FAIXA: Partial<Record<TipoEtapa, string>> = {
   GET: 'Fator de atividade (GET)',
@@ -89,7 +95,9 @@ export class ResolverComponent {
       })),
   );
 
+  private readonly stepper = viewChild(MatStepper);
   private readonly passoEtapas = viewChild(PassoEtapasComponent);
+  private readonly passoJustificativa = viewChild(PassoJustificativaComponent);
 
   /** `nao-encontrada`: id que não existe; `sem-caso`: o caso foi excluído; `submetida`: vai para o resultado. */
   protected readonly estado = computed<'nao-encontrada' | 'sem-caso' | 'submetida' | 'pronta'>(() => {
@@ -113,10 +121,20 @@ export class ResolverComponent {
     });
   }
 
-  /** Ao sair do passo Etapas (pelo cabeçalho do stepper), salva a etapa que estava na tela. */
+  /** Ao sair de um passo que tem rascunho (Etapas ou Justificativa), salva o que estava na tela. */
   protected aoMudarPasso(evento: StepperSelectionEvent): void {
-    if (evento.previouslySelectedIndex === 0) {
+    if (evento.previouslySelectedIndex === PASSO_ETAPAS) {
       this.passoEtapas()?.salvarAtual();
+    } else if (evento.previouslySelectedIndex === PASSO_JUSTIFICATIVA) {
+      this.passoJustificativa()?.salvarAtual();
+    }
+  }
+
+  /** Leva ao passo pedido (as pendências do passo Revisar usam isto). */
+  protected irParaPasso(indice: number): void {
+    const stepper = this.stepper();
+    if (stepper) {
+      stepper.selectedIndex = indice;
     }
   }
 

@@ -52,10 +52,17 @@
             <app-passo-dieta [resolucao]="resolucao()!" />
           </mat-step>
           <mat-step label="Justificativa">
-            <p class="em-construcao">Em construção.</p>
+            <app-passo-justificativa [resolucao]="resolucao()!" />
+            <div class="passo-navegacao">
+              <button mat-button type="button" class="passo-anterior" matStepperPrevious>Anterior</button>
+              <button mat-flat-button type="button" class="passo-proximo" matStepperNext>Próxima</button>
+            </div>
           </mat-step>
           <mat-step label="Revisar">
-            <p class="em-construcao">Em construção.</p>
+            <app-passo-revisar [resolucao]="resolucao()!" (irPara)="irParaPasso($event)" />
+            <div class="passo-navegacao">
+              <button mat-button type="button" class="passo-anterior" matStepperPrevious>Anterior</button>
+            </div>
           </mat-step>
         </mat-stepper>
       </section>

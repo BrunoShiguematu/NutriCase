@@ -9,6 +9,9 @@ import { BuscaAlimentoComponent } from './passo-dieta/busca-alimento/busca-alime
 import { ConfirmarExclusaoRefeicaoComponent } from './passo-dieta/confirmar-exclusao-refeicao/confirmar-exclusao-refeicao.component';
 import { PassoDietaComponent } from './passo-dieta/passo-dieta.component';
 import { PassoEtapasComponent } from './passo-etapas/passo-etapas.component';
+import { PassoJustificativaComponent } from './passo-justificativa/passo-justificativa.component';
+import { ConfirmarSubmissaoComponent } from './passo-revisar/confirmar-submissao/confirmar-submissao.component';
+import { PassoRevisarComponent } from './passo-revisar/passo-revisar.component';
 import { ResolucoesComponent } from './resolucoes.component';
 import { ResolverComponent } from './resolver/resolver.component';
 import { ResultadoComponent } from './resultado/resultado.component';
@@ -22,6 +25,9 @@ import { ResultadoComponent } from './resultado/resultado.component';
     PassoDietaComponent,
     BuscaAlimentoComponent,
     ConfirmarExclusaoRefeicaoComponent,
+    PassoJustificativaComponent,
+    PassoRevisarComponent,
+    ConfirmarSubmissaoComponent,
     ResultadoComponent,
   ],
   imports: [

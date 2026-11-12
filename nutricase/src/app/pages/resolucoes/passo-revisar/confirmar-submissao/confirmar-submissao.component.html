@@ -1,0 +1,11 @@
+<h2 mat-dialog-title>Submeter a resolução?</h2>
+
+<mat-dialog-content class="confirmar-texto">
+  Depois de submeter, não é possível editar as respostas, a dieta nem a justificativa. A correção é feita na hora e
+  você poderá refazer o caso em uma nova tentativa.
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="confirmar-acoes">
+  <button mat-button type="button" class="confirmar-cancelar" [mat-dialog-close]="false" cdkFocusInitial>Cancelar</button>
+  <button mat-flat-button type="button" class="confirmar-submeter" [mat-dialog-close]="true">Submeter</button>
+</mat-dialog-actions>

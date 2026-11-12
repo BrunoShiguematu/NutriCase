@@ -1,0 +1,15 @@
+<section class="passo-justificativa" aria-label="Justificativa da dieta">
+  <p class="aviso-justificativa" id="aviso-justificativa">A justificativa não recebe avaliação automática.</p>
+
+  <mat-form-field class="campo campo-justificativa" [formGroup]="formulario()">
+    <mat-label>Justificativa das suas escolhas (opcional)</mat-label>
+    <textarea
+      matInput
+      rows="8"
+      formControlName="texto"
+      aria-describedby="aviso-justificativa"
+      (blur)="salvar()"
+    ></textarea>
+    <mat-hint>Explique por que montou a dieta assim. Pode deixar em branco.</mat-hint>
+  </mat-form-field>
+</section>

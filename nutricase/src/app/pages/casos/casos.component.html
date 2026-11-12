@@ -61,6 +61,17 @@
               </div>
             </dl>
           </mat-card-content>
+          <mat-card-actions>
+            <button
+              mat-flat-button
+              type="button"
+              class="caso-resolver"
+              [attr.aria-label]="'Resolver ' + caso.titulo"
+              (click)="resolver(caso.id)"
+            >
+              Resolver
+            </button>
+          </mat-card-actions>
         </mat-card>
       }
     </div>

@@ -1,0 +1,7 @@
+// Mínimo da T7: só o que põe a ficha ao lado do passo a passo. O estilo de verdade é da T14.
+.resolver-layout {
+  display: grid;
+  grid-template-columns: 22rem minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}

@@ -1,0 +1,81 @@
+@switch (estado()) {
+  @case ('pronta') {
+    @let caso = doCaso()!.caso;
+    <header class="page-header">
+      <h1 class="page-title">{{ caso.titulo }}</h1>
+    </header>
+
+    <div class="resolver-layout">
+      <aside class="resolver-lateral" aria-label="Ficha do atleta e material de referência">
+        <app-ficha-atleta [atleta]="doCaso()!.atleta" [modalidade]="caso.modalidade" />
+
+        <mat-expansion-panel class="material-referencia">
+          <mat-expansion-panel-header>
+            <mat-panel-title>Material de referência</mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <p class="aviso-exemplo">Valores de exemplo, aguardam validação docente.</p>
+
+          <section class="material-equacoes" aria-labelledby="material-equacoes-titulo">
+            <h2 id="material-equacoes-titulo" class="material-subtitulo">Equações da TMB</h2>
+            <p class="material-nota">Peso em kg, altura em cm e idade em anos.</p>
+            @for (equacao of equacoes; track equacao.nome) {
+              <div class="material-equacao">
+                <h3 class="material-equacao-nome">{{ equacao.nome }} <span class="material-fonte">({{ equacao.fonte }})</span></h3>
+                @for (formula of equacao.formulas; track formula) {
+                  <p class="material-formula">{{ formula }}</p>
+                }
+              </div>
+            }
+          </section>
+
+          <section class="material-faixas" aria-labelledby="material-faixas-titulo">
+            <h2 id="material-faixas-titulo" class="material-subtitulo">Faixas aceitáveis</h2>
+            <dl class="material-faixas-lista">
+              @for (item of faixas(); track item.rotulo) {
+                <div class="material-faixa">
+                  <dt>{{ item.rotulo }}</dt>
+                  <dd>{{ item.faixa }}</dd>
+                </div>
+              }
+            </dl>
+          </section>
+        </mat-expansion-panel>
+      </aside>
+
+      <section class="resolver-passos" aria-label="Passos da resolução">
+        <mat-stepper class="resolver-stepper" [linear]="false">
+          <mat-step label="Etapas">
+            <p class="em-construcao">Em construção.</p>
+          </mat-step>
+          <mat-step label="Dieta">
+            <p class="em-construcao">Em construção.</p>
+          </mat-step>
+          <mat-step label="Justificativa">
+            <p class="em-construcao">Em construção.</p>
+          </mat-step>
+          <mat-step label="Revisar">
+            <p class="em-construcao">Em construção.</p>
+          </mat-step>
+        </mat-stepper>
+      </section>
+    </div>
+  }
+  @case ('submetida') {
+    <p class="mensagem-abrindo" role="status">Abrindo o resultado…</p>
+  }
+  @case ('sem-caso') {
+    <section class="mensagem-erro" role="alert">
+      <h1 class="page-title">Caso não encontrado</h1>
+      <p>O caso desta resolução não existe mais.</p>
+      <a mat-flat-button class="voltar-catalogo" routerLink="/casos">Voltar ao catálogo</a>
+    </section>
+  }
+  @default {
+    <section class="mensagem-erro" role="alert">
+      <h1 class="page-title">Resolução não encontrada</h1>
+      <p>Não existe uma resolução com este endereço. Ela pode ter sido excluída.</p>
+      <a mat-flat-button class="voltar-catalogo" routerLink="/casos">Voltar ao catálogo</a>
+    </section>
+  }
+}

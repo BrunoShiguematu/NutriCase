@@ -1,0 +1,64 @@
+@let a = atleta();
+<mat-card class="ficha-atleta" appearance="outlined">
+  <mat-card-header>
+    <mat-card-title class="ficha-titulo">Ficha do atleta</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <dl class="ficha-dados">
+      <div class="ficha-dado ficha-nome">
+        <dt>Nome</dt>
+        <dd>{{ a.nome }}</dd>
+      </div>
+      <div class="ficha-dado ficha-idade">
+        <dt>Idade</dt>
+        <dd>{{ numero(a.idade) }} anos</dd>
+      </div>
+      <div class="ficha-dado ficha-sexo">
+        <dt>Sexo</dt>
+        <dd>{{ sexo() }}</dd>
+      </div>
+      <div class="ficha-dado ficha-peso">
+        <dt>Peso</dt>
+        <dd>{{ numero(a.peso) }} kg</dd>
+      </div>
+      <div class="ficha-dado ficha-altura">
+        <dt>Altura</dt>
+        <dd>{{ numero(a.altura) }} cm</dd>
+      </div>
+      <div class="ficha-dado ficha-gordura">
+        <dt>Percentual de gordura</dt>
+        <dd>{{ a.percentualGordura === undefined ? 'Não informado' : numero(a.percentualGordura) + ' %' }}</dd>
+      </div>
+      @if (modalidade(); as modalidadeDoCaso) {
+        <div class="ficha-dado ficha-modalidade">
+          <dt>Modalidade</dt>
+          <dd>{{ modalidadeDoCaso }}</dd>
+        </div>
+      }
+      <div class="ficha-dado ficha-volume">
+        <dt>Volume de treino</dt>
+        <dd>{{ a.volumeTreino }}</dd>
+      </div>
+      <div class="ficha-dado ficha-horario">
+        <dt>Horário de treino</dt>
+        <dd>{{ a.horarioTreino }}</dd>
+      </div>
+      <div class="ficha-dado ficha-fase">
+        <dt>Fase da periodização</dt>
+        <dd>{{ a.fasePeriodizacao }}</dd>
+      </div>
+      <div class="ficha-dado ficha-objetivo">
+        <dt>Objetivo</dt>
+        <dd>{{ a.objetivo }}</dd>
+      </div>
+      <div class="ficha-dado ficha-restricoes">
+        <dt>Restrições alimentares</dt>
+        <dd>{{ a.restricoes.length > 0 ? a.restricoes.join(', ') : 'Nenhuma' }}</dd>
+      </div>
+      <div class="ficha-dado ficha-preferencias">
+        <dt>Preferências alimentares</dt>
+        <dd>{{ a.preferencias.length > 0 ? a.preferencias.join(', ') : 'Nenhuma' }}</dd>
+      </div>
+    </dl>
+  </mat-card-content>
+</mat-card>

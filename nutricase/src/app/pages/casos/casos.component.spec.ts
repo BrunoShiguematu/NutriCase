@@ -1,9 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { MatSelectHarness } from '@angular/material/select/testing';
-import { provideRouter } from '@angular/router';
+import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
+import { provideRouter, Router } from '@angular/router';
 import { CASOS_EXEMPLO } from '../../core/data/casos-exemplo';
+import { ResolucaoService } from '../../core/services/resolucao.service';
 import { CasosModule } from './casos.module';
 import { CasosComponent } from './casos.component';
 
@@ -37,7 +40,11 @@ describe('CasosComponent', () => {
     await TestBed.configureTestingModule({
       // Importa o CasosModule (e não só declara a página): o template é compilado com o escopo do módulo.
       imports: [CasosModule],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        // Sem animação no teste: o snackbar abre e fecha na hora.
+        { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CasosComponent);
@@ -45,7 +52,10 @@ describe('CasosComponent', () => {
     await fixture.whenStable();
   });
 
-  afterEach(() => localStorage.clear());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+  });
 
   it('lista os 8 casos de exemplo com título, nível, modalidade e competência', () => {
     expect(titulosNaTela().length).toBe(CASOS_EXEMPLO.length);
@@ -141,5 +151,67 @@ describe('CasosComponent', () => {
 
     expect(mensagemVazia()).toBeUndefined();
     expect(titulosNaTela().length).toBeGreaterThan(0);
+  });
+
+  describe('botão Resolver', () => {
+    const botoes = (): HTMLButtonElement[] =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('.caso-resolver'));
+
+    it('cada caso tem um botão "Resolver", com o título do caso no nome acessível', () => {
+      expect(botoes().length).toBe(CASOS_EXEMPLO.length);
+      expect(botoes().every((b) => b.textContent?.trim() === 'Resolver')).toBe(true);
+      expect(botoes().map((b) => b.getAttribute('aria-label'))).toEqual(CASOS_EXEMPLO.map((c) => `Resolver ${c.titulo}`));
+    });
+
+    it('o botão segue o filtro: só aparece nos casos que estão na tela', async () => {
+      await escolher('filtro-modalidade', 'Corrida');
+
+      expect(botoes().map((b) => b.getAttribute('aria-label'))).toEqual(
+        CASOS_EXEMPLO.filter((c) => c.modalidade === 'Corrida').map((c) => `Resolver ${c.titulo}`),
+      );
+    });
+
+    it('clicar em "Resolver" começa uma tentativa do caso e abre /resolucoes/<id>', async () => {
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const service = TestBed.inject(ResolucaoService);
+      expect(service.listar()).toEqual([]);
+
+      botoes()[2].click(); // 3º caso: Nadadora em período competitivo
+      await fixture.whenStable();
+
+      const [resolucao] = service.listar();
+      expect(service.listar().length).toBe(1);
+      expect(resolucao.casoId).toBe(CASOS_EXEMPLO[2].id);
+      expect(resolucao.status).toBe('em andamento');
+      expect(navegar).toHaveBeenCalledTimes(1);
+      expect(navegar).toHaveBeenCalledWith(['/resolucoes', resolucao.id]);
+    });
+
+    it('cada clique começa uma tentativa nova (refazer um caso gera outra)', async () => {
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const service = TestBed.inject(ResolucaoService);
+
+      botoes()[0].click();
+      botoes()[0].click();
+      await fixture.whenStable();
+
+      const ids = service.listar().map((r) => r.id);
+      expect(ids.length).toBe(2);
+      expect(new Set(ids).size).toBe(2);
+    });
+
+    it('se a tentativa não puder começar, avisa e não navega', async () => {
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      vi.spyOn(TestBed.inject(ResolucaoService), 'iniciar').mockReturnValue(undefined);
+
+      botoes()[0].click();
+      await fixture.whenStable();
+
+      const avisos = await Promise.all(
+        (await TestbedHarnessEnvironment.documentRootLoader(fixture).getAllHarnesses(MatSnackBarHarness)).map((a) => a.getMessage()),
+      );
+      expect(avisos).toEqual(['Não foi possível iniciar: caso não encontrado']);
+      expect(navegar).not.toHaveBeenCalled();
+    });
   });
 });

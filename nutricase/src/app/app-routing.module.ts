@@ -15,6 +15,10 @@ const routes: Routes = [
     path: 'alimentos',
     loadChildren: () => import('./pages/alimentos/alimentos.module').then((m) => m.AlimentosModule),
   },
+  {
+    path: 'resolucoes',
+    loadChildren: () => import('./pages/resolucoes/resolucoes.module').then((m) => m.ResolucoesModule),
+  },
   { path: '**', redirectTo: 'dashboard' },
 ];
 

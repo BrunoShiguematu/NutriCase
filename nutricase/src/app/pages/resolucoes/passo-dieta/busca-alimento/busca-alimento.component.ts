@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, FormGroupDirective, ValidationErrors, Validators } from '@angular/forms';
 import { Alimento } from '../../../../core/models';
 import { AlimentoService } from '../../../../core/services/alimento.service';
-import { mensagemNumero, numeroPositivo } from '../validador-numero';
+import { mensagemNumero, numeroPositivo } from '../../etapas-ui';
 
 /** Quantas sugestões a lista mostra, e quantas letras são preciso digitar para buscar. */
 export const LIMITE_SUGESTOES = 8;

@@ -1,2 +1,179 @@
-<h1 class="page-title">Resultado</h1>
-<p class="em-construcao">Em construção.</p>
+@switch (estado()) {
+  @case ('pronto') {
+    <header class="page-header">
+      <h1 class="page-title">Resultado: {{ titulo() }}</h1>
+    </header>
+
+    <section class="bloco bloco-avaliacao" aria-labelledby="avaliacao-titulo">
+      <h2 id="avaliacao-titulo" class="bloco-titulo">Avaliação</h2>
+
+      <section class="avaliacao-etapas" aria-labelledby="avaliacao-etapas-titulo">
+        <h3 id="avaliacao-etapas-titulo" class="secao-titulo">Etapas de cálculo</h3>
+        <table class="tabela-etapas" aria-label="Etapas de cálculo corrigidas">
+          <thead>
+            <tr>
+              <th scope="col">Etapa</th>
+              <th scope="col">Seu parâmetro</th>
+              <th scope="col">Seu valor</th>
+              <th scope="col">Valor esperado a partir das suas respostas</th>
+              <th scope="col">Classificação</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (etapa of etapas(); track etapa.numero) {
+              <tr class="etapa-linha etapa-{{ etapa.classe }}">
+                <th scope="row">Etapa {{ etapa.numero }}: {{ etapa.titulo }}</th>
+                <td class="etapa-parametro">{{ etapa.parametro }}</td>
+                <td class="etapa-valor">{{ etapa.valor }}</td>
+                <td class="etapa-esperado">{{ etapa.esperado ?? 'Não calculado' }}</td>
+                <td class="etapa-classificacao">{{ etapa.classificacao }}</td>
+              </tr>
+              @if (etapa.divergente || etapa.erro) {
+                <tr class="etapa-detalhe">
+                  <td colspan="5">
+                    @if (etapa.divergente) {
+                      <p class="etapa-criterio"><strong>Critério de referência do caso:</strong> {{ etapa.criterio }}</p>
+                    }
+                    <p class="etapa-motivo"><strong>Explicação:</strong> {{ etapa.motivo }}</p>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </section>
+
+      <section class="avaliacao-dieta" aria-labelledby="avaliacao-dieta-titulo">
+        <h3 id="avaliacao-dieta-titulo" class="secao-titulo">Dieta</h3>
+        @if (resultado()!.dieta) {
+          @if (tolerancia() !== undefined) {
+            <p class="dieta-tolerancia">Tolerância do caso para a dieta: {{ tolerancia() }} %.</p>
+          }
+          <table class="tabela-comparativo" aria-label="Total do dia e metas do estudante">
+            <thead>
+              <tr>
+                <th scope="col">Nutriente</th>
+                <th scope="col">Total da dieta</th>
+                <th scope="col">Sua meta</th>
+                <th scope="col">Diferença</th>
+                <th scope="col">Situação</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (linha of comparativo(); track linha.nutriente) {
+                <tr class="comparativo-linha comparativo-{{ linha.nutriente }}">
+                  <th scope="row">{{ linha.rotulo }}</th>
+                  <td class="comparativo-total">{{ linha.total }}</td>
+                  <td class="comparativo-meta">{{ linha.meta ?? '—' }}</td>
+                  <td class="comparativo-diferenca">
+                    @if (linha.diferenca !== undefined) {
+                      {{ linha.diferenca }}@if (linha.percentual !== undefined) {
+                        ({{ linha.percentual }})
+                      }
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td class="comparativo-situacao" [class.dentro]="linha.dentro" [class.fora]="linha.fora">{{ linha.situacao }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <h4 class="dieta-alertas-titulo">Alertas da dieta</h4>
+          @if (alertas().length === 0) {
+            <p class="sem-alertas">Nenhum alerta: a dieta tem pré e pós-treino, respeita as restrições, distribui bem as calorias e é variada.</p>
+          } @else {
+            <ul class="alertas">
+              @for (alerta of alertas(); track $index) {
+                <li class="alerta">
+                  <span class="alerta-tipo">{{ alerta.tipo }}:</span>
+                  <span class="alerta-texto">{{ alerta.texto }}</span>
+                </li>
+              }
+            </ul>
+          }
+          @if (itensIncompletos() > 0) {
+            <p class="dieta-incompleta">
+              {{ itensIncompletos() === 1 ? '1 item' : itensIncompletos() + ' itens' }} sem dados completos na base de alimentos
+              {{ itensIncompletos() === 1 ? 'não entrou' : 'não entraram' }} nos totais.
+            </p>
+          }
+        } @else {
+          <div class="dieta-indisponivel" role="alert">
+            <p>
+              Não foi possível avaliar a dieta agora, porque a base de alimentos não carregou. O restante do resultado
+              continua válido.
+            </p>
+            <button mat-button type="button" class="dieta-tentar" (click)="tentarDeNovo()">Tentar de novo</button>
+          </div>
+        }
+      </section>
+
+      <section class="avaliacao-resumo" aria-labelledby="avaliacao-resumo-titulo">
+        <h3 id="avaliacao-resumo-titulo" class="secao-titulo">Resumo dos erros</h3>
+        <table class="tabela-resumo" aria-label="Quantidade de erros por tipo">
+          <thead>
+            <tr>
+              <th scope="col">Tipo de erro</th>
+              <th scope="col">Quantidade</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (linha of resumo(); track linha.tipo) {
+              <tr class="resumo-linha">
+                <th scope="row">{{ linha.tipo }}</th>
+                <td class="resumo-quantidade">{{ linha.quantidade }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+
+      <section class="avaliacao-justificativa" aria-labelledby="avaliacao-justificativa-titulo">
+        <h3 id="avaliacao-justificativa-titulo" class="secao-titulo">Sua justificativa</h3>
+        <p class="justificativa-aviso">Não avaliada automaticamente.</p>
+        @if (justificativa()) {
+          <p class="justificativa-texto">{{ justificativa() }}</p>
+        } @else {
+          <p class="sem-justificativa">Você não escreveu justificativa (ela é opcional).</p>
+        }
+      </section>
+
+      <section class="avaliacao-comentario" aria-labelledby="avaliacao-comentario-titulo">
+        <h3 id="avaliacao-comentario-titulo" class="secao-titulo">Comentário de referência do caso</h3>
+        <p class="comentario-texto">{{ resultado()!.comentarioReferencia }}</p>
+      </section>
+    </section>
+
+    <section class="bloco bloco-sugestoes" aria-labelledby="sugestoes-titulo">
+      <h2 id="sugestoes-titulo" class="bloco-titulo">Sugestões</h2>
+      <p class="sugestoes-indisponiveis">Sugestões indisponíveis nesta versão. A avaliação acima está completa.</p>
+    </section>
+
+    <div class="resultado-acoes">
+      <button mat-flat-button type="button" class="resultado-refazer" (click)="refazer()">Refazer</button>
+      <a mat-button class="resultado-voltar" routerLink="/resolucoes">Voltar às resoluções</a>
+    </div>
+  }
+  @case ('carregando') {
+    <p class="mensagem-carregando" role="status">Carregando o resultado…</p>
+  }
+  @case ('em-andamento') {
+    <p class="mensagem-abrindo" role="status">Esta resolução ainda não foi submetida. Abrindo a resolução…</p>
+  }
+  @case ('indisponivel') {
+    <section class="mensagem-erro" role="alert">
+      <h1 class="page-title">Resultado indisponível</h1>
+      <p>Não foi possível montar o resultado desta tentativa. O caso dela pode ter sido excluído.</p>
+      <a mat-flat-button class="voltar-resolucoes" routerLink="/resolucoes">Voltar às resoluções</a>
+    </section>
+  }
+  @default {
+    <section class="mensagem-erro" role="alert">
+      <h1 class="page-title">Resolução não encontrada</h1>
+      <p>Não existe uma resolução com este endereço. Ela pode ter sido excluída.</p>
+      <a mat-flat-button class="voltar-resolucoes" routerLink="/resolucoes">Voltar às resoluções</a>
+    </section>
+  }
+}

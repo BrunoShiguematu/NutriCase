@@ -12,7 +12,7 @@ import {
   ConfirmarExclusaoRefeicaoComponent,
   DadosConfirmarExclusaoRefeicao,
 } from './confirmar-exclusao-refeicao/confirmar-exclusao-refeicao.component';
-import { mensagemNumero, numeroPositivo } from './validador-numero';
+import { mensagemNumero, numeroPositivo } from '../etapas-ui';
 
 const HORARIO = /^([01]\d|2[0-3]):[0-5]\d$/;
 

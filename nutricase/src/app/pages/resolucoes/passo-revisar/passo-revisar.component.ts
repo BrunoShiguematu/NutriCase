@@ -2,23 +2,16 @@ import { Component, computed, EventEmitter, inject, input, Output, signal } from
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { totaisDaDieta } from '../../../core/avaliacao/avaliar-dieta';
-import { Resolucao, TipoEtapa } from '../../../core/models';
+import { Resolucao } from '../../../core/models';
 import { AlimentoService } from '../../../core/services/alimento.service';
 import { CasoService } from '../../../core/services/caso.service';
 import { Pendencia, ResolucaoService } from '../../../core/services/resolucao.service';
+import { CAMPOS_DA_ETAPA } from '../etapas-ui';
 import { ConfirmarSubmissaoComponent } from './confirmar-submissao/confirmar-submissao.component';
 
 /** Posição dos passos no stepper do resolver: para onde cada pendência leva. */
 export const PASSO_ETAPAS = 0;
 export const PASSO_DIETA = 1;
-
-const ROTULOS: Record<TipoEtapa, { titulo: string; parametro: string; parametroUnidade?: string; valor: string; valorUnidade: string }> = {
-  TMB: { titulo: 'Taxa metabólica basal (TMB)', parametro: 'Equação', valor: 'TMB', valorUnidade: 'kcal/dia' },
-  GET: { titulo: 'Gasto energético total (GET)', parametro: 'Fator de atividade', valor: 'GET', valorUnidade: 'kcal/dia' },
-  CHO: { titulo: 'Meta de carboidrato', parametro: 'Carboidrato', parametroUnidade: 'g/kg/dia', valor: 'Carboidrato total', valorUnidade: 'g/dia' },
-  PTN: { titulo: 'Meta de proteína', parametro: 'Proteína', parametroUnidade: 'g/kg/dia', valor: 'Proteína total', valorUnidade: 'g/dia' },
-  LIP: { titulo: 'Meta de gordura', parametro: 'Gordura', parametroUnidade: 'g/kg/dia', valor: 'Gordura total', valorUnidade: 'g/dia' },
-};
 
 const ROTULO_MARCADOR: Record<string, string> = { 'pré-treino': 'Pré-treino', 'pós-treino': 'Pós-treino' };
 
@@ -61,12 +54,12 @@ export class PassoRevisarComponent {
     const respostas = this.service.listarRespostas(this.id());
     return this.casos.listarEtapas(this.resolucao().casoId).map((etapa) => {
       const resposta = respostas.find((r) => r.etapaId === etapa.id);
-      const rotulos = ROTULOS[etapa.tipo];
+      const campos = CAMPOS_DA_ETAPA[etapa.tipo];
       return {
         numero: etapa.ordem,
-        titulo: rotulos.titulo,
-        parametro: resposta ? `${rotulos.parametro}: ${this.formatar(resposta.parametro, rotulos.parametroUnidade)}` : undefined,
-        valor: resposta ? `${rotulos.valor}: ${this.formatar(resposta.valor, rotulos.valorUnidade)}` : undefined,
+        titulo: campos.titulo,
+        parametro: resposta ? `${campos.parametroRotulo}: ${this.formatar(resposta.parametro, campos.parametroUnidade)}` : undefined,
+        valor: resposta ? `${campos.valorRotulo}: ${this.formatar(resposta.valor, campos.valorUnidade)}` : undefined,
       };
     });
   });

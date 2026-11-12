@@ -1,44 +1,15 @@
 import { Component, computed, inject, input, linkedSignal, signal, untracked } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { EQUACOES_TMB } from '../../../core/avaliacao/formulas';
-import { EtapaCalculo, Resolucao, TipoEtapa } from '../../../core/models';
+import { EtapaCalculo, Resolucao } from '../../../core/models';
 import { ResolucaoService } from '../../../core/services/resolucao.service';
+import { CAMPOS_DA_ETAPA, mensagemNumero, numeroPositivo } from '../etapas-ui';
 
 type FormEtapa = FormGroup<{
   parametro: FormControl<string | number | null>;
   valor: FormControl<number | null>;
 }>;
-
-/** Rótulos e unidades de cada etapa. Nada aqui dá a conta pronta nem o valor esperado. */
-interface CamposDaEtapa {
-  titulo: string;
-  parametroRotulo: string;
-  /** Unidade do parâmetro; ausente no fator de atividade e na equação. */
-  parametroUnidade?: string;
-  valorRotulo: string;
-  valorUnidade: string;
-}
-
-const CAMPOS: Record<TipoEtapa, CamposDaEtapa> = {
-  TMB: { titulo: 'Taxa metabólica basal (TMB)', parametroRotulo: 'Equação', valorRotulo: 'TMB', valorUnidade: 'kcal/dia' },
-  GET: { titulo: 'Gasto energético total (GET)', parametroRotulo: 'Fator de atividade', valorRotulo: 'GET', valorUnidade: 'kcal/dia' },
-  CHO: { titulo: 'Meta de carboidrato', parametroRotulo: 'Carboidrato', parametroUnidade: 'g/kg/dia', valorRotulo: 'Carboidrato total', valorUnidade: 'g/dia' },
-  PTN: { titulo: 'Meta de proteína', parametroRotulo: 'Proteína', parametroUnidade: 'g/kg/dia', valorRotulo: 'Proteína total', valorUnidade: 'g/dia' },
-  LIP: { titulo: 'Meta de gordura', parametroRotulo: 'Gordura', parametroUnidade: 'g/kg/dia', valorRotulo: 'Gordura total', valorUnidade: 'g/dia' },
-};
-
-/** Validação só de formato (RF11): número finito e maior que zero. Vazio é com o `required`. */
-function numeroPositivo(controle: AbstractControl): ValidationErrors | null {
-  const valor = controle.value;
-  if (valor === null || valor === '') {
-    return null;
-  }
-  if (typeof valor !== 'number' || !Number.isFinite(valor)) {
-    return { numero: true };
-  }
-  return valor > 0 ? null : { positivo: true };
-}
 
 /**
  * Passo "Etapas" da resolução: uma etapa por vez (RF07), com Anterior e Próxima (RF10) e, no fim, o
@@ -64,7 +35,7 @@ export class PassoEtapasComponent {
 
   /** Sempre as 3 equações, não só as aceitas pelo caso: qual vale é do resultado. */
   protected readonly equacoes = [...EQUACOES_TMB];
-  protected readonly campos = CAMPOS;
+  protected readonly campos = CAMPOS_DA_ETAPA;
 
   private readonly ordenadas = computed(() => [...this.etapas()].sort((a, b) => a.ordem - b.ordem));
 
@@ -94,7 +65,7 @@ export class PassoEtapasComponent {
     const respostas = this.service.listarRespostas(this.resolucao().id);
     return this.ordenadas().map((etapa, indice) => {
       const resposta = respostas.find((r) => r.etapaId === etapa.id);
-      const campos = CAMPOS[etapa.tipo];
+      const campos = CAMPOS_DA_ETAPA[etapa.tipo];
       return {
         indice,
         numero: indice + 1,
@@ -151,16 +122,7 @@ export class PassoEtapasComponent {
   }
 
   protected mensagem(controle: AbstractControl, ehEquacao: boolean): string {
-    if (controle.hasError('required')) {
-      return ehEquacao ? 'Escolha uma equação' : 'Campo obrigatório';
-    }
-    if (controle.hasError('numero')) {
-      return 'Informe um número válido';
-    }
-    if (controle.hasError('positivo')) {
-      return 'Informe um número maior que zero';
-    }
-    return '';
+    return ehEquacao && controle.hasError('required') ? 'Escolha uma equação' : mensagemNumero(controle);
   }
 
   /**

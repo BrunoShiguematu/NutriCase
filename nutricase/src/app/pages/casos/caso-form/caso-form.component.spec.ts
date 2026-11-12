@@ -7,7 +7,7 @@ import { MatInputHarness } from '@angular/material/input/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { CASOS_EXEMPLO, etapasPadrao } from '../../../core/data/casos-exemplo';
 import { TipoEtapa } from '../../../core/models';
 import { CasoService } from '../../../core/services/caso.service';
@@ -26,13 +26,13 @@ describe('CasoFormComponent', () => {
   let navegar: ReturnType<typeof vi.spyOn>;
 
   /** Monta o formulário como se a rota tivesse (ou não) o parâmetro `:id`. */
-  async function montar(id?: string): Promise<void> {
+  async function montar(id?: string, parametros = of(convertToParamMap(id ? { id } : {}))): Promise<void> {
     TestBed.configureTestingModule({
       // Importa o CasosModule (e não só declara o componente): o template é compilado com o escopo do módulo.
       imports: [CasosModule],
       providers: [
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap(id ? { id } : {})) } },
+        { provide: ActivatedRoute, useValue: { paramMap: parametros } },
         // Sem animação no teste: o snackbar fecha na hora.
         { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
       ],
@@ -131,14 +131,173 @@ describe('CasoFormComponent', () => {
       expect(erros()).toContain('Campo obrigatório');
     });
 
-    it('números precisam ser maiores que zero', async () => {
-      await escrever('idade', '0');
+    it('peso e altura precisam ser maiores que zero', async () => {
       await escrever('peso', '-5');
-      await escrever('altura', '170');
+      await escrever('altura', '0');
       await salvar();
 
-      expect(erros()).toContain('Informe um número maior que zero');
       expect(erros().filter((e) => e === 'Informe um número maior que zero').length).toBe(2);
+    });
+
+    describe('idade: inteira, de 10 a 100 anos', () => {
+      const FAIXA = 'A idade deve estar entre 10 e 100 anos';
+      const mensagemDaIdade = (): string =>
+        (fixture.nativeElement as HTMLElement).querySelector('.campo-idade mat-error')?.textContent?.trim() ?? '';
+
+      it.each(['0', '-3', '9', '101', '150'])('%s anos: mensagem da faixa e nada é salvo', async (idade) => {
+        const antes = service.listar().length;
+        await preencherTudo();
+        await escrever('idade', idade);
+
+        await salvar();
+
+        expect(mensagemDaIdade()).toBe(FAIXA);
+        expect(service.listar().length).toBe(antes);
+        expect(navegar).not.toHaveBeenCalled();
+      });
+
+      it.each(['10.5', '30.2', '99.9'])('%s anos: pede anos inteiros e nada é salvo', async (idade) => {
+        const antes = service.listar().length;
+        await preencherTudo();
+        await escrever('idade', idade);
+
+        await salvar();
+
+        expect(mensagemDaIdade()).toBe('Informe a idade em anos inteiros');
+        expect(service.listar().length).toBe(antes);
+      });
+
+      it.each([10, 100])('%i anos, o limite, vale e é guardado', async (idade) => {
+        await preencherTudo();
+        await escrever('idade', String(idade));
+
+        await salvar();
+
+        expect(navegar).toHaveBeenCalledWith(['/casos/gestao']);
+        expect(service.listar().find((c) => c.titulo === 'Remador em preparação')).toBeDefined();
+        const salvo = JSON.parse(localStorage.getItem(CHAVE) ?? '{}') as { atletas: { nome: string; idade: number }[] };
+        expect(salvo.atletas.find((a) => a.nome === 'Ana Teste')?.idade).toBe(idade);
+      });
+
+      it('vazia: campo obrigatório', async () => {
+        await salvar();
+
+        expect(mensagemDaIdade()).toBe('Campo obrigatório');
+      });
+
+      it('mostra a regra num texto de ajuda e nos limites do campo', async () => {
+        const dom = fixture.nativeElement as HTMLElement;
+        const campoIdade = dom.querySelector('.campo-idade') as HTMLElement;
+
+        expect(campoIdade.querySelector('mat-hint')?.textContent?.trim()).toBe('Inteiro, de 10 a 100');
+        const entrada = campoIdade.querySelector('input') as HTMLInputElement;
+        expect([entrada.min, entrada.max, entrada.step]).toEqual(['10', '100', '1']);
+      });
+
+      it('corrigir a idade tira a mensagem', async () => {
+        await escrever('idade', '5');
+        await salvar();
+        expect(mensagemDaIdade()).toBe(FAIXA);
+
+        await escrever('idade', '25');
+
+        expect(mensagemDaIdade()).toBe('');
+      });
+    });
+
+    describe('foco no primeiro campo com erro ao tentar salvar', () => {
+      const focado = (): Element | null => document.activeElement;
+      /** O harness deixa o foco no último campo digitado; tira o foco antes, para só o componente poder colocá-lo. */
+      const tentarSalvar = async (): Promise<void> => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        await salvar();
+      };
+      const doCampo = (nome: string): HTMLElement =>
+        (fixture.nativeElement as HTMLElement).querySelector(`[formControlName="${nome}"]`) as HTMLElement;
+
+      it('formulário vazio: o foco vai para o Título, o primeiro campo', async () => {
+        await tentarSalvar();
+
+        expect(focado()).toBe(doCampo('titulo'));
+      });
+
+      it('só um campo da ficha inválido: o foco vai para ele', async () => {
+        await preencherTudo();
+        await escrever('idade', '5');
+
+        await tentarSalvar();
+
+        expect(focado()).toBe(doCampo('idade'));
+      });
+
+      it('vários inválidos: o foco vai para o primeiro da tela, não para o último', async () => {
+        await preencherTudo();
+        await escrever('altura', '0');
+        await escrever('modalidade', '  ');
+
+        await tentarSalvar();
+
+        expect(focado()).toBe(doCampo('modalidade'));
+      });
+
+      it('um select obrigatório vazio também recebe o foco', async () => {
+        await preencherTudo();
+        // o Sexo foi escolhido em preencherTudo; esvazia pelo formulário
+        fixture.componentInstance['form'].controls.sexo.setValue('');
+
+        await tentarSalvar();
+
+        expect(focado()).toBe(doCampo('sexo'));
+      });
+
+      it('erro numa etapa de cálculo: o foco vai para o campo da etapa', async () => {
+        await preencherTudo();
+        await escreverEtapa('CHO', 'min', '9');
+        await escreverEtapa('CHO', 'max', '5');
+
+        await tentarSalvar();
+
+        const alvo = (fixture.nativeElement as HTMLElement).querySelector(`${ehTipo('CHO')} [formControlName="referencia"]`);
+        expect(focado()).toBe(alvo);
+      });
+
+      it('um campo de texto longo (textarea) vazio também recebe o foco', async () => {
+        await preencherTudo();
+        await escrever('descricao', '');
+
+        await tentarSalvar();
+
+        expect(focado()).toBe(doCampo('descricao'));
+      });
+
+      it('o critério (textarea) de uma etapa vazio recebe o foco', async () => {
+        await preencherTudo();
+        await escreverEtapa('PTN', 'criterio', '  ');
+
+        await tentarSalvar();
+
+        expect(focado()).toBe((fixture.nativeElement as HTMLElement).querySelector(`${ehTipo('PTN')} [formControlName="criterio"]`));
+      });
+
+      it('um campo antes das etapas inválido vence um erro de etapa', async () => {
+        await preencherTudo();
+        await escreverEtapa('LIP', 'tolerancia', '0');
+        await escrever('nome', '');
+
+        await tentarSalvar();
+
+        expect(focado()).toBe(doCampo('nome'));
+      });
+
+      it('tudo válido: salva e não mexe no foco', async () => {
+        await preencherTudo();
+        const antes = focado();
+
+        await salvar();
+
+        expect(navegar).toHaveBeenCalledWith(['/casos/gestao']);
+        expect(focado()).toBe(antes);
+      });
     });
 
     it('com tudo preenchido, mas um número inválido, não salva', async () => {
@@ -603,14 +762,55 @@ describe('CasoFormComponent', () => {
     });
   });
 
+  describe('texto de ajuda de "Equações aceitas"', () => {
+    it('diz que a equação de referência sempre vale', async () => {
+      await montar();
+
+      const dica = (fixture.nativeElement as HTMLElement).querySelector('.etapa-tmb .campo-opcoes mat-hint')?.textContent ?? '';
+
+      expect(dica).toContain('A equação de referência sempre vale');
+      expect(dica).toContain('erro de escolha de equação');
+    });
+  });
+
   describe('id inexistente', () => {
-    it('avisa o erro e volta para a gestão sem alterar nada', async () => {
+    it('mostra uma mensagem clara e um link para a gestão, sem formulário, sem aviso e sem redirecionar', async () => {
       await montar('nao-existe');
+      const dom = fixture.nativeElement as HTMLElement;
       const antes = service.listar().length;
 
-      expect(await avisos()).toEqual(['Caso não encontrado']);
-      expect(navegar).toHaveBeenCalledWith(['/casos/gestao']);
+      expect(titulo()).toBe('Caso não encontrado');
+      expect(dom.querySelector('.caso-nao-encontrado')?.textContent).toContain('Não existe um caso com este endereço');
+      expect(dom.querySelector('.caso-nao-encontrado')?.getAttribute('role')).toBe('alert');
+      const link = dom.querySelector('.caso-nao-encontrado .voltar-gestao') as HTMLAnchorElement;
+      expect(link.getAttribute('href')).toBe('/casos/gestao');
+      expect(link.textContent?.trim()).toBe('Voltar à gestão de casos');
+      expect(dom.querySelector('form')).toBeNull();
+      expect(dom.querySelector('.salvar')).toBeNull();
+      expect(await avisos()).toEqual([]);
+      expect(navegar).not.toHaveBeenCalled();
       expect(service.listar().length).toBe(antes);
+    });
+
+    it('trocar o endereço de um id inexistente para um que existe volta a mostrar o formulário', async () => {
+      const rota = new BehaviorSubject(convertToParamMap({ id: 'nao-existe' }));
+      await montar(undefined, rota);
+      expect(titulo()).toBe('Caso não encontrado');
+
+      rota.next(convertToParamMap({ id: CASO_COM_RESTRICAO.id }));
+      await fixture.whenStable();
+
+      expect(titulo()).toBe('Editar caso');
+      expect((fixture.nativeElement as HTMLElement).querySelector('.caso-nao-encontrado')).toBeNull();
+    });
+
+    it('um id que existe continua mostrando o formulário, sem a mensagem', async () => {
+      await montar(CASO_COM_RESTRICAO.id);
+      const dom = fixture.nativeElement as HTMLElement;
+
+      expect(titulo()).toBe('Editar caso');
+      expect(dom.querySelector('form')).not.toBeNull();
+      expect(dom.querySelector('.caso-nao-encontrado')).toBeNull();
     });
   });
 });

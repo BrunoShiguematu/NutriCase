@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, ElementRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormArray, FormGroup, NonNullableFormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -18,6 +18,16 @@ function textoObrigatorio(controle: AbstractControl): ValidationErrors | null {
 function positivo(controle: AbstractControl): ValidationErrors | null {
   const valor = controle.value;
   return valor !== null && valor !== '' && Number(valor) <= 0 ? { positivo: true } : null;
+}
+
+/** Idade plausível de um atleta do catálogo, em anos inteiros (decisão da A5: de 10 a 100). */
+export const IDADE_MINIMA = 10;
+export const IDADE_MAXIMA = 100;
+
+/** Número preenchido tem que ser inteiro (vazio é com o `required`). */
+function inteiro(controle: AbstractControl): ValidationErrors | null {
+  const valor = controle.value;
+  return valor !== null && valor !== '' && !Number.isInteger(Number(valor)) ? { inteiro: true } : null;
 }
 
 const numeroOuNulo = (controle: AbstractControl | null | undefined): number | null =>
@@ -81,6 +91,7 @@ export class CasoFormComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly elemento = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly niveis: Nivel[] = ['Iniciante', 'Intermediário', 'Avançado'];
   protected readonly sexos: { valor: Sexo; rotulo: string }[] = [
@@ -90,6 +101,12 @@ export class CasoFormComponent {
 
   /** Id do caso em edição; `null` no cadastro. */
   protected readonly idEmEdicao = signal<string | null>(null);
+
+  /** A rota de edição pediu um id que não existe: a tela mostra a mensagem em vez do formulário. */
+  protected readonly naoEncontrado = signal(false);
+
+  protected readonly idadeMinima = IDADE_MINIMA;
+  protected readonly idadeMaxima = IDADE_MAXIMA;
 
   /** As 5 etapas, sempre nesta ordem (a mesma de `etapas` no formulário). */
   protected readonly tipos: readonly TipoEtapa[] = TIPOS_ETAPA;
@@ -109,7 +126,7 @@ export class CasoFormComponent {
     etapas: this.fb.array(TIPOS_ETAPA.map((tipo) => this.criarGrupoDaEtapa(tipo))),
     // Ficha do atleta
     nome: ['', textoObrigatorio],
-    idade: this.fb.control<number | null>(null, [Validators.required, positivo]),
+    idade: this.fb.control<number | null>(null, [Validators.required, inteiro, Validators.min(IDADE_MINIMA), Validators.max(IDADE_MAXIMA)]),
     sexo: this.fb.control<Sexo | ''>('', Validators.required),
     peso: this.fb.control<number | null>(null, [Validators.required, positivo]),
     altura: this.fb.control<number | null>(null, [Validators.required, positivo]),
@@ -134,6 +151,7 @@ export class CasoFormComponent {
     const dados = this.lerFormulario();
     if (this.form.invalid || !dados) {
       this.form.markAllAsTouched();
+      this.focarPrimeiroErro();
       return;
     }
 
@@ -156,6 +174,9 @@ export class CasoFormComponent {
     }
     if (erros['required']) {
       return 'Campo obrigatório';
+    }
+    if (campo === 'idade') {
+      return erros['inteiro'] ? 'Informe a idade em anos inteiros' : `A idade deve estar entre ${IDADE_MINIMA} e ${IDADE_MAXIMA} anos`;
     }
     if (erros['positivo']) {
       return 'Informe um número maior que zero';
@@ -188,6 +209,13 @@ export class CasoFormComponent {
       return 'Escolha uma equação';
     }
     return mensagemNumero(controle) || 'Valor inválido';
+  }
+
+  /** Leva o foco ao primeiro campo com erro, na ordem em que aparecem na tela. */
+  private focarPrimeiroErro(): void {
+    this.elemento.nativeElement
+      .querySelector<HTMLElement>('input.ng-invalid, textarea.ng-invalid, mat-select.ng-invalid')
+      ?.focus();
   }
 
   private avisar(texto: string): void {
@@ -262,6 +290,7 @@ export class CasoFormComponent {
   }
 
   private carregar(id: string | null): void {
+    this.naoEncontrado.set(false);
     if (id === null) {
       this.idEmEdicao.set(null);
       this.form.reset();
@@ -272,8 +301,8 @@ export class CasoFormComponent {
     }
     const existente = this.casoService.buscarPorId(id);
     if (!existente) {
-      this.snackBar.open('Caso não encontrado', 'Fechar', { duration: 4000 });
-      void this.router.navigate(['/casos/gestao']);
+      this.idEmEdicao.set(null);
+      this.naoEncontrado.set(true);
       return;
     }
     this.idEmEdicao.set(id);

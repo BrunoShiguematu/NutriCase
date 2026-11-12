@@ -1,7 +1,6 @@
-// Cores e peças de estilo comuns às telas de resolução e à seção de etapas do caso-form.
+// Fonte única das cores e peças de estilo da marca, usada pelo tema global (styles.scss) e pelos componentes.
 // Paleta da marca (60/30/10): fundo #F2F2F2, verde #174D38, vinho #4D1717 (só para erro). Só variáveis do Sass
 // e mixins: o que não é incluído não vira CSS, então este arquivo não pesa no orçamento de cada componente.
-// Quando o tema global da marca entrar em styles.scss, o mixin `tema-marca` pode sair.
 
 $fundo: #f2f2f2;
 $card: #ffffff;
@@ -16,33 +15,15 @@ $azul: #1f5f6b;
 $borda: #cbcbcb;
 $texto: #1f2a24;
 $suave: #4a5750;
+$campo: #e9eeeb;
+$contorno: #6b756f;
 
-$fonte-titulo: 'Figtree', 'Noto Sans', 'Roboto', sans-serif;
-$fonte-texto: 'Noto Sans', 'Roboto', sans-serif;
+// Barras de indicador: trilha clara com contorno (3,19:1 sobre branco) e a barra em $verde por cima.
+$trilha: #dde5e0;
+$trilha-contorno: #8a928d;
 
-// Troca as cores do Material (azul padrão) pelas da marca só dentro do componente, pelas variáveis de sistema.
-@mixin tema-marca {
-  --mat-sys-primary: #{$verde};
-  --mat-sys-on-primary: #fff;
-  --mat-sys-primary-container: #{$verde-claro};
-  --mat-sys-on-primary-container: #{$verde};
-  --mat-sys-secondary-container: #{$verde-claro};
-  --mat-sys-on-secondary-container: #{$verde};
-  --mat-sys-error: #{$vinho};
-  --mat-sys-on-error: #fff;
-  --mat-sys-on-surface: #{$texto};
-  --mat-sys-on-surface-variant: #{$suave};
-  --mat-sys-outline: #6b756f;
-  --mat-sys-outline-variant: #{$borda};
-  --mat-sys-surface-container-highest: #e9eeeb;
-  --mat-sys-surface-variant: #e9eeeb;
-  --mat-sys-body-large-font: #{$fonte-texto};
-  --mat-sys-body-medium-font: #{$fonte-texto};
-  --mat-sys-label-large-font: #{$fonte-texto};
-  --fonte-titulo: #{$fonte-titulo};
-  font-family: $fonte-texto;
-  color: $texto;
-}
+$fonte-titulo: 'Figtree', 'Noto Sans', sans-serif;
+$fonte-texto: 'Noto Sans', sans-serif;
 
 // Página inteira: respiro em volta (o shell ainda não dá) e título.
 @mixin pagina {

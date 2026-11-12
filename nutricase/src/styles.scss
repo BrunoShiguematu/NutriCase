@@ -1,34 +1,73 @@
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
+// Tema global do NutriCase: Angular Material 3 com a paleta e as fontes da marca (pasta brand/).
+// Como o tema é global, os painéis que abrem fora dos componentes (autocomplete, select, diálogo, snackbar)
+// também saem na cor da marca. As cores ficam em app/shared/styles/_marca.scss, uma fonte só.
+@use 'sass:map';
 @use '@angular/material' as mat;
+@use './app/shared/styles/theme-colors' as paleta;
+@use './app/shared/styles/marca' as m;
 
 html {
   height: 100%;
+
+  // A paleta tonal vem do verde da marca (ng generate @angular/material:theme-color). O verde #174D38 fica entre
+  // os tons 30 e 40 dela, então as cores exatas da marca entram logo abaixo, nas variáveis de sistema.
   @include mat.theme(
     (
       color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
+        primary: paleta.$primary-palette,
+        tertiary: paleta.$primary-palette,
+        theme-type: light,
       ),
-      typography: Roboto,
+      typography: (
+        plain-family: m.$fonte-texto,
+        brand-family: m.$fonte-titulo,
+        bold-weight: 700,
+        medium-weight: 500,
+        regular-weight: 400,
+      ),
       density: 0,
     )
   );
+
+  // Marca 60/30/10: o fundo da página é o cinza #F2F2F2 e tudo o que o Material desenha em cima (cartões, menus,
+  // diálogos, painéis) é branco. O verde é a cor de ação e o vinho só aparece nos erros.
+  @include mat.theme-overrides(
+    (
+      primary: m.$verde,
+      on-primary: #fff,
+      primary-container: m.$verde-claro,
+      on-primary-container: m.$verde,
+      secondary-container: m.$verde-claro,
+      on-secondary-container: m.$verde,
+      error: m.$vinho,
+      on-error: #fff,
+      error-container: m.$vinho-claro,
+      on-error-container: m.$vinho,
+      surface: #fff,
+      background: m.$fundo,
+      surface-container-lowest: #fff,
+      surface-container-low: #fff,
+      surface-container: #fff,
+      surface-container-high: #fff,
+      surface-container-highest: m.$campo,
+      surface-variant: m.$campo,
+      on-surface: m.$texto,
+      on-surface-variant: m.$suave,
+      outline: m.$contorno,
+      outline-variant: m.$borda,
+      inverse-surface: m.$verde,
+      inverse-on-surface: #fff,
+      inverse-primary: map.get(paleta.$primary-palette, 80),
+    )
+  );
+
+  // Fonte dos títulos das telas (Figtree); o texto corrido usa a do tema (Noto Sans).
+  --fonte-titulo: #{m.$fonte-titulo};
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
   color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
+  background-color: m.$fundo;
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
 
@@ -36,4 +75,21 @@ body {
   margin: 0;
   height: 100%;
 }
-/* You can add global styles to this file, and also import other style files */
+
+// A fonte de ícones vem do pacote npm (angular.json), mas o pacote não traz a classe que o mat-icon usa.
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga';
+}

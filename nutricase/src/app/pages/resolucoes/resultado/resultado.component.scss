@@ -1,7 +1,6 @@
-@use '../marca' as m;
+@use '../../../shared/styles/marca' as m;
 
 :host {
-  @include m.tema-marca;
   @include m.pagina;
 }
 

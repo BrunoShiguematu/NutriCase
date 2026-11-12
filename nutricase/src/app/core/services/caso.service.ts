@@ -26,6 +26,13 @@ interface DadosSalvos {
   atletas: Atleta[];
   /** As 5 etapas de todos os casos, ligadas a cada caso por `casoId`. */
   etapas: EtapaCalculo[];
+  /**
+   * Ids dos exemplos que o usuário editou (o caso, a ficha ou as etapas). Na troca de versão dos
+   * exemplos, esses ficam como o usuário deixou. Dado antigo, sem o campo, vale como lista vazia.
+   */
+  exemplosEditados: string[];
+  /** Ids dos exemplos que o usuário excluiu; na troca de versão eles não voltam. */
+  exemplosExcluidos: string[];
 }
 
 const CHAVE = 'nutricase.casos';
@@ -103,6 +110,24 @@ function conjuntoCompleto(etapas: EtapaCalculo[]): boolean {
   return ordenadas.length === TIPOS_ETAPA.length && ordenadas.every((e, i) => e.tipo === TIPOS_ETAPA[i] && e.ordem === i + 1);
 }
 
+const ehExemplo = (id: string): boolean => id.startsWith(PREFIXO_ID_EXEMPLO);
+
+/** Os mesmos dados, sem depender da ordem das chaves (o JSON já ignora chaves com `undefined`). */
+function iguais(a: unknown, b: unknown): boolean {
+  const normal = (v: unknown): unknown =>
+    Array.isArray(v)
+      ? v.map(normal)
+      : v !== null && typeof v === 'object'
+        ? Object.fromEntries(Object.entries(v).sort(([x], [y]) => x.localeCompare(y)).map(([k, x]) => [k, normal(x)]))
+        : v;
+  return JSON.stringify(normal(a)) === JSON.stringify(normal(b));
+}
+
+/** Uma lista de ids de exemplo guardada: só textos com o prefixo de exemplo, sem repetição; o resto é descartado. */
+function idsDeExemplo(lista: unknown): string[] {
+  return Array.isArray(lista) ? [...new Set(lista.filter((id): id is string => typeof id === 'string' && ehExemplo(id)))] : [];
+}
+
 function gerarId(prefixo: string): string {
   return `${prefixo}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -115,7 +140,14 @@ function gerarId(prefixo: string): string {
  */
 @Injectable({ providedIn: 'root' })
 export class CasoService {
-  private readonly dados = signal<DadosSalvos>({ versao: VERSAO_CASOS_EXEMPLO, casos: [], atletas: [], etapas: [] });
+  private readonly dados = signal<DadosSalvos>({
+    versao: VERSAO_CASOS_EXEMPLO,
+    casos: [],
+    atletas: [],
+    etapas: [],
+    exemplosEditados: [],
+    exemplosExcluidos: [],
+  });
 
   readonly casos = computed(() => this.dados().casos.map(copiarCaso));
 
@@ -156,10 +188,13 @@ export class CasoService {
     const atleta: Atleta = { ...copiarAtleta(dadosAtleta), id: existente.atleta.id };
     const caso: Caso = { ...copiarCaso(dadosCaso), id: existente.caso.id, atletaId: atleta.id };
     const atual = this.dados();
+    // Só conta como edição se algo mudou: salvar o formulário sem mexer em nada não "gasta" o exemplo.
+    const mudou = !iguais(existente.caso, caso) || !iguais(existente.atleta, atleta);
     this.salvar({
       ...atual,
       casos: atual.casos.map((c) => (c.id === id ? caso : c)),
       atletas: atual.atletas.map((a) => (a.id === atleta.id ? atleta : a)),
+      exemplosEditados: mudou ? this.marcarEditado(atual, id) : atual.exemplosEditados,
     });
     return { caso: copiarCaso(caso), atleta: copiarAtleta(atleta) };
   }
@@ -176,6 +211,9 @@ export class CasoService {
       casos: atual.casos.filter((c) => c.id !== id),
       atletas: atual.atletas.filter((a) => a.id !== existente.atleta.id),
       etapas: atual.etapas.filter((e) => e.casoId !== id),
+      // Um exemplo excluído não volta na troca de versão, mesmo que antes tivesse sido editado.
+      exemplosEditados: atual.exemplosEditados.filter((e) => e !== id),
+      exemplosExcluidos: ehExemplo(id) && !atual.exemplosExcluidos.includes(id) ? [...atual.exemplosExcluidos, id] : atual.exemplosExcluidos,
     });
     return true;
   }
@@ -216,8 +254,18 @@ export class CasoService {
       return undefined;
     }
     const guardadas = (novas as EtapaCalculo[]).map(copiarEtapa).sort(porOrdem);
-    this.salvar({ ...atual, etapas: [...atual.etapas.filter((e) => e.casoId !== casoId), ...guardadas] });
+    const mudou = !iguais([...existentes].sort(porOrdem), guardadas);
+    this.salvar({
+      ...atual,
+      etapas: [...atual.etapas.filter((e) => e.casoId !== casoId), ...guardadas],
+      exemplosEditados: mudou ? this.marcarEditado(atual, casoId) : atual.exemplosEditados,
+    });
     return guardadas.map(copiarEtapa);
+  }
+
+  /** A lista de exemplos editados com este caso incluído, se ele for um exemplo. */
+  private marcarEditado(dados: DadosSalvos, casoId: string): string[] {
+    return ehExemplo(casoId) && !dados.exemplosEditados.includes(casoId) ? [...dados.exemplosEditados, casoId] : dados.exemplosEditados;
   }
 
   private salvar(novo: DadosSalvos): void {
@@ -227,7 +275,9 @@ export class CasoService {
 
   /**
    * Primeira abertura (ou dado ilegível): grava os exemplos.
-   * Versão diferente da atual: troca os exemplos antigos pelos atuais e mantém os casos do usuário.
+   * Versão diferente da atual: os exemplos intactos são trocados pelos atuais e os casos do usuário
+   * ficam. Um exemplo que o usuário editou (caso, ficha e etapas) fica como ele deixou, e um que ele
+   * excluiu não volta. Os ids não mudam, então as resoluções ligadas aos exemplos continuam abrindo.
    * Em toda abertura os dados salvos são normalizados (veja `normalizar`), então dado de versão
    * antiga ou sem a lista de etapas carrega sem quebrar.
    */
@@ -239,19 +289,37 @@ export class CasoService {
         casos: CASOS_EXEMPLO.map(copiarCaso),
         atletas: ATLETAS_EXEMPLO.map(copiarAtleta),
         etapas: ETAPAS_EXEMPLO.map(copiarEtapa),
+        exemplosEditados: [],
+        exemplosExcluidos: [],
       });
     }
     if (salvos.versao === VERSAO_CASOS_EXEMPLO) {
       const { dados, alterado } = this.normalizar(salvos);
       return alterado ? this.gravarEDevolver(dados) : dados;
     }
-    const doUsuario = (casoId: string): boolean => !casoId.startsWith(PREFIXO_ID_EXEMPLO);
+
+    const excluidos = new Set(salvos.exemplosExcluidos);
+    // Ficam como estão: os casos do usuário e os exemplos que ele editou (se ainda estão salvos).
+    const mantidos = salvos.casos.filter((c) => !ehExemplo(c.id) || salvos.exemplosEditados.includes(c.id));
+    const idsMantidos = new Set(mantidos.map((c) => c.id));
+    const atletasMantidos = new Set(mantidos.map((c) => c.atletaId));
+    // Entram os exemplos atuais que o usuário não excluiu nem editou.
+    const novos = CASOS_EXEMPLO.filter((c) => !excluidos.has(c.id) && !idsMantidos.has(c.id));
+    const atletasNovos = new Set(novos.map((c) => c.atletaId));
     return this.gravarEDevolver(
       this.normalizar({
         versao: VERSAO_CASOS_EXEMPLO,
-        casos: [...CASOS_EXEMPLO.map(copiarCaso), ...salvos.casos.filter((c) => doUsuario(c.id))],
-        atletas: [...ATLETAS_EXEMPLO.map(copiarAtleta), ...salvos.atletas.filter((a) => !a.id.startsWith(PREFIXO_ID_EXEMPLO))],
-        etapas: [...ETAPAS_EXEMPLO.map(copiarEtapa), ...salvos.etapas.filter((e) => doUsuario(e.casoId))],
+        casos: [...novos.map(copiarCaso), ...mantidos],
+        atletas: [
+          ...ATLETAS_EXEMPLO.filter((a) => atletasNovos.has(a.id)).map(copiarAtleta),
+          ...salvos.atletas.filter((a) => (ehExemplo(a.id) ? atletasMantidos.has(a.id) : true)),
+        ],
+        etapas: [
+          ...ETAPAS_EXEMPLO.filter((e) => novos.some((c) => c.id === e.casoId)).map(copiarEtapa),
+          ...salvos.etapas.filter((e) => idsMantidos.has(e.casoId)),
+        ],
+        exemplosEditados: salvos.exemplosEditados.filter((id) => idsMantidos.has(id)),
+        exemplosExcluidos: salvos.exemplosExcluidos,
       }).dados,
     );
   }
@@ -292,11 +360,19 @@ export class CasoService {
   }
 
   private lerSalvos(): DadosSalvos | null {
-    const lido = this.storage.ler<Partial<DadosSalvos>>(CHAVE);
+    const lido = this.storage.ler<Partial<Record<keyof DadosSalvos, unknown>>>(CHAVE);
     if (lido && typeof lido.versao === 'number' && Array.isArray(lido.casos) && Array.isArray(lido.atletas)) {
       // Dado salvo antes das etapas existirem não tem a lista: vira vazia e a normalização preenche.
       const etapas = Array.isArray(lido.etapas) ? lido.etapas.filter(etapaBemFormada) : [];
-      return { versao: lido.versao, casos: lido.casos, atletas: lido.atletas, etapas };
+      return {
+        versao: lido.versao,
+        casos: lido.casos,
+        atletas: lido.atletas,
+        etapas,
+        // Dado salvo antes destas listas existirem não as tem: vale como vazia (nenhum exemplo editado ou excluído).
+        exemplosEditados: idsDeExemplo(lido.exemplosEditados),
+        exemplosExcluidos: idsDeExemplo(lido.exemplosExcluidos),
+      };
     }
     return null;
   }

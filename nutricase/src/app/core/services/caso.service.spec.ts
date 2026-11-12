@@ -10,7 +10,9 @@ import {
   VERSAO_CASOS_EXEMPLO,
 } from '../data/casos-exemplo';
 import { Atleta, Caso, EtapaCalculo, RespostaEtapa, TOLERANCIA_DIETA_PADRAO } from '../models';
+import { AlimentoService } from './alimento.service';
 import { CasoService, DadosAtleta, DadosCaso } from './caso.service';
+import { ResolucaoService } from './resolucao.service';
 import { StorageService } from './storage.service';
 
 const CHAVE = 'nutricase.casos';
@@ -20,6 +22,8 @@ interface Salvos {
   casos: Caso[];
   atletas: Atleta[];
   etapas: EtapaCalculo[];
+  exemplosEditados?: unknown;
+  exemplosExcluidos?: unknown;
 }
 
 function dadosCaso(titulo = 'Caso de teste'): DadosCaso {
@@ -59,6 +63,13 @@ function lerLocalStorage(): Salvos | null {
 /** Simula fechar e abrir o app: serviço novo com StorageService novo, que só enxerga o localStorage. */
 function reabrir(): CasoService {
   return new CasoService(new StorageService());
+}
+
+/** Simula a troca de VERSAO_CASOS_EXEMPLO: marca os dados salvos como de uma versão antiga e abre o app de novo. */
+function subirVersao(): CasoService {
+  const salvos = lerLocalStorage() as Salvos;
+  localStorage.setItem(CHAVE, JSON.stringify({ ...salvos, versao: VERSAO_CASOS_EXEMPLO - 1 }));
+  return reabrir();
 }
 
 describe('etapasPadrao e etapas dos casos de exemplo', () => {
@@ -364,14 +375,316 @@ describe('CasoService', () => {
       expect(novosSalvos?.atletas.some((a) => a.id === 'exemplo-atleta-99')).toBe(false);
     });
 
-    it('recoloca um exemplo que estava excluído na versão antiga', () => {
+    it('um exemplo excluído não volta, nem na troca de versão', () => {
       service.excluir(CASOS_EXEMPLO[0].id);
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId(CASOS_EXEMPLO[0].id)).toBeUndefined();
+      expect(reaberto.listar().length).toBe(CASOS_EXEMPLO.length - 1);
+    });
+  });
+
+  describe('troca de versão: exemplos editados, excluídos e intactos', () => {
+    const ID = CASOS_EXEMPLO[0].id;
+    const OUTRO = CASOS_EXEMPLO[1].id;
+    const ATLETA_ID = CASOS_EXEMPLO[0].atletaId;
+
+    /** Deixa os exemplos salvos "de uma versão antiga": o texto de cada um é trocado, para ver quem a troca de versão atualiza. */
+    function envelhecerExemplos(...ids: string[]): void {
       const salvos = lerLocalStorage() as Salvos;
-      localStorage.setItem(CHAVE, JSON.stringify({ ...salvos, versao: VERSAO_CASOS_EXEMPLO - 1 }));
+      salvos.casos = salvos.casos.map((c) => (ids.includes(c.id) ? { ...c, titulo: 'Texto de uma versão antiga' } : c));
+      salvos.atletas = salvos.atletas.map((a) =>
+        ids.some((id) => CASOS_EXEMPLO.find((c) => c.id === id)?.atletaId === a.id) ? { ...a, nome: 'Nome de uma versão antiga' } : a,
+      );
+      localStorage.setItem(CHAVE, JSON.stringify(salvos));
+    }
 
-      const reaberto = reabrir();
+    function editarCasoEAtleta(titulo = 'Editado pelo docente', nome = 'Atleta editada'): void {
+      const { caso, atleta } = service.buscarPorId(ID)!;
+      const { id: _c, atletaId: _a, ...dadosC } = caso;
+      const { id: _i, ...dadosA } = atleta;
+      service.atualizar(ID, { ...dadosC, titulo }, { ...dadosA, nome });
+    }
 
-      expect(reaberto.buscarPorId(CASOS_EXEMPLO[0].id)).toBeDefined();
+    it('um exemplo editado fica como o usuário deixou: o caso e o atleta', () => {
+      editarCasoEAtleta();
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId(ID)?.caso.titulo).toBe('Editado pelo docente');
+      expect(reaberto.buscarPorId(ID)?.atleta.nome).toBe('Atleta editada');
+      expect(reaberto.buscarPorId(ID)?.caso.atletaId).toBe(ATLETA_ID);
+      expect(reaberto.listar().length).toBe(CASOS_EXEMPLO.length);
+    });
+
+    it('editar só a ficha do atleta também conta', () => {
+      const { caso, atleta } = service.buscarPorId(ID)!;
+      const { id: _c, atletaId: _a, ...dadosC } = caso;
+      const { id: _i, ...dadosA } = atleta;
+      service.atualizar(ID, dadosC, { ...dadosA, peso: atleta.peso + 5 });
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId(ID)?.atleta.peso).toBe(atleta.peso + 5);
+    });
+
+    it('editar só o caso (a ficha igual) também conta', () => {
+      const { caso, atleta } = service.buscarPorId(ID)!;
+      const { id: _c, atletaId: _a, ...dadosC } = caso;
+      const { id: _i, ...dadosA } = atleta;
+      service.atualizar(ID, { ...dadosC, descricao: 'Descrição editada' }, dadosA);
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId(ID)?.caso.descricao).toBe('Descrição editada');
+    });
+
+    it('editar um caso do usuário não entra na lista de exemplos editados', () => {
+      const meu = service.criar(dadosCaso('Meu caso'), dadosAtleta('Minha atleta'));
+
+      service.atualizar(meu.caso.id, dadosCaso('Meu caso editado'), dadosAtleta('Minha atleta'));
+      const etapas = service.listarEtapas(meu.caso.id);
+      etapas[0] = { ...etapas[0], tolerancia: 7 };
+      service.atualizarEtapas(meu.caso.id, etapas);
+
+      expect((lerLocalStorage() as Salvos).exemplosEditados).toEqual([]);
+    });
+
+    it('editar só as etapas também conta, e as etapas ficam como o usuário deixou', () => {
+      const etapas = service.listarEtapas(ID);
+      etapas[1] = { ...etapas[1], faixaAceitavel: { min: 1.6, max: 1.9 }, parametroReferencia: 1.8 };
+      expect(service.atualizarEtapas(ID, etapas)).toBeDefined();
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.listarEtapas(ID)).toEqual(etapas);
+      expect(reaberto.listarEtapas(ID)[1].faixaAceitavel).toEqual({ min: 1.6, max: 1.9 });
+      expect(reaberto.buscarPorId(ID)?.caso.titulo).toBe(CASOS_EXEMPLO[0].titulo);
+    });
+
+    it('a edição sobrevive a várias trocas de versão seguidas', () => {
+      editarCasoEAtleta();
+
+      subirVersao();
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId(ID)?.caso.titulo).toBe('Editado pelo docente');
+    });
+
+    it('guarda no navegador quais exemplos foram editados e quais foram excluídos', () => {
+      editarCasoEAtleta();
+      service.excluir(OUTRO);
+
+      const salvos = lerLocalStorage() as Salvos;
+
+      expect(salvos.exemplosEditados).toEqual([ID]);
+      expect(salvos.exemplosExcluidos).toEqual([OUTRO]);
+    });
+
+    it('os exemplos intactos são atualizados normalmente, com caso, ficha e etapas', () => {
+      envelhecerExemplos(OUTRO);
+      const salvos = lerLocalStorage() as Salvos;
+      salvos.etapas = salvos.etapas.map((e) => (e.casoId === OUTRO ? { ...e, tolerancia: 99 } : e));
+      localStorage.setItem(CHAVE, JSON.stringify(salvos));
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId(OUTRO)?.caso.titulo).toBe(CASOS_EXEMPLO[1].titulo);
+      expect(reaberto.buscarPorId(OUTRO)?.atleta.nome).toBe(ATLETAS_EXEMPLO[1].nome);
+      expect(reaberto.listarEtapas(OUTRO)).toEqual(etapasPadrao(OUTRO));
+    });
+
+    it('editar um exemplo não impede a atualização dos outros', () => {
+      envelhecerExemplos(OUTRO);
+      editarCasoEAtleta();
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId(ID)?.caso.titulo).toBe('Editado pelo docente');
+      expect(reaberto.buscarPorId(OUTRO)?.caso.titulo).toBe(CASOS_EXEMPLO[1].titulo);
+    });
+
+    it('salvar um exemplo sem mudar nada não o marca como editado: ele continua sendo atualizado', () => {
+      const { caso, atleta } = service.buscarPorId(ID)!;
+      const { id: _c, atletaId: _a, ...dadosC } = caso;
+      const { id: _i, ...dadosA } = atleta;
+      service.atualizar(ID, dadosC, dadosA);
+      service.atualizarEtapas(ID, service.listarEtapas(ID));
+      expect((lerLocalStorage() as Salvos).exemplosEditados).toEqual([]);
+      envelhecerExemplos(ID);
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId(ID)?.caso.titulo).toBe(CASOS_EXEMPLO[0].titulo);
+    });
+
+    it('um exemplo excluído não volta: nem o caso, nem o atleta, nem as etapas', () => {
+      service.excluir(ID);
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId(ID)).toBeUndefined();
+      expect(reaberto.listarEtapas(ID)).toEqual([]);
+      const salvos = lerLocalStorage() as Salvos;
+      expect(salvos.atletas.some((a) => a.id === ATLETA_ID)).toBe(false);
+      expect(salvos.etapas.some((e) => e.casoId === ID)).toBe(false);
+      expect(reaberto.listar().length).toBe(CASOS_EXEMPLO.length - 1);
+    });
+
+    it('editar e depois excluir: também não volta, e sai da lista de editados', () => {
+      editarCasoEAtleta();
+      expect((lerLocalStorage() as Salvos).exemplosEditados).toEqual([ID]);
+      service.excluir(ID);
+      expect((lerLocalStorage() as Salvos).exemplosEditados).toEqual([]);
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId(ID)).toBeUndefined();
+      const salvos = lerLocalStorage() as Salvos;
+      expect(salvos.exemplosEditados).toEqual([]);
+      expect(salvos.exemplosExcluidos).toEqual([ID]);
+    });
+
+    it('excluir um exemplo não segura os outros: eles são atualizados', () => {
+      envelhecerExemplos(OUTRO);
+      service.excluir(ID);
+
+      expect(subirVersao().buscarPorId(OUTRO)?.caso.titulo).toBe(CASOS_EXEMPLO[1].titulo);
+    });
+
+    it('os casos do usuário continuam como estão, junto com exemplos editados e excluídos', () => {
+      const meu = service.criar(dadosCaso('Meu caso'), dadosAtleta('Minha atleta'));
+      editarCasoEAtleta();
+      service.excluir(OUTRO);
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId(meu.caso.id)?.atleta.nome).toBe('Minha atleta');
+      expect(reaberto.listarEtapas(meu.caso.id).length).toBe(5);
+      expect(reaberto.listar().length).toBe(CASOS_EXEMPLO.length); // 8 - 1 excluído + 1 do usuário
+    });
+
+    it('um exemplo editado que deixou de existir nos exemplos atuais continua guardado', () => {
+      const salvos = lerLocalStorage() as Salvos;
+      const antigo: Caso = { ...CASOS_EXEMPLO[0], id: 'exemplo-caso-99', atletaId: 'exemplo-atleta-99', titulo: 'Editado e já fora dos exemplos' };
+      localStorage.setItem(
+        CHAVE,
+        JSON.stringify({
+          ...salvos,
+          casos: [...salvos.casos, antigo],
+          atletas: [...salvos.atletas, { ...ATLETAS_EXEMPLO[0], id: 'exemplo-atleta-99' }],
+          etapas: [...salvos.etapas, ...etapasPadrao('exemplo-caso-99')],
+          exemplosEditados: ['exemplo-caso-99'],
+        }),
+      );
+
+      const reaberto = subirVersao();
+
+      expect(reaberto.buscarPorId('exemplo-caso-99')?.caso.titulo).toBe('Editado e já fora dos exemplos');
+      expect(reaberto.listarEtapas('exemplo-caso-99').length).toBe(5);
+    });
+
+    describe('resoluções ligadas', () => {
+      function resolucoes(): ResolucaoService {
+        const storage = new StorageService();
+        return new ResolucaoService(storage, new CasoService(storage), new AlimentoService(storage, async () => []));
+      }
+
+      it('uma resolução de um exemplo editado continua abrindo, com o caso editado', () => {
+        const antes = resolucoes();
+        const resolucao = antes.iniciar(ID)!;
+        editarCasoEAtleta();
+
+        subirVersao();
+        const depois = resolucoes();
+
+        expect(depois.buscar(resolucao.id)?.casoId).toBe(ID);
+        expect(new CasoService(new StorageService()).buscarPorId(ID)?.caso.titulo).toBe('Editado pelo docente');
+        expect(depois.listar().map((r) => r.id)).toContain(resolucao.id);
+      });
+
+      it('uma resolução de um exemplo intacto continua abrindo, com o caso atualizado', () => {
+        const resolucao = resolucoes().iniciar(OUTRO)!;
+        envelhecerExemplos(OUTRO);
+
+        subirVersao();
+
+        expect(resolucoes().buscar(resolucao.id)?.casoId).toBe(OUTRO);
+        expect(new CasoService(new StorageService()).buscarPorId(OUTRO)?.caso.titulo).toBe(CASOS_EXEMPLO[1].titulo);
+      });
+
+      it('uma resolução de um exemplo excluído continua guardada, e o caso segue ausente (a tela mostra "Caso excluído")', () => {
+        const resolucao = resolucoes().iniciar(ID)!;
+        new CasoService(new StorageService()).excluir(ID);
+
+        subirVersao();
+
+        expect(resolucoes().buscar(resolucao.id)).toBeDefined();
+        expect(new CasoService(new StorageService()).buscarPorId(ID)).toBeUndefined();
+      });
+    });
+
+    describe('dados antigos, sem as listas novas', () => {
+      function semAsListas(versao: number): void {
+        const { exemplosEditados: _e, exemplosExcluidos: _x, ...resto } = lerLocalStorage() as Salvos;
+        localStorage.setItem(CHAVE, JSON.stringify({ ...resto, versao }));
+      }
+
+      it('na mesma versão: carregam sem quebrar, e as listas começam vazias', () => {
+        semAsListas(VERSAO_CASOS_EXEMPLO);
+
+        const reaberto = reabrir();
+
+        expect(reaberto.listar().length).toBe(CASOS_EXEMPLO.length);
+        reaberto.excluir(ID);
+        expect((lerLocalStorage() as Salvos).exemplosExcluidos).toEqual([ID]);
+        expect((lerLocalStorage() as Salvos).exemplosEditados).toEqual([]);
+      });
+
+      it('na troca de versão: os exemplos são atualizados e o caso do usuário fica', () => {
+        const meu = service.criar(dadosCaso('Meu caso'), dadosAtleta('Minha atleta'));
+        envelhecerExemplos(ID);
+        semAsListas(VERSAO_CASOS_EXEMPLO - 1);
+
+        const reaberto = reabrir();
+
+        expect(reaberto.buscarPorId(ID)?.caso.titulo).toBe(CASOS_EXEMPLO[0].titulo);
+        expect(reaberto.buscarPorId(meu.caso.id)?.caso.titulo).toBe('Meu caso');
+        const salvos = lerLocalStorage() as Salvos;
+        expect(salvos.versao).toBe(VERSAO_CASOS_EXEMPLO);
+        expect(salvos.exemplosEditados).toEqual([]);
+        expect(salvos.exemplosExcluidos).toEqual([]);
+      });
+
+      it.each([
+        ['não é lista', 'texto'],
+        ['é um objeto', { a: 1 }],
+        ['é null', null],
+        ['é um número', 3],
+      ])('listas que %s valem como vazias', (_rotulo, lixo) => {
+        const salvos = lerLocalStorage() as Salvos;
+        localStorage.setItem(CHAVE, JSON.stringify({ ...salvos, exemplosEditados: lixo, exemplosExcluidos: lixo }));
+
+        const reaberto = subirVersao();
+
+        expect(reaberto.listar().length).toBe(CASOS_EXEMPLO.length);
+      });
+
+      it('descarta o que não é id de exemplo: números, textos soltos, repetidos e ids de casos do usuário', () => {
+        const meu = service.criar(dadosCaso('Meu caso'), dadosAtleta('Minha atleta'));
+        const salvos = lerLocalStorage() as Salvos;
+        localStorage.setItem(
+          CHAVE,
+          JSON.stringify({ ...salvos, exemplosEditados: [ID, ID, 7, null, meu.caso.id, 'qualquer coisa'], exemplosExcluidos: [OUTRO, {}, OUTRO] }),
+        );
+
+        reabrir().excluir(CASOS_EXEMPLO[2].id); // qualquer gravação regrava as listas já limpas
+
+        const depois = lerLocalStorage() as Salvos;
+        expect(depois.exemplosEditados).toEqual([ID]);
+        expect(depois.exemplosExcluidos).toEqual([OUTRO, CASOS_EXEMPLO[2].id]);
+      });
     });
   });
 

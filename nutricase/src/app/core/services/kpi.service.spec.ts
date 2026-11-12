@@ -149,6 +149,18 @@ describe('KpiService', () => {
     expect(resultado.aproveitamento?.total).toBe(5);
   });
 
+  it('uma submetida cujo caso foi excluído depois continua contando: os KPIs não mudam', async () => {
+    const s = abrir();
+    await submeter(s, { CHO: [6, 420000] });
+    const antes = s.kpis.calcular();
+    expect(antes.casosConcluidos.tentativas).toBe(1);
+
+    expect(s.casos.excluir(CASO_1)).toBe(true);
+
+    expect(s.casos.buscarPorId(CASO_1)).toBeUndefined();
+    expect(s.kpis.calcular()).toEqual(antes);
+  });
+
   it('não grava nada no navegador ao calcular', async () => {
     const s = abrir();
     await submeter(s);

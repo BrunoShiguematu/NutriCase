@@ -1,1 +1,69 @@
-<h1 class="page-title">Dashboard</h1>
+<header class="page-header">
+  <h1 class="page-title">Dashboard</h1>
+</header>
+
+<section class="kpis" aria-label="Indicadores das suas resoluções">
+  <mat-card class="kpi kpi-casos" appearance="outlined">
+    <mat-card-header>
+      <h2 mat-card-title class="kpi-titulo">Casos concluídos</h2>
+    </mat-card-header>
+    <mat-card-content>
+      @if (semSubmissoes) {
+        <p class="kpi-valor kpi-vazio">—</p>
+      } @else {
+        <p class="kpi-valor">{{ kpis.casosConcluidos.tentativas }}</p>
+        <p class="kpi-detalhe">{{ tentativasTexto }}, em {{ casosTexto }}</p>
+      }
+      <p class="kpi-explicacao">Conta todas as tentativas submetidas, inclusive as refeitas.</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="kpi kpi-aproveitamento" appearance="outlined">
+    <mat-card-header>
+      <h2 mat-card-title class="kpi-titulo">Aproveitamento nos cálculos</h2>
+    </mat-card-header>
+    <mat-card-content>
+      @if (kpis.aproveitamento; as aproveitamento) {
+        <p class="kpi-valor">{{ aproveitamento.percentual }}%</p>
+        <p class="kpi-detalhe">
+          {{ aproveitamento.corretas + aproveitamento.divergentes }} de {{ aproveitamento.total }} etapas corretas ou divergentes
+        </p>
+      } @else {
+        <p class="kpi-valor kpi-vazio">—</p>
+      }
+      <p class="kpi-explicacao">Etapas corretas ou divergentes sobre o total de etapas respondidas nas tentativas submetidas.</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="kpi kpi-erros" appearance="outlined">
+    <mat-card-header>
+      <h2 mat-card-title class="kpi-titulo">Erros por tipo</h2>
+    </mat-card-header>
+    <mat-card-content>
+      @if (semSubmissoes) {
+        <p class="kpi-valor kpi-vazio">—</p>
+      } @else {
+        <p class="kpi-valor">{{ kpis.errosPorTipo.total }}</p>
+        <p class="kpi-detalhe">{{ errosTexto }} no total</p>
+        <ul class="lista-erros">
+          @for (linha of linhasErro; track linha.tipo) {
+            <li class="erro-tipo">
+              <span class="erro-rotulo">{{ linha.tipo }}</span>
+              <span class="erro-quantidade">{{ linha.quantidade }}</span>
+              <span class="erro-barra" aria-hidden="true">
+                <span class="erro-barra-preenchida" [style.width.%]="linha.largura"></span>
+              </span>
+            </li>
+          }
+        </ul>
+      }
+      <p class="kpi-explicacao">Erros das tentativas submetidas pelos 5 tipos; a dieta fora das metas conta 1 por tentativa.</p>
+    </mat-card-content>
+  </mat-card>
+</section>
+
+@if (semSubmissoes) {
+  <p class="sem-submissoes">
+    Você ainda não submeteu nenhuma resolução. <a class="ir-catalogo" routerLink="/casos">Escolha um caso no catálogo</a> para começar.
+  </p>
+}

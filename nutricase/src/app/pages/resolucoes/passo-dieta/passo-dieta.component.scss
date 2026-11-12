@@ -1,0 +1,163 @@
+@use '../marca' as m;
+
+:host {
+  display: block;
+  padding-top: 0.75rem;
+}
+
+.secao-titulo {
+  @include m.secao-titulo;
+}
+
+// Formulário da refeição: nome, horário e marcador na mesma linha.
+.refeicao-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 0 1rem;
+  margin-bottom: 1.5rem;
+
+  .secao-titulo,
+  .refeicao-acoes {
+    grid-column: 1 / -1;
+  }
+}
+
+.refeicao-acoes {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.alimentos-erro {
+  @include m.aviso(m.$vinho, m.$vinho-claro);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+
+  p {
+    margin: 0;
+  }
+}
+
+.alimentos-carregando,
+.sem-refeicoes,
+.sem-itens {
+  color: m.$suave;
+}
+
+.sem-refeicoes {
+  padding: 1rem;
+  border: 1px dashed m.$borda;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.refeicao {
+  --mat-card-outlined-outline-color: #{m.$borda};
+  margin-bottom: 1rem;
+}
+
+.refeicao-nome {
+  font: 700 1.0625rem/1.3 var(--fonte-titulo);
+  color: m.$verde;
+}
+
+.itens {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+// Alimento, quantidade e remover em uma linha; o aviso de item incompleto vai para baixo.
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8rem auto;
+  gap: 0 1rem;
+  align-items: center;
+  padding: 0.25rem 0;
+
+  + .item {
+    border-top: 1px solid m.$borda;
+  }
+}
+
+.item-nome {
+  font-weight: 600;
+}
+
+.item-quantidade {
+  --mat-form-field-container-height: 44px;
+  --mat-form-field-filled-with-label-container-padding-top: 12px;
+  --mat-form-field-filled-with-label-container-padding-bottom: 12px;
+}
+
+.item-incompleto {
+  @include m.aviso(m.$ambar-borda, m.$ambar-claro);
+  grid-column: 1 / -1;
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+// Totais como etiquetas: o nome do nutriente está sempre escrito junto do número.
+.refeicao-totais,
+.dia-totais {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  font-weight: 600;
+}
+
+.total-kcal,
+.total-cho,
+.total-ptn,
+.total-lip {
+  padding: 0.125rem 0.625rem;
+  border-radius: 999px;
+  background: m.$verde-claro;
+  color: m.$verde;
+  font-variant-numeric: tabular-nums;
+}
+
+.dia {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 2px solid m.$verde;
+}
+
+.comparativo-titulo {
+  margin: 1.25rem 0 0.5rem;
+  font: 600 0.9375rem/1.3 var(--fonte-titulo);
+}
+
+.comparativo {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid m.$borda;
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid m.$borda;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  th:first-child {
+    text-align: left;
+  }
+
+  thead th {
+    background: m.$verde-claro;
+    color: m.$verde;
+    font-size: 0.8125rem;
+  }
+}
+
+.comparativo-pendente {
+  background: m.$ambar-claro;
+  color: m.$ambar;
+  font-weight: 600;
+  text-align: left;
+}

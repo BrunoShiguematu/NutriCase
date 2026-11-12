@@ -1,0 +1,130 @@
+@use '../marca' as m;
+
+:host {
+  display: block;
+  padding-top: 0.75rem;
+}
+
+.secao-titulo {
+  @include m.secao-titulo;
+}
+
+.passo-revisar > section {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid m.$borda;
+
+  &:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+}
+
+// Pendências: cada uma é uma linha âmbar com o texto do que falta e o botão que leva até lá.
+.pendencias {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pendencia {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  padding: 0.375rem 0.5rem 0.375rem 0.875rem;
+  border-left: 4px solid m.$ambar-borda;
+  border-radius: 4px;
+  background: m.$ambar-claro;
+  color: m.$ambar;
+  font-weight: 600;
+}
+
+.pendencia-ir {
+  flex: none;
+  border: 1px solid m.$ambar-borda;
+  --mat-button-text-label-text-color: #{m.$ambar};
+}
+
+.sem-pendencias {
+  @include m.aviso(m.$verde, m.$verde-claro);
+  margin: 0;
+  font-weight: 600;
+}
+
+@include m.resumo;
+
+.refeicoes,
+.itens {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.refeicao {
+  display: grid;
+  grid-template-columns: minmax(10rem, auto) 1fr;
+  gap: 0.125rem 1rem;
+  padding: 0.5rem 0;
+
+  + .refeicao {
+    border-top: 1px solid m.$borda;
+  }
+}
+
+.refeicao-nome {
+  font-weight: 600;
+}
+
+.refeicao-detalhe,
+.sem-itens,
+.sem-refeicoes,
+.sem-justificativa {
+  color: m.$suave;
+}
+
+.itens {
+  grid-column: 2;
+  font-size: 0.875rem;
+}
+
+.revisar-total-dia {
+  display: inline-block;
+  margin: 0.75rem 0 0;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: m.$verde-claro;
+  color: m.$verde;
+  font-weight: 600;
+}
+
+.justificativa-texto {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid m.$borda;
+  background: m.$fundo;
+  white-space: pre-wrap;
+}
+
+.alimentos-erro,
+.erro-submissao {
+  @include m.aviso(m.$vinho, m.$vinho-claro);
+  font-weight: 600;
+}
+
+// Botão e explicação juntos: quem lê vê por que o Submeter está apagado.
+.revisar-submissao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.submeter-explicacao {
+  @include m.aviso(m.$ambar-borda, m.$ambar-claro);
+  margin: 0;
+  font-weight: 600;
+  color: m.$ambar;
+}

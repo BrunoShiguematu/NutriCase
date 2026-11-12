@@ -1,0 +1,50 @@
+@use '../marca' as m;
+
+:host {
+  display: block;
+}
+
+.ficha-atleta {
+  --mat-card-outlined-outline-color: #{m.$borda};
+  --mat-card-outlined-container-color: #{m.$card};
+}
+
+.ficha-titulo {
+  font: 700 1.125rem/1.3 var(--fonte-titulo);
+  color: m.$verde;
+}
+
+// Duas colunas para o que é curto; o resto ocupa a linha toda.
+.ficha-dados {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  margin: 0;
+}
+
+.ficha-dado {
+  grid-column: 1 / -1;
+  min-width: 0;
+
+  dt {
+    font-size: 0.75rem;
+    color: m.$suave;
+  }
+
+  dd {
+    margin: 0.0625rem 0 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+}
+
+.ficha-idade,
+.ficha-sexo,
+.ficha-peso,
+.ficha-altura,
+.ficha-gordura,
+.ficha-modalidade,
+.ficha-horario,
+.ficha-fase {
+  grid-column: auto;
+}

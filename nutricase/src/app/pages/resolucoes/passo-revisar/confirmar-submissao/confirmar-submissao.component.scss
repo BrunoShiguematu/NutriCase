@@ -1,0 +1,6 @@
+@use '../../marca' as m;
+
+:host {
+  @include m.tema-marca;
+  display: block;
+}

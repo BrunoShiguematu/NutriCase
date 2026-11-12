@@ -1,0 +1,15 @@
+@use '../marca' as m;
+
+:host {
+  display: block;
+  padding-top: 0.75rem;
+}
+
+.aviso-justificativa {
+  @include m.aviso(m.$verde, m.$verde-claro);
+  margin-top: 0.5rem;
+}
+
+.campo-justificativa {
+  width: 100%;
+}

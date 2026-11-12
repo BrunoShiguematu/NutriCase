@@ -1,0 +1,11 @@
+@use '../marca' as m;
+
+:host {
+  @include m.tema-marca;
+  display: block;
+}
+
+.confirmar-excluir {
+  --mat-button-filled-container-color: #{m.$vinho};
+  --mat-button-filled-label-text-color: #fff;
+}

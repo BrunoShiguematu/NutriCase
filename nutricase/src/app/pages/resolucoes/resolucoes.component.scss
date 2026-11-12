@@ -1,0 +1,70 @@
+@use './marca' as m;
+
+:host {
+  @include m.tema-marca;
+  @include m.pagina;
+}
+
+.tabela-resolucoes {
+  width: 100%;
+  border: 1px solid m.$borda;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.sem-resolucoes {
+  max-width: 40rem;
+  padding: 1.5rem;
+  border: 1px dashed m.$borda;
+  border-radius: 12px;
+  background: m.$card;
+}
+
+.sem-resolucoes-titulo {
+  margin: 0 0 0.5rem;
+  font: 700 1.25rem/1.3 var(--fonte-titulo);
+  color: m.$verde;
+}
+
+// Os três botões da linha ficam juntos, sem quebrar o texto; a coluna encolhe sozinha ao tamanho deles.
+.coluna-acoes,
+.mat-column-acoes {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.acao-continuar,
+.acao-resultado,
+.acao-refazer,
+.acao-excluir {
+  --mat-button-text-horizontal-padding: 0.75rem;
+}
+
+.acao-excluir {
+  --mat-button-text-label-text-color: #{m.$vinho};
+}
+
+.coluna-data,
+.coluna-status {
+  white-space: nowrap;
+}
+
+.etapas-corretas {
+  color: m.$verde;
+  font-weight: 600;
+}
+
+.etapas-divergentes {
+  color: m.$ambar;
+  font-weight: 600;
+}
+
+.etapas-erro {
+  color: m.$vinho;
+  font-weight: 600;
+}
+
+.etapas-pendente {
+  color: m.$suave;
+}

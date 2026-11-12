@@ -1,0 +1,234 @@
+@use '../marca' as m;
+
+:host {
+  @include m.tema-marca;
+  @include m.pagina;
+}
+
+// Cada parte do resultado é um painel com cor de faixa própria (etapas verde, dieta azul-petróleo, sugestões
+// tracejado). A classificação de cada linha leva a cor E o texto escrito, e a linha ganha um símbolo (RNF04).
+.bloco-titulo {
+  margin: 0 0 1rem;
+  font: 700 1.375rem/1.3 var(--fonte-titulo);
+  color: m.$verde;
+}
+
+.bloco-avaliacao {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bloco-avaliacao > section,
+.bloco-sugestoes {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid m.$borda;
+  border-top: 4px solid m.$borda;
+  border-radius: 12px;
+  background: m.$card;
+}
+
+.bloco-avaliacao > .avaliacao-etapas {
+  border-top-color: m.$verde;
+}
+
+.bloco-avaliacao > .avaliacao-dieta {
+  border-top-color: m.$azul;
+
+  .secao-titulo {
+    color: m.$azul;
+  }
+}
+
+.bloco-sugestoes {
+  margin-top: 1.5rem;
+  border-style: dashed;
+  border-top-color: m.$verde;
+  background: m.$verde-claro;
+}
+
+.secao-titulo {
+  @include m.secao-titulo;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid m.$borda;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    background: m.$fundo;
+    font-size: 0.8125rem;
+  }
+}
+
+// Linha de etapa: faixa de cor à esquerda, fundo suave e, na célula da classificação, símbolo + texto em negrito.
+.etapa-linha {
+  th {
+    border-left: 4px solid transparent;
+  }
+
+  .etapa-classificacao {
+    font-weight: 700;
+    white-space: nowrap;
+
+    &::before {
+      content: var(--simbolo);
+    }
+  }
+}
+
+.etapa-correta {
+  background: m.$verde-claro;
+
+  th {
+    border-left-color: m.$verde;
+  }
+
+  --simbolo: '✓ ';
+
+  .etapa-classificacao {
+    color: m.$verde;
+  }
+}
+
+.etapa-divergente {
+  background: m.$ambar-claro;
+
+  th {
+    border-left-color: m.$ambar-borda;
+  }
+
+  --simbolo: '≈ ';
+
+  .etapa-classificacao {
+    color: m.$ambar;
+  }
+}
+
+.etapa-erro-de-fato {
+  background: m.$vinho-claro;
+
+  th {
+    border-left-color: m.$vinho;
+  }
+
+  --simbolo: '✕ ';
+
+  .etapa-classificacao {
+    color: m.$vinho;
+    white-space: normal;
+  }
+}
+
+.etapa-detalhe td {
+  padding: 0.5rem 0.75rem 0.75rem 1rem;
+  background: m.$card;
+  font-size: 0.875rem;
+
+  p {
+    margin: 0.125rem 0;
+  }
+}
+
+.dieta-tolerancia,
+.justificativa-aviso,
+.sugestoes-indisponiveis,
+.sem-justificativa {
+  margin: 0 0 0.75rem;
+  color: m.$suave;
+}
+
+.comparativo-situacao {
+  font-weight: 700;
+
+  &::before {
+    content: var(--simbolo);
+  }
+
+  &.dentro {
+    --simbolo: '✓ ';
+    color: m.$verde;
+  }
+
+  &.fora {
+    --simbolo: '✕ ';
+    color: m.$vinho;
+  }
+}
+
+.dieta-alertas-titulo {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.9375rem;
+}
+
+.alertas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.alerta {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-left: 4px solid m.$ambar-borda;
+  border-radius: 4px;
+  background: m.$ambar-claro;
+}
+
+.alerta-tipo {
+  margin-right: 0.375rem;
+  font-weight: 700;
+}
+
+.sem-alertas,
+.dieta-incompleta,
+.dieta-indisponivel {
+  @include m.aviso(m.$ambar-borda, m.$ambar-claro);
+  margin: 1rem 0 0;
+}
+
+.sem-alertas {
+  border-left-color: m.$verde;
+  background: m.$verde-claro;
+}
+
+.dieta-indisponivel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-left-color: m.$vinho;
+  background: m.$vinho-claro;
+
+  p {
+    margin: 0;
+  }
+}
+
+.justificativa-texto,
+.comentario-texto {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid m.$borda;
+  background: m.$fundo;
+  white-space: pre-wrap;
+}
+
+.resultado-acoes {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.mensagem-erro {
+  padding: 0.5rem 1.25rem 1rem;
+  border-left: 4px solid m.$vinho;
+}

@@ -210,16 +210,45 @@ describe('ResolucoesComponent (Minhas resoluções)', () => {
 
       const rotulos = (linha: HTMLElement) =>
         Array.from(linha.querySelectorAll('.coluna-acoes button'), (b) => b.getAttribute('aria-label'));
-      expect(rotulos(linhas()[0])).toEqual([
-        `Ver resultado de ${CASO.titulo}`,
-        `Refazer ${CASO.titulo}`,
-        `Excluir resolução de ${CASO.titulo}`,
+      const [primeira, segunda] = linhas();
+      const dataDe = (linha: HTMLElement) => celula(linha, 'data');
+      expect(rotulos(primeira)).toEqual([
+        `Ver resultado de ${CASO.titulo} de ${dataDe(primeira)}`,
+        `Refazer ${CASO.titulo} de ${dataDe(primeira)}`,
+        `Excluir resolução de ${CASO.titulo} de ${dataDe(primeira)}`,
       ]);
-      expect(rotulos(linhas()[1])).toEqual([
-        `Continuar ${CASO.titulo}`,
-        `Refazer ${CASO.titulo}`,
-        `Excluir resolução de ${CASO.titulo}`,
+      expect(rotulos(segunda)).toEqual([
+        `Continuar ${CASO.titulo} de ${dataDe(segunda)}`,
+        `Refazer ${CASO.titulo} de ${dataDe(segunda)}`,
+        `Excluir resolução de ${CASO.titulo} de ${dataDe(segunda)}`,
       ]);
+    });
+
+    it('a data no rótulo distingue duas tentativas do mesmo caso', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 10, 10, 9, 5));
+      iniciar();
+      vi.setSystemTime(new Date(2026, 10, 11, 14, 30));
+      iniciar();
+      vi.useRealTimers();
+      await abrir();
+
+      const continuar = linhas().map((l) => l.querySelector('.acao-continuar')?.getAttribute('aria-label'));
+      expect(continuar).toEqual([`Continuar ${CASO.titulo} de 11/11/2026 14:30`, `Continuar ${CASO.titulo} de 10/11/2026 09:05`]);
+    });
+
+    it('data guardada inválida: um traço na coluna e nos rótulos, sem "Invalid Date" nem "NaN"', async () => {
+      const id = iniciar();
+      const original = service.listar();
+      vi.spyOn(service, 'listar').mockReturnValue(original.map((r) => ({ ...r, data: 'não é uma data' })));
+      await abrir();
+
+      const [linha] = linhas();
+      expect(celula(linha, 'data')).toBe('—');
+      expect(linha.querySelector('.acao-continuar')?.getAttribute('aria-label')).toBe(`Continuar ${CASO.titulo}`);
+      expect(linha.querySelector('.acao-excluir')?.getAttribute('aria-label')).toBe(`Excluir resolução de ${CASO.titulo}`);
+      expect(raiz().textContent).not.toMatch(/Invalid|NaN/);
+      expect(service.buscar(id)).toBeDefined();
     });
 
     it('caso excluído pelo docente aparece como "Caso excluído", e a tentativa continua na lista', async () => {

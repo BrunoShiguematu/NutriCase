@@ -7,6 +7,7 @@ import { MatDialogHarness } from '@angular/material/dialog/testing';
 import { MatExpansionPanelHarness } from '@angular/material/expansion/testing';
 import { MatInputHarness } from '@angular/material/input/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
+import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { MatStepperHarness } from '@angular/material/stepper/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
@@ -274,6 +275,57 @@ describe('ResolverComponent', () => {
       await todos[3].select();
       await (await botao('.pendencia-ir', 0)).click(); // a etapa 1
       expect(await todos[0].isSelected()).toBe(true);
+    });
+
+    it('a pendência de uma etapa leva direto a ela: o passo Etapas abre na etapa certa', async () => {
+      const todos = await passos();
+      await todos[3].select();
+
+      await (await botao('.pendencia-ir', 3)).click(); // "Etapa 4 (PTN) sem resposta."
+
+      expect(await todos[0].isSelected()).toBe(true);
+      expect(texto('app-passo-etapas .etapa-numero')).toBe('Etapa 4 de 5');
+      expect(texto('app-passo-etapas .campo-parametro mat-label')).toBe('Proteína');
+    });
+
+    it('cada pendência de etapa abre a sua etapa, da primeira à última', async () => {
+      const todos = await passos();
+      for (const n of [5, 2, 1, 3]) {
+        await todos[3].select();
+        await (await botao('.pendencia-ir', n - 1)).click();
+
+        expect(texto('app-passo-etapas .etapa-numero'), `pendência da etapa ${n}`).toBe(`Etapa ${n} de 5`);
+      }
+    });
+
+    it('a pendência da dieta leva ao passo Dieta, sem mexer na etapa aberta', async () => {
+      const todos = await passos();
+      await todos[3].select();
+
+      await (await botao('.pendencia-ir', 5)).click();
+
+      expect(await todos[1].isSelected()).toBe(true);
+      expect(texto('app-passo-etapas .etapa-numero')).toBe('Etapa 1 de 5');
+    });
+
+    it('sair do passo Etapas pelo cabeçalho com um valor inválido avisa que a resposta não foi salva', async () => {
+      const todos = await passos();
+      const valor = await loader.getHarness(MatInputHarness.with({ selector: 'app-passo-etapas input[formControlName="valor"]' }));
+      await valor.setValue('0');
+
+      await todos[1].select();
+
+      const avisos = await Promise.all(
+        (await TestbedHarnessEnvironment.documentRootLoader(fixture).getAllHarnesses(MatSnackBarHarness)).map((a) => a.getMessage()),
+      );
+      expect(avisos).toEqual(['A etapa 1 não foi salva: há valores inválidos. Volte ao passo Etapas para corrigir.']);
+    });
+
+    it('sair pelo cabeçalho sem ter mexido na etapa não avisa nada', async () => {
+      await (await passos())[1].select();
+
+      const avisos = await TestbedHarnessEnvironment.documentRootLoader(fixture).getAllHarnesses(MatSnackBarHarness);
+      expect(avisos.length).toBe(0);
     });
 
     it('com pendências, o Submeter fica desativado no passo Revisar', async () => {

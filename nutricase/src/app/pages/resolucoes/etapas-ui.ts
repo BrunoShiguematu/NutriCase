@@ -49,6 +49,17 @@ export function mensagemNumero(controle: AbstractControl): string {
   return '';
 }
 
+/** Mensagem para o que foi digitado num campo numérico e o navegador recusou (por exemplo, letras). */
+export const MENSAGEM_TEXTO_NAO_NUMERICO = 'Digite só números (ex.: 1,8)';
+
+/**
+ * O campo numérico recebeu texto que não é número? O navegador deixa o valor do campo vazio nesse caso, e só
+ * `validity.badInput` sabe que havia algo digitado; sem isto a mensagem seria "Campo obrigatório".
+ */
+export function textoNaoNumerico(evento: Event): boolean {
+  return (evento.target as HTMLInputElement | null)?.validity?.badInput === true;
+}
+
 /** Número com vírgula decimal, no máximo `casas` casas (3008,25 com 2; 3.008,3 com 1). */
 export function formatarNumero(valor: number, casas = 1): string {
   return valor.toLocaleString('pt-BR', { maximumFractionDigits: casas });

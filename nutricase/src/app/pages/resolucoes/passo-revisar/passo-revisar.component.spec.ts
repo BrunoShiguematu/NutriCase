@@ -11,7 +11,7 @@ import { AlimentoService, CarregadorTaco, CARREGADOR_TACO } from '../../../core/
 import { CasoService } from '../../../core/services/caso.service';
 import { ResolucaoService } from '../../../core/services/resolucao.service';
 import { ResolucoesModule } from '../resolucoes.module';
-import { PASSO_DIETA, PASSO_ETAPAS, PassoRevisarComponent } from './passo-revisar.component';
+import { DestinoDaPendencia, PASSO_DIETA, PASSO_ETAPAS, PassoRevisarComponent } from './passo-revisar.component';
 
 const CASO = CASOS_EXEMPLO[0];
 
@@ -38,7 +38,7 @@ describe('PassoRevisarComponent', () => {
   let resolucao: Resolucao;
   let navegar: ReturnType<typeof vi.spyOn>;
   let carregador: CarregadorTaco;
-  let pedidosDeSalto: number[];
+  let pedidosDeSalto: DestinoDaPendencia[];
 
   beforeEach(async () => {
     localStorage.clear();
@@ -132,7 +132,7 @@ describe('PassoRevisarComponent', () => {
       expect(texto('.submeter-explicacao')).toBe('Para submeter, resolva a pendência acima.');
     });
 
-    it('cada pendência tem um botão que pede o passo onde ela se resolve: etapas = 0, dieta = 1', async () => {
+    it('cada pendência tem um botão que pede o passo onde ela se resolve: etapas = 0 (com a etapa), dieta = 1', async () => {
       responder(['TMB', 'GET']);
       await abrir();
 
@@ -148,7 +148,9 @@ describe('PassoRevisarComponent', () => {
 
       expect(PASSO_ETAPAS).toBe(0);
       expect(PASSO_DIETA).toBe(1);
-      expect(pedidosDeSalto).toEqual([0, 1]);
+      // A pendência de etapa leva o id da etapa (a 3ª, a primeira sem resposta); a da dieta só o passo.
+      const etapa3 = casos.listarEtapas(CASO.id).find((e) => e.ordem === 3)!;
+      expect(pedidosDeSalto).toEqual([{ passo: 0, etapaId: etapa3.id }, { passo: 1 }]);
     });
 
     it('os botões das pendências têm nome acessível que diz qual é a pendência', async () => {

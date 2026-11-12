@@ -4,7 +4,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { EQUACOES_TMB } from '../../../core/avaliacao/formulas';
 import { EtapaCalculo, Resolucao } from '../../../core/models';
 import { ResolucaoService } from '../../../core/services/resolucao.service';
-import { CAMPOS_DA_ETAPA, mensagemNumero, numeroPositivo } from '../etapas-ui';
+import { CAMPOS_DA_ETAPA, MENSAGEM_TEXTO_NAO_NUMERICO, mensagemNumero, numeroPositivo, textoNaoNumerico } from '../etapas-ui';
 
 type FormEtapa = FormGroup<{
   parametro: FormControl<string | number | null>;
@@ -36,6 +36,9 @@ export class PassoEtapasComponent {
   /** Sempre as 3 equações, não só as aceitas pelo caso: qual vale é do resultado. */
   protected readonly equacoes = [...EQUACOES_TMB];
   protected readonly campos = CAMPOS_DA_ETAPA;
+
+  /** Campos em que o navegador recusou o que foi digitado (texto no lugar de número). */
+  private readonly comTextoRecusado = new Set<AbstractControl>();
 
   private readonly ordenadas = computed(() => [...this.etapas()].sort((a, b) => a.ordem - b.ordem));
 
@@ -112,17 +115,57 @@ export class PassoEtapasComponent {
   }
 
   /**
-   * Salva a etapa que está na tela, se foi alterada e está válida. O resolver chama isto ao sair do passo.
-   * Sem erros na tela: quem sai do passo não é obrigado a terminar a etapa.
+   * Abre a etapa de número `numero` (1 a N, o mesmo "Etapa 3" que a tela e as pendências dizem). O que estava
+   * sendo digitado na etapa da tela é salvo antes, se estiver válido. Número fora de 1 a N não faz nada.
+   */
+  abrirEtapa(numero: number): void {
+    const destino = numero - 1;
+    if (!Number.isInteger(numero) || destino < 0 || destino >= this.total()) {
+      return;
+    }
+    if (!this.noResumo() && destino !== this.indice()) {
+      this.salvarFormulario(this.indice(), false);
+    }
+    this.indice.set(destino);
+  }
+
+  /**
+   * Salva a etapa que está na tela, se foi alterada e está válida. O resolver chama isto ao sair do passo
+   * (pelo cabeçalho do stepper). Quem sai sem ter mexido não é obrigado a terminar a etapa e não vê aviso; mas
+   * se mexeu e o valor é inválido, a resposta não é salva e o aviso diz isso, em vez de falhar em silêncio
+   * (a pendência do Revisar apareceria sem explicação). Os campos ficam marcados, para o erro aparecer na volta.
    */
   salvarAtual(): void {
-    if (!this.noResumo()) {
-      this.salvarFormulario(this.indice(), false);
+    if (this.noResumo()) {
+      return;
+    }
+    const indice = this.indice();
+    const form = this.formularios()[indice];
+    if (!this.salvarFormulario(indice, true) && form?.invalid && form.dirty) {
+      form.markAllAsTouched();
+      this.snackBar.open(`A etapa ${indice + 1} não foi salva: há valores inválidos. Volte ao passo Etapas para corrigir.`, 'Fechar', {
+        duration: 6000,
+      });
+    }
+  }
+
+  /** Guarda, a cada tecla, se o navegador recusou o texto digitado no campo (veja `textoNaoNumerico`). */
+  protected conferirTexto(controle: AbstractControl, evento: Event): void {
+    if (textoNaoNumerico(evento)) {
+      this.comTextoRecusado.add(controle);
+    } else {
+      this.comTextoRecusado.delete(controle);
     }
   }
 
   protected mensagem(controle: AbstractControl, ehEquacao: boolean): string {
-    return ehEquacao && controle.hasError('required') ? 'Escolha uma equação' : mensagemNumero(controle);
+    if (ehEquacao) {
+      return controle.hasError('required') ? 'Escolha uma equação' : mensagemNumero(controle);
+    }
+    if (controle.hasError('required') && this.comTextoRecusado.has(controle)) {
+      return MENSAGEM_TEXTO_NAO_NUMERICO;
+    }
+    return mensagemNumero(controle);
   }
 
   /**

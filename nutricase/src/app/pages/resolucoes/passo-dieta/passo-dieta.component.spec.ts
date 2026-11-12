@@ -565,6 +565,16 @@ describe('PassoDietaComponent', () => {
       expect(texto('.dia-totais')).toBe('Total do dia: 0 kcal · CHO 0 g · PTN 0 g · LIP 0 g');
     });
 
+    it('o total de cada refeição é lido pelo texto: sem aria-label que o repita ou o substitua', async () => {
+      await montarDieta();
+
+      const totais = Array.from(raiz().querySelectorAll('.refeicao-totais'));
+      expect(totais.length).toBe(2);
+      for (const total of totais) {
+        expect(total.hasAttribute('aria-label')).toBe(false);
+      }
+    });
+
     it('somam por refeição e no dia, a partir da TACO por 100 g × gramas', async () => {
       await montarDieta();
 

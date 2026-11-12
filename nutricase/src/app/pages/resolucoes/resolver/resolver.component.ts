@@ -8,6 +8,7 @@ import { EquacaoTmb, EQUACOES_TMB } from '../../../core/avaliacao/formulas';
 import { TipoEtapa } from '../../../core/models';
 import { CasoService } from '../../../core/services/caso.service';
 import { PassoEtapasComponent } from '../passo-etapas/passo-etapas.component';
+import { DestinoDaPendencia } from '../passo-revisar/passo-revisar.component';
 import { PassoJustificativaComponent } from '../passo-justificativa/passo-justificativa.component';
 import { ResolucaoService } from '../../../core/services/resolucao.service';
 
@@ -130,11 +131,15 @@ export class ResolverComponent {
     }
   }
 
-  /** Leva ao passo pedido (as pendências do passo Revisar usam isto). */
-  protected irParaPasso(indice: number): void {
+  /** Leva ao passo pedido e, numa pendência de etapa, abre essa etapa (as pendências do passo Revisar usam isto). */
+  protected irParaPasso(destino: DestinoDaPendencia): void {
     const stepper = this.stepper();
     if (stepper) {
-      stepper.selectedIndex = indice;
+      stepper.selectedIndex = destino.passo;
+    }
+    const ordem = destino.etapaId ? this.etapas().find((e) => e.id === destino.etapaId)?.ordem : undefined;
+    if (ordem !== undefined) {
+      this.passoEtapas()?.abrirEtapa(ordem);
     }
   }
 

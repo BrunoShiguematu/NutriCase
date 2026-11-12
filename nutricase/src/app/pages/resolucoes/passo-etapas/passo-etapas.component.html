@@ -9,26 +9,29 @@
       <form class="etapa-form" [formGroup]="form" (ngSubmit)="avancar()" novalidate>
         <mat-form-field class="campo campo-parametro">
           <mat-label>{{ campo.parametroRotulo }}</mat-label>
+          <!-- Cada @if com um elemento só, direto no mat-form-field: dentro de um @else com vários itens, o hint e o sufixo não vão para o lugar deles. -->
           @if (etapa.tipo === 'TMB') {
             <mat-select formControlName="parametro">
               @for (equacao of equacoes; track equacao) {
                 <mat-option [value]="equacao">{{ equacao }}</mat-option>
               }
             </mat-select>
-          } @else {
-            <input matInput type="number" step="any" inputmode="decimal" formControlName="parametro" />
-            @if (campo.parametroUnidade) {
-              <span matTextSuffix>{{ campo.parametroUnidade }}</span>
-            } @else {
-              <mat-hint>Sem unidade</mat-hint>
-            }
+          }
+          @if (etapa.tipo !== 'TMB') {
+            <input matInput type="number" step="any" inputmode="decimal" formControlName="parametro" (input)="conferirTexto(form.controls.parametro, $event)" />
+          }
+          @if (etapa.tipo !== 'TMB' && campo.parametroUnidade) {
+            <span matTextSuffix>{{ campo.parametroUnidade }}</span>
+          }
+          @if (etapa.tipo !== 'TMB' && !campo.parametroUnidade) {
+            <mat-hint>Sem unidade</mat-hint>
           }
           <mat-error>{{ mensagem(form.controls.parametro, etapa.tipo === 'TMB') }}</mat-error>
         </mat-form-field>
 
         <mat-form-field class="campo campo-valor">
           <mat-label>{{ campo.valorRotulo }}</mat-label>
-          <input matInput type="number" step="any" inputmode="decimal" formControlName="valor" />
+          <input matInput type="number" step="any" inputmode="decimal" formControlName="valor" (input)="conferirTexto(form.controls.valor, $event)" />
           <span matTextSuffix>{{ campo.valorUnidade }}</span>
           <mat-error>{{ mensagem(form.controls.valor, false) }}</mat-error>
         </mat-form-field>

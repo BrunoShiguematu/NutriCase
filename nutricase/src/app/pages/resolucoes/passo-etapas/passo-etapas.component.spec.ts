@@ -136,6 +136,9 @@ describe('PassoEtapasComponent', () => {
       expect(opcoes).toEqual([...EQUACOES_TMB]);
       expect(texto('.campo-valor [matTextSuffix]')).toBe('kcal/dia');
       expect(texto('.campo-valor mat-label')).toBe('TMB');
+      // A equação não é um número: nem unidade nem "Sem unidade".
+      expect(raiz().querySelector('.campo-parametro mat-hint')).toBeNull();
+      expect(raiz().querySelector('.campo-parametro [matTextSuffix]')).toBeNull();
     });
 
     it('o select oferece as 3 equações mesmo quando o caso só aceita uma', async () => {
@@ -152,6 +155,9 @@ describe('PassoEtapasComponent', () => {
 
       expect(texto('.campo-parametro mat-label')).toBe('Fator de atividade');
       expect(texto('.campo-parametro mat-hint')).toBe('Sem unidade');
+      // O hint fica na linha de baixo do campo (a área de ajuda), não junto do valor digitado.
+      expect(raiz().querySelector('.campo-parametro .mat-mdc-form-field-subscript-wrapper mat-hint')).not.toBeNull();
+      expect(raiz().querySelector('.campo-parametro .mat-mdc-form-field-infix mat-hint')).toBeNull();
       expect(texto('.campo-valor mat-label')).toBe('GET');
       expect(texto('.campo-valor [matTextSuffix]')).toBe('kcal/dia');
       expect(raiz().querySelector('.campo-parametro mat-select')).toBeNull();
@@ -168,6 +174,8 @@ describe('PassoEtapasComponent', () => {
       ]) {
         expect(texto('.campo-parametro mat-label')).toBe(rotulo);
         expect(texto('.campo-parametro [matTextSuffix]')).toBe('g/kg/dia');
+        expect(raiz().querySelector('.campo-parametro .mat-mdc-form-field-text-suffix [matTextSuffix]')).not.toBeNull();
+        expect(raiz().querySelector('.campo-parametro mat-hint')).toBeNull(); // com unidade, não há "Sem unidade"
         expect(texto('.campo-valor mat-label')).toBe(valor);
         expect(texto('.campo-valor [matTextSuffix]')).toBe('g/dia');
         await responderNumerica(parametro, total);
@@ -224,6 +232,68 @@ describe('PassoEtapasComponent', () => {
       expect(erros()).toEqual(['Informe um número maior que zero']);
       expect(numero()).toBe('Etapa 1 de 5');
       expect(respostasSalvas()).toEqual([]);
+    });
+
+    describe('texto que não é número', () => {
+      /** O navegador deixa o campo vazio e só `validity.badInput` sabe que havia texto; no teste, finge o navegador. */
+      async function digitarTextoRecusado(nome: 'parametro' | 'valor', recusado: boolean): Promise<void> {
+        const entrada = raiz().querySelector(`input[formControlName="${nome}"]`) as HTMLInputElement;
+        Object.defineProperty(entrada, 'validity', { value: { badInput: recusado }, configurable: true });
+        entrada.dispatchEvent(new Event('input', { bubbles: true }));
+        await fixture.whenStable();
+      }
+
+      it('o valor com texto recusado pelo navegador mostra uma mensagem própria, não "Campo obrigatório"', async () => {
+        await escolherEquacao('Mifflin-St Jeor');
+        await digitarTextoRecusado('valor', true);
+
+        await proxima();
+
+        expect(erros()).toEqual(['Digite só números (ex.: 1,8)']);
+        expect(respostasSalvas()).toEqual([]);
+      });
+
+      it('o parâmetro numérico também (fator de atividade)', async () => {
+        await responderTmb();
+        await digitarTextoRecusado('parametro', true);
+
+        await proxima();
+
+        expect(erros()).toEqual(['Digite só números (ex.: 1,8)', 'Campo obrigatório']);
+      });
+
+      it('campo vazio de verdade continua "Campo obrigatório"', async () => {
+        await escolherEquacao('Mifflin-St Jeor');
+        await digitarTextoRecusado('valor', false);
+
+        await proxima();
+
+        expect(erros()).toEqual(['Campo obrigatório']);
+      });
+
+      it('apagar o texto (campo vazio de novo) volta ao "Campo obrigatório"', async () => {
+        await escolherEquacao('Mifflin-St Jeor');
+        await digitarTextoRecusado('valor', true);
+        await proxima();
+        expect(erros()).toEqual(['Digite só números (ex.: 1,8)']);
+
+        await digitarTextoRecusado('valor', false);
+
+        expect(erros()).toEqual(['Campo obrigatório']);
+      });
+
+      it('corrigir para um número válido tira a mensagem e deixa salvar', async () => {
+        await escolherEquacao('Mifflin-St Jeor');
+        await digitarTextoRecusado('valor', true);
+        await proxima();
+
+        await digitarTextoRecusado('valor', false);
+        await escrever('valor', '1671.25');
+        await proxima();
+
+        expect(numero()).toBe('Etapa 2 de 5');
+        expect(respostasSalvas().length).toBe(1);
+      });
     });
 
     it('texto no campo numérico não vira número: vale como vazio', async () => {
@@ -311,13 +381,64 @@ describe('PassoEtapasComponent', () => {
       expect(respostasSalvas()).toEqual([expect.objectContaining({ parametro: 'Mifflin-St Jeor', valor: 1671.25 })]);
     });
 
-    it('salvarAtual com a etapa inválida não salva e não mostra erro', async () => {
+    const avisosDoSnackbar = async (): Promise<string[]> =>
+      Promise.all((await raizDoc.getAllHarnesses(MatSnackBarHarness)).map((a) => a.getMessage()));
+
+    it('salvarAtual com a etapa alterada e inválida não salva, avisa e deixa os erros à vista na volta', async () => {
+      await escolherEquacao('Mifflin-St Jeor');
       await escrever('valor', '0');
 
       fixture.componentInstance.salvarAtual();
 
       expect(respostasSalvas()).toEqual([]);
+      expect(await avisosDoSnackbar()).toEqual(['A etapa 1 não foi salva: há valores inválidos. Volte ao passo Etapas para corrigir.']);
+      expect(erros()).toEqual(['Informe um número maior que zero']);
+    });
+
+    it('o aviso diz o número da etapa que ficou sem salvar', async () => {
+      await responderTmb();
+      await escrever('parametro', '1.8');
+      await escrever('valor', '-1');
+
+      fixture.componentInstance.salvarAtual();
+
+      expect(await avisosDoSnackbar()).toEqual(['A etapa 2 não foi salva: há valores inválidos. Volte ao passo Etapas para corrigir.']);
+    });
+
+    it('salvarAtual com a etapa só preenchida pela metade também avisa', async () => {
+      await escolherEquacao('Mifflin-St Jeor');
+
+      fixture.componentInstance.salvarAtual();
+
+      expect(respostasSalvas()).toEqual([]);
+      expect((await avisosDoSnackbar()).length).toBe(1);
+    });
+
+    it('salvarAtual sem ter mexido em nada sai em silêncio: ninguém é obrigado a terminar a etapa', async () => {
+      fixture.componentInstance.salvarAtual();
+
+      expect(respostasSalvas()).toEqual([]);
       expect(erros()).toEqual([]);
+      expect(await avisosDoSnackbar()).toEqual([]);
+    });
+
+    it('salvarAtual com a etapa válida não avisa nada', async () => {
+      await escolherEquacao('Mifflin-St Jeor');
+      await escrever('valor', '1671.25');
+
+      fixture.componentInstance.salvarAtual();
+
+      expect(await avisosDoSnackbar()).toEqual([]);
+    });
+
+    it('salvarAtual com a etapa válida mas o serviço recusando avisa que não foi possível salvar', async () => {
+      vi.spyOn(service, 'salvarResposta').mockReturnValue(undefined);
+      await escolherEquacao('Mifflin-St Jeor');
+      await escrever('valor', '1671.25');
+
+      fixture.componentInstance.salvarAtual();
+
+      expect(await avisosDoSnackbar()).toEqual(['Não foi possível salvar a resposta']);
     });
 
     it('alterar uma resposta já salva substitui a anterior, sem duplicar', async () => {
@@ -422,6 +543,71 @@ describe('PassoEtapasComponent', () => {
       await fixture.whenStable();
 
       expect(await (await campo('valor')).getValue()).toBe('16');
+    });
+  });
+
+  describe('abrirEtapa(n): ir direto a uma etapa', () => {
+    it('abre a etapa de número n (1 a 5), com o que foi salvo nela', async () => {
+      await responderTudo();
+      await (await loader.getHarness(MatButtonHarness.with({ selector: '[aria-label="Alterar a etapa 1"]' }))).click();
+
+      fixture.componentInstance.abrirEtapa(4);
+      fixture.detectChanges();
+
+      expect(numero()).toBe('Etapa 4 de 5');
+      expect(texto('.campo-parametro mat-label')).toBe('Proteína');
+    });
+
+    it.each([
+      [1, 'Etapa 1 de 5'],
+      [3, 'Etapa 3 de 5'],
+      [5, 'Etapa 5 de 5'],
+    ])('abrirEtapa(%i) mostra "%s"', async (n, esperado) => {
+      fixture.componentInstance.abrirEtapa(n);
+      fixture.detectChanges();
+
+      expect(numero()).toBe(esperado);
+    });
+
+    it.each([0, 6, -1, 1.5, NaN])('abrirEtapa(%s) não faz nada', async (n) => {
+      fixture.componentInstance.abrirEtapa(3);
+      fixture.detectChanges();
+
+      fixture.componentInstance.abrirEtapa(n);
+      fixture.detectChanges();
+
+      expect(numero()).toBe('Etapa 3 de 5');
+    });
+
+    it('salva a etapa válida da tela antes de sair dela', async () => {
+      await escolherEquacao('Mifflin-St Jeor');
+      await escrever('valor', '1671.25');
+
+      fixture.componentInstance.abrirEtapa(4);
+      fixture.detectChanges();
+
+      expect(respostasSalvas()).toEqual([expect.objectContaining({ parametro: 'Mifflin-St Jeor', valor: 1671.25 })]);
+    });
+
+    it('com a etapa da tela inválida, vai mesmo assim, sem salvar e sem erro', async () => {
+      await escrever('valor', '0');
+
+      fixture.componentInstance.abrirEtapa(2);
+      fixture.detectChanges();
+
+      expect(numero()).toBe('Etapa 2 de 5');
+      expect(respostasSalvas()).toEqual([]);
+      expect(erros()).toEqual([]);
+    });
+
+    it('vindo do resumo, abre a etapa pedida', async () => {
+      await responderTudo();
+      expect(texto('.etapa-numero')).toBe('Resumo das respostas');
+
+      fixture.componentInstance.abrirEtapa(3);
+      fixture.detectChanges();
+
+      expect(numero()).toBe('Etapa 3 de 5');
     });
   });
 

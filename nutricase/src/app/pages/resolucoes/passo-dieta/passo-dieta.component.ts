@@ -12,7 +12,7 @@ import {
   ConfirmarExclusaoRefeicaoComponent,
   DadosConfirmarExclusaoRefeicao,
 } from './confirmar-exclusao-refeicao/confirmar-exclusao-refeicao.component';
-import { mensagemNumero, numeroPositivo } from '../etapas-ui';
+import { comSinal, formatarNumero, mensagemNumero, numeroPositivo } from '../etapas-ui';
 
 const HORARIO = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -248,15 +248,9 @@ export class PassoDietaComponent {
     return mensagemNumero(controle);
   }
 
-  protected numero(valor: number, casas = 1): string {
-    return valor.toLocaleString('pt-BR', { maximumFractionDigits: casas });
-  }
-
-  /** "+120", "−35" ou "0": a diferença com sinal, para ler sem conta. */
-  protected comSinal(valor: number, casas = 1): string {
-    const texto = this.numero(Math.abs(valor), casas);
-    return valor > 0 ? `+${texto}` : valor < 0 ? `−${texto}` : texto;
-  }
+  /** Números e diferenças como o resultado os mostra: as funções são as de `etapas-ui`. */
+  protected readonly numero = formatarNumero;
+  protected readonly comSinal = comSinal;
 
   private apagarRefeicao(refeicao: Refeicao, itens: ItemRefeicao[]): void {
     if (!this.service.excluirRefeicao(refeicao.id)) {

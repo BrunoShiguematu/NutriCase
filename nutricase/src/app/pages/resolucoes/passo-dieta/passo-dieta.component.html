@@ -106,7 +106,7 @@
 
         @if (estadoAlimentos() === 'pronto') {
           <app-busca-alimento (incluir)="incluirItem(cartao.refeicao.id, $event)" />
-          <p class="refeicao-totais" [attr.aria-label]="'Total da refeição ' + cartao.refeicao.nome">
+          <p class="refeicao-totais">
             Total da refeição:
             <span class="total-kcal">{{ numero(cartao.totais.kcal) }} kcal</span> ·
             <span class="total-cho">CHO {{ numero(cartao.totais.cho) }} g</span> ·

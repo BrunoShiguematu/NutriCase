@@ -13,6 +13,12 @@ import { ConfirmarSubmissaoComponent } from './confirmar-submissao/confirmar-sub
 export const PASSO_ETAPAS = 0;
 export const PASSO_DIETA = 1;
 
+/** Para onde uma pendência leva: o passo do stepper e, nas de etapa, qual etapa abrir dentro do passo Etapas. */
+export interface DestinoDaPendencia {
+  passo: number;
+  etapaId?: string;
+}
+
 const ROTULO_MARCADOR: Record<string, string> = { 'pré-treino': 'Pré-treino', 'pós-treino': 'Pós-treino' };
 
 /**
@@ -39,8 +45,11 @@ export class PassoRevisarComponent {
 
   readonly resolucao = input.required<Resolucao>();
 
-  /** Emite a posição do passo (0 = Etapas, 1 = Dieta) para onde a pendência leva; o resolver troca o passo. */
-  @Output() readonly irPara = new EventEmitter<number>();
+  /**
+   * Emite para onde a pendência leva: o passo (0 = Etapas, 1 = Dieta) e, se for de etapa, o id da etapa;
+   * o resolver troca o passo e abre a etapa.
+   */
+  @Output() readonly irPara = new EventEmitter<DestinoDaPendencia>();
 
   protected readonly estadoAlimentos = this.alimentos.estado;
   protected readonly submetendo = signal(false);
@@ -96,7 +105,7 @@ export class PassoRevisarComponent {
   }
 
   protected levarAoPasso(pendencia: Pendencia): void {
-    this.irPara.emit(pendencia.tipo === 'etapa' ? PASSO_ETAPAS : PASSO_DIETA);
+    this.irPara.emit(pendencia.tipo === 'etapa' ? { passo: PASSO_ETAPAS, etapaId: pendencia.etapaId } : { passo: PASSO_DIETA });
   }
 
   protected tentarCarregarAlimentos(): void {

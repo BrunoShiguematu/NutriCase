@@ -10,14 +10,20 @@ import {
   DadosConfirmarExclusaoResolucao,
 } from './confirmar-exclusao-resolucao/confirmar-exclusao-resolucao.component';
 
+/** O que a tela mostra quando a data guardada não é uma data. */
+const SEM_DATA = '—';
+
 const doisDigitos = (n: number): string => String(n).padStart(2, '0');
 
 /**
- * "dd/MM/yyyy HH:mm" no fuso do navegador. Feito à mão de propósito: o `formatDate` do Angular, por estar
+ * "dd/MM/yyyy HH:mm" no fuso do navegador, ou um traço se a data guardada for inválida. Feito à mão de propósito: o `formatDate` do Angular, por estar
  * também no código do `main`, entraria inteiro no pacote inicial (+10 kB).
  */
 function formatarData(iso: string): string {
   const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return SEM_DATA;
+  }
   return `${doisDigitos(d.getDate())}/${doisDigitos(d.getMonth() + 1)}/${d.getFullYear()} ${doisDigitos(d.getHours())}:${doisDigitos(d.getMinutes())}`;
 }
 
@@ -27,8 +33,10 @@ export interface LinhaResolucao {
   /** Título do caso; "Caso excluído" quando o docente removeu o caso depois. */
   caso: string;
   casoExiste: boolean;
-  /** "dd/MM/yyyy HH:mm", no fuso do navegador. */
+  /** "dd/MM/yyyy HH:mm", no fuso do navegador; "—" se a data guardada for inválida. */
   dataTexto: string;
+  /** O caso e a data, para os rótulos das ações: tentativas do mesmo caso se distinguem pela data. */
+  rotulo: string;
   /** Contagem das etapas por classificação; só nas submetidas. */
   contagem?: ContagemEtapas;
 }
@@ -53,11 +61,14 @@ export class ResolucoesComponent {
   protected readonly linhas = computed<LinhaResolucao[]>(() =>
     this.service.listar().map((resolucao) => {
       const caso = this.casos.buscarPorId(resolucao.casoId);
+      const titulo = caso?.caso.titulo ?? 'Caso excluído';
+      const dataTexto = formatarData(resolucao.data);
       return {
         resolucao,
-        caso: caso?.caso.titulo ?? 'Caso excluído',
+        caso: titulo,
         casoExiste: caso !== undefined,
-        dataTexto: formatarData(resolucao.data),
+        dataTexto,
+        rotulo: dataTexto === SEM_DATA ? titulo : `${titulo} de ${dataTexto}`,
         contagem: this.service.contagemEtapas(resolucao.id),
       };
     }),

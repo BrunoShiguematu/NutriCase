@@ -162,7 +162,7 @@ function avaliarEtapa(
     : {
         ...base,
         classificacao: 'divergente',
-        motivo: `O parâmetro difere da referência do caso (${String(etapa.parametroReferencia)}), mas está dentro do aceitável, e o valor confere.`,
+        motivo: `O parâmetro difere da referência do caso (${texto(etapa.parametroReferencia)}), mas está dentro do aceitável, e o valor confere.`,
       };
 }
 
@@ -178,7 +178,7 @@ function verificarEquacao(etapa: EtapaCalculo, resposta: RespostaEtapa, atleta: 
   // A referência do caso sempre vale como aceitável, mesmo que a lista de opções não a repita.
   const aceitaveis = new Set([...(etapa.opcoesAceitaveis ?? []), String(etapa.parametroReferencia)]);
   if (typeof escolhida !== 'string' || !aceitaveis.has(escolhida)) {
-    return { tipoErro: 'escolha de equação', motivo: `A equação escolhida (${String(escolhida)}) não está entre as aceitas para este caso.` };
+    return { tipoErro: 'escolha de equação', motivo: `A equação escolhida (${texto(escolhida)}) não está entre as aceitas para este caso.` };
   }
   const equacao = EQUACOES_TMB.find((e) => e === escolhida);
   if (equacao === undefined) {
@@ -261,4 +261,9 @@ function parametroIgualAReferencia(etapa: EtapaCalculo, parametro: string | numb
 
 function num(n: number): string {
   return n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+}
+
+/** Valor de parâmetro em texto para as explicações: número com vírgula ("1,8"), o resto como está. */
+function texto(valor: unknown): string {
+  return typeof valor === 'number' && Number.isFinite(valor) ? num(valor) : String(valor);
 }

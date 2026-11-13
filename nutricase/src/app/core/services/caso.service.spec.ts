@@ -1005,34 +1005,35 @@ describe('CasoService', () => {
       expect(noNavegador?.casos.find((c) => c.id === 'caso-do-usuario')?.toleranciaDieta).toBe(TOLERANCIA_DIETA_PADRAO);
     });
 
-    it('mantém a tolerância que o caso do usuário já tinha', () => {
+    it('mantém a tolerância positiva que o caso do usuário já tinha', () => {
       gravar({
         versao: 1,
-        casos: [{ ...casoV1('c1', 'Com tolerância'), toleranciaDieta: 15 }, { ...casoV1('c2', 'Tolerância zero'), toleranciaDieta: 0 }],
+        casos: [{ ...casoV1('c1', 'Com tolerância'), toleranciaDieta: 15 }, { ...casoV1('c2', 'Tolerância pequena'), toleranciaDieta: 0.5 }],
         atletas: [atletaV1('c1'), atletaV1('c2')],
       });
 
       const reaberto = reabrir();
 
       expect(reaberto.buscarPorId('c1')?.caso.toleranciaDieta).toBe(15);
-      expect(reaberto.buscarPorId('c2')?.caso.toleranciaDieta).toBe(0);
+      expect(reaberto.buscarPorId('c2')?.caso.toleranciaDieta).toBe(0.5);
     });
 
-    it('tolerância inválida (nula, texto, negativa) vira o padrão', () => {
+    it('tolerância inválida (nula, texto, negativa, zero) vira o padrão, como o formulário exige (maior que zero)', () => {
       gravar({
         versao: VERSAO_CASOS_EXEMPLO,
         casos: [
           { ...casoV1('c1', 'Nula'), toleranciaDieta: null },
           { ...casoV1('c2', 'Texto'), toleranciaDieta: 'dez' },
           { ...casoV1('c3', 'Negativa'), toleranciaDieta: -5 },
+          { ...casoV1('c4', 'Zero'), toleranciaDieta: 0 },
         ],
-        atletas: [atletaV1('c1'), atletaV1('c2'), atletaV1('c3')],
+        atletas: [atletaV1('c1'), atletaV1('c2'), atletaV1('c3'), atletaV1('c4')],
         etapas: [],
       });
 
       const reaberto = reabrir();
 
-      for (const id of ['c1', 'c2', 'c3']) {
+      for (const id of ['c1', 'c2', 'c3', 'c4']) {
         expect(reaberto.buscarPorId(id)?.caso.toleranciaDieta, id).toBe(TOLERANCIA_DIETA_PADRAO);
       }
     });
@@ -1062,11 +1063,15 @@ describe('CasoService', () => {
 
     describe('forma do critério (faixaAceitavel e opcoesAceitaveis)', () => {
       /** Grava os dados com a etapa `indice` do caso 1 alterada, reabre o serviço e devolve as etapas dele. */
-      function reabrirComEtapaAlterada(indice: number, mudanca: Record<string, unknown>) {
+      function reabrirComEtapaAlterada(indice: number, mudanca: Record<string, unknown>, outra?: { indice: number; mudanca: Record<string, unknown> }) {
         const salvos = lerLocalStorage() as Salvos;
         const doCaso1 = salvos.etapas.filter((e) => e.casoId === 'exemplo-caso-1');
         const alvo = doCaso1[indice].id;
-        gravar({ ...salvos, etapas: salvos.etapas.map((e) => (e.id === alvo ? { ...e, ...mudanca } : e)) });
+        const alvoOutra = outra ? doCaso1[outra.indice].id : undefined;
+        gravar({
+          ...salvos,
+          etapas: salvos.etapas.map((e) => (e.id === alvo ? { ...e, ...mudanca } : e.id === alvoOutra ? { ...e, ...outra?.mudanca } : e)),
+        });
         return reabrir();
       }
 
@@ -1087,10 +1092,16 @@ describe('CasoService', () => {
       ];
 
       for (const [nome, indice, mudanca] of formasInvalidas) {
-        it(`${nome}: as 5 etapas do caso voltam ao padrão, sem quebrar, e o resto fica`, () => {
-          const reaberto = reabrirComEtapaAlterada(indice, mudanca);
+        it(`${nome}: só essa etapa volta ao padrão, sem quebrar; as outras 4 e o resto ficam`, () => {
+          const outra = (indice + 1) % 5;
+          const reaberto = reabrirComEtapaAlterada(indice, mudanca, { indice: outra, mudanca: { tolerancia: 7 } });
 
-          expect(reaberto.listarEtapas('exemplo-caso-1')).toEqual(etapasPadrao('exemplo-caso-1'));
+          const doCaso1 = reaberto.listarEtapas('exemplo-caso-1');
+          expect(doCaso1[indice]).toEqual(etapasPadrao('exemplo-caso-1')[indice]);
+          expect(doCaso1[outra].tolerancia).toBe(7);
+          expect(doCaso1.filter((_, i) => i !== indice && i !== outra)).toEqual(
+            etapasPadrao('exemplo-caso-1').filter((_, i) => i !== indice && i !== outra),
+          );
           expect(reaberto.listarEtapas('exemplo-caso-2')).toEqual(etapasPadrao('exemplo-caso-2'));
           expect(reaberto.listar().length).toBe(CASOS_EXEMPLO.length);
           expect(lerLocalStorage()?.etapas.find((e) => e.casoId === 'exemplo-caso-1' && e.ordem === indice + 1)).toEqual(

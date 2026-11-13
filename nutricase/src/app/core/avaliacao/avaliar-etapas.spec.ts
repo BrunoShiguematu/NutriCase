@@ -141,6 +141,14 @@ describe('avaliarEtapas — divergente (parâmetro aceitável, diferente da refe
     expect(r.GET.tipoErro).toBeUndefined();
   });
 
+  it('a explicação mostra o parâmetro de referência com vírgula, como o resto da tela: "1,8", não "1.8"', () => {
+    const r = avaliar([['PTN', 1.5, 105]]); // referência 1,8 g/kg; 1,5 × 70 = 105
+
+    expect(r.PTN.classificacao).toBe('divergente');
+    expect(r.PTN.motivo).toContain('(1,8)');
+    expect(r.PTN.motivo).not.toContain('1.8');
+  });
+
   it('g/kg dentro da faixa e fora da tolerância da referência, com os gramas coerentes', () => {
     const r = avaliar([['CHO', 7, 490]]); // 7 × 70 = 490
 
@@ -191,6 +199,7 @@ describe('avaliarEtapas — erro de fato: escolha de equação', () => {
     expect(desconhecida.motivo).toContain('não é reconhecida');
     expect(numero.tipoErro).toBe('escolha de equação');
     expect(numero.valorEsperado).toBeUndefined();
+    expect(numero.motivo).toContain('(1.648,75)'); // formato pt-BR, igual ao do resto das explicações
   });
 
   it('vem antes de qualquer conferência do valor: valor absurdo com equação inaceitável continua sendo escolha de equação', () => {

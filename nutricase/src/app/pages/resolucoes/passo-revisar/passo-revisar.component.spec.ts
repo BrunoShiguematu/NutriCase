@@ -11,7 +11,8 @@ import { AlimentoService, CarregadorTaco, CARREGADOR_TACO } from '../../../core/
 import { CasoService } from '../../../core/services/caso.service';
 import { ResolucaoService } from '../../../core/services/resolucao.service';
 import { ResolucoesModule } from '../resolucoes.module';
-import { DestinoDaPendencia, PASSO_DIETA, PASSO_ETAPAS, PassoRevisarComponent } from './passo-revisar.component';
+import { DestinoDaPendencia } from '../etapas-ui';
+import { PASSO_DIETA, PASSO_ETAPAS, PassoRevisarComponent } from './passo-revisar.component';
 
 const CASO = CASOS_EXEMPLO[0];
 

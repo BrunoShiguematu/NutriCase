@@ -8,7 +8,7 @@ import { EquacaoTmb, EQUACOES_TMB } from '../../../core/avaliacao/formulas';
 import { TipoEtapa } from '../../../core/models';
 import { CasoService } from '../../../core/services/caso.service';
 import { PassoEtapasComponent } from '../passo-etapas/passo-etapas.component';
-import { DestinoDaPendencia } from '../passo-revisar/passo-revisar.component';
+import { DestinoDaPendencia } from '../etapas-ui';
 import { PassoJustificativaComponent } from '../passo-justificativa/passo-justificativa.component';
 import { ResolucaoService } from '../../../core/services/resolucao.service';
 

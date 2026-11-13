@@ -5,8 +5,8 @@
 // Sobe a versão quando os exemplos mudarem: na próxima abertura, o CasoService troca os
 // exemplos antigos pelos novos e mantém os casos criados pelo usuário.
 //
-// Atenção: editar um exemplo pela tela mantém o id "exemplo-...", então a troca de versão
-// sobrescreve a edição. Para guardar uma alteração de forma permanente, crie um caso novo.
+// Um exemplo que o usuário editou pela tela (caso, ficha ou etapas) é mantido como ele deixou na troca de
+// versão, e um que ele excluiu não volta. Só os exemplos intactos são trocados pelos novos.
 
 import { EQUACOES_TMB } from '../avaliacao/formulas';
 import { Atleta, Caso, EtapaCalculo, TipoEtapa, TOLERANCIA_DIETA_PADRAO } from '../models';

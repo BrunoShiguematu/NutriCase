@@ -86,7 +86,20 @@ function criterioBemFormado(etapa: Partial<EtapaCalculo>): boolean {
   return ehNumero(min) && ehNumero(max) && min <= max;
 }
 
-/** Dado salvo que parece uma etapa; o que vier torto é descartado na carga, sem quebrar. */
+/** Dado salvo que dá para reconhecer como etapa de um caso; o que não der é descartado na carga, sem quebrar. */
+function etapaIdentificavel(e: unknown): e is EtapaCalculo {
+  const etapa = e as Partial<EtapaCalculo> | null;
+  return (
+    typeof etapa === 'object' &&
+    etapa !== null &&
+    typeof etapa.id === 'string' &&
+    typeof etapa.casoId === 'string' &&
+    typeof etapa.ordem === 'number' &&
+    TIPOS_ETAPA.includes(etapa.tipo as EtapaCalculo['tipo'])
+  );
+}
+
+/** Etapa com todos os campos e o critério na forma certa; senão, a normalização a troca pela padrão do tipo. */
 function etapaBemFormada(e: unknown): e is EtapaCalculo {
   const etapa = e as Partial<EtapaCalculo> | null;
   return (
@@ -326,9 +339,9 @@ export class CasoService {
 
   /**
    * Deixa os dados salvos no formato atual, sem perder nada do usuário:
-   *  - caso sem `toleranciaDieta` (ou com valor inválido): recebe `TOLERANCIA_DIETA_PADRAO`;
+   *  - caso sem `toleranciaDieta` (ou com valor inválido: não numérico, zero ou negativo): recebe `TOLERANCIA_DIETA_PADRAO`;
    *  - caso sem as 5 etapas completas: recebe `etapasPadrao`;
-   *  - etapa com a forma do critério errada (veja `criterioBemFormado`): descartada, e o caso volta às 5 etapas padrão;
+   *  - etapa com a forma do critério errada (veja `criterioBemFormado`): trocada só por ela mesma, pela padrão do mesmo tipo (as outras 4 ficam);
    *  - etapa de caso que não existe mais: descartada.
    * `alterado` diz se algo mudou, para só regravar quando preciso.
    */
@@ -336,7 +349,7 @@ export class CasoService {
     let alterado = false;
     const casos = dados.casos.map((caso) => {
       const tolerancia: unknown = caso.toleranciaDieta;
-      if (typeof tolerancia === 'number' && Number.isFinite(tolerancia) && tolerancia >= 0) {
+      if (typeof tolerancia === 'number' && Number.isFinite(tolerancia) && tolerancia > 0) {
         return caso;
       }
       alterado = true;
@@ -347,7 +360,16 @@ export class CasoService {
     for (const caso of casos) {
       const doCaso = dados.etapas.filter((e) => e.casoId === caso.id);
       if (conjuntoCompleto(doCaso)) {
-        etapas.push(...doCaso.sort(porOrdem));
+        const padrao = etapasPadrao(caso.id);
+        for (const etapa of doCaso.sort(porOrdem)) {
+          const tipo = etapa.tipo;
+          if (etapaBemFormada(etapa)) {
+            etapas.push(etapa);
+          } else {
+            alterado = true;
+            etapas.push(padrao.find((p) => p.tipo === tipo) as EtapaCalculo);
+          }
+        }
       } else {
         alterado = true;
         etapas.push(...etapasPadrao(caso.id));
@@ -363,7 +385,8 @@ export class CasoService {
     const lido = this.storage.ler<Partial<Record<keyof DadosSalvos, unknown>>>(CHAVE);
     if (lido && typeof lido.versao === 'number' && Array.isArray(lido.casos) && Array.isArray(lido.atletas)) {
       // Dado salvo antes das etapas existirem não tem a lista: vira vazia e a normalização preenche.
-      const etapas = Array.isArray(lido.etapas) ? lido.etapas.filter(etapaBemFormada) : [];
+      // Fica o que dá para identificar (caso, tipo e ordem); a forma do critério é conferida na normalização.
+      const etapas = Array.isArray(lido.etapas) ? lido.etapas.filter(etapaIdentificavel) : [];
       return {
         versao: lido.versao,
         casos: lido.casos,

@@ -6,18 +6,12 @@ import { Resolucao } from '../../../core/models';
 import { AlimentoService } from '../../../core/services/alimento.service';
 import { CasoService } from '../../../core/services/caso.service';
 import { Pendencia, ResolucaoService } from '../../../core/services/resolucao.service';
-import { CAMPOS_DA_ETAPA } from '../etapas-ui';
+import { CAMPOS_DA_ETAPA, DestinoDaPendencia } from '../etapas-ui';
 import { ConfirmarSubmissaoComponent } from './confirmar-submissao/confirmar-submissao.component';
 
 /** Posição dos passos no stepper do resolver: para onde cada pendência leva. */
 export const PASSO_ETAPAS = 0;
 export const PASSO_DIETA = 1;
-
-/** Para onde uma pendência leva: o passo do stepper e, nas de etapa, qual etapa abrir dentro do passo Etapas. */
-export interface DestinoDaPendencia {
-  passo: number;
-  etapaId?: string;
-}
 
 const ROTULO_MARCADOR: Record<string, string> = { 'pré-treino': 'Pré-treino', 'pós-treino': 'Pós-treino' };
 

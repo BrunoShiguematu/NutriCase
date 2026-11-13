@@ -5,6 +5,12 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { TipoEtapa } from '../../core/models';
 
+/** Para onde uma pendência leva: o passo do stepper e, nas de etapa, qual etapa abrir dentro do passo Etapas. */
+export interface DestinoDaPendencia {
+  passo: number;
+  etapaId?: string;
+}
+
 /** Como uma etapa aparece na tela: título, rótulo e unidade do parâmetro e do valor. */
 export interface CamposDaEtapa {
   titulo: string;

@@ -12,7 +12,7 @@
 | Link do download | https://www.cfn.org.br/wp-content/uploads/2017/03/taco_4_edicao_ampliada_e_revisada.pdf (cópia do PDF do NEPA hospedada pelo Conselho Federal de Nutricionistas) |
 | Baixado em | 2026-11-11 |
 | SHA-256 do PDF | `2002aec5615b5b1395aaa8fa675635bbb7f712c33f278af5e332f1cac8f108c8` |
-| Onde ficou o PDF | fora do repositório: `/private/tmp/claude-501/taco-fonte/taco_4_edicao.pdf` (pasta temporária; baixe de novo pelo link e confira o hash) |
+| Onde ficou o PDF | fora do repositório: baixe de novo pelo link acima e confira o hash |
 | Tabela lida | Tabela 1 (composição centesimal, minerais, vitaminas e colesterol), a partir da página 29 do PDF |
 
 A página 5 do PDF diz: "É permitida a reprodução parcial ou total desta obra, desde que citada a fonte." Por isso a citação abaixo vai também no rodapé da tela.

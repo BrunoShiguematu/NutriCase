@@ -94,7 +94,9 @@
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   background: m.$fundo;
-  font: 0.8125rem/1.4 ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
 }
 
 .material-faixas-lista {

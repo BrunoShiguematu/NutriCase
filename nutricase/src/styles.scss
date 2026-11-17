@@ -63,6 +63,15 @@ html {
 
   // Fonte dos títulos das telas (Figtree); o texto corrido usa a do tema (Noto Sans).
   --fonte-titulo: #{m.$fonte-titulo};
+
+  // Tabelas do Material: linhas na cor de borda da marca (o padrão é o contorno escuro) e cabeçalho em negrito.
+  --mat-table-row-item-outline-color: #{m.$borda};
+  --mat-table-header-headline-weight: 700;
+}
+
+// O Material não tem token para o fundo do cabeçalho; Resultado e Dieta trocam esta cor no próprio .scss.
+table.mat-mdc-table .mat-mdc-header-cell {
+  background-color: m.$fundo;
 }
 
 body {

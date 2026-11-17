@@ -2,7 +2,7 @@
   <mat-sidenav class="side" mode="side" opened #sidenav>
     <div class="side-topo">
       <img class="brand" src="nutricase-logo-negativa.svg" alt="NutriCase" height="32" />
-      <button mat-icon-button type="button" (click)="sidenav.toggle()" [attr.aria-expanded]="sidenav.opened" aria-label="Abrir ou fechar o menu">
+      <button #botaoLateral mat-icon-button type="button" (click)="alternarMenu(sidenav)" [attr.aria-expanded]="sidenav.opened" aria-label="Abrir ou fechar o menu">
         <mat-icon>menu</mat-icon>
       </button>
     </div>
@@ -40,10 +40,31 @@
   <mat-sidenav-content class="content">
     <mat-toolbar class="top">
       @if (!sidenav.opened) {
-        <button mat-icon-button type="button" (click)="sidenav.toggle()" aria-expanded="false" aria-label="Abrir ou fechar o menu">
+        <button #botaoTopo mat-icon-button type="button" (click)="alternarMenu(sidenav)" aria-expanded="false" aria-label="Abrir ou fechar o menu">
           <mat-icon>menu</mat-icon>
         </button>
       }
+      <mat-form-field class="pesquisa" subscriptSizing="dynamic">
+        <input
+          #campo
+          matInput
+          type="search"
+          autocomplete="off"
+          placeholder="Pesquisar telas"
+          aria-label="Pesquisar telas"
+          [matAutocomplete]="auto"
+          [value]="busca()"
+          (input)="busca.set(campo.value)"
+        />
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      <mat-autocomplete #auto="matAutocomplete" autoActiveFirstOption (optionSelected)="ir($event.option.value, campo)">
+        @for (tela of telas(); track tela.rota) {
+          <mat-option [value]="tela.rota">{{ tela.nome }}</mat-option>
+        } @empty {
+          <mat-option disabled>Nenhuma tela encontrada</mat-option>
+        }
+      </mat-autocomplete>
     </mat-toolbar>
 
     <p class="disclaimer">Ferramenta educacional · casos fictícios · sem finalidade clínica</p>

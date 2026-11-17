@@ -131,10 +131,16 @@
   font: 600 0.9375rem/1.3 var(--fonte-titulo);
 }
 
+// O <thead> é criado pelo Material (sem o atributo do componente): o cabeçalho é pego pelo th, não por "thead th".
 .comparativo {
   width: 100%;
-  border-collapse: collapse;
   border: 1px solid m.$borda;
+  --mat-table-background-color: transparent;
+  --mat-table-header-headline-weight: 700;
+  --mat-table-header-headline-size: 0.8125rem;
+  --mat-table-header-headline-color: #{m.$verde};
+  --mat-table-header-container-height: 2.5rem;
+  --mat-table-row-item-container-height: 2.5rem;
 
   th,
   td {
@@ -144,14 +150,17 @@
     font-variant-numeric: tabular-nums;
   }
 
+  th[mat-header-cell] {
+    background: m.$verde-claro;
+  }
+
+  // A coluna de rótulo é th scope="row" e não vira MatCell: alinhamento à esquerda e peso normal entram aqui.
   th:first-child {
     text-align: left;
   }
 
-  thead th {
-    background: m.$verde-claro;
-    color: m.$verde;
-    font-size: 0.8125rem;
+  th[scope='row'] {
+    font-weight: 400;
   }
 }
 

@@ -50,10 +50,16 @@
   @include m.secao-titulo;
 }
 
-table {
+// Peso, tamanho e altura do cabeçalho e das linhas vêm dos tokens do mat-table. O <thead> é criado pelo Material
+// (sem o atributo do componente), então o cabeçalho é pego pelo th, nunca por "thead th".
+table[mat-table] {
   width: 100%;
-  border-collapse: collapse;
   font-variant-numeric: tabular-nums;
+  --mat-table-background-color: transparent;
+  --mat-table-header-headline-weight: 700;
+  --mat-table-header-headline-size: 0.8125rem;
+  --mat-table-header-container-height: 2.5rem;
+  --mat-table-row-item-container-height: 2.5rem;
 
   th,
   td {
@@ -63,9 +69,13 @@ table {
     vertical-align: top;
   }
 
-  thead th {
+  th[mat-header-cell] {
     background: m.$fundo;
-    font-size: 0.8125rem;
+  }
+
+  // A coluna de rótulo é th scope="row" (leitor de tela) e não vira MatCell: o peso normal da MatCell entra aqui.
+  th[scope='row'] {
+    font-weight: 400;
   }
 }
 

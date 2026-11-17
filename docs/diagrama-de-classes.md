@@ -1,6 +1,6 @@
 # NutriCase: diagrama de classes
 
-Modelos em `nutricase/src/app/core/models/` (todos os campos são `readonly`; `?` marca campo opcional). A chave que liga uma entidade à outra (`casoId`, `atletaId`, `etapaId`, `resolucaoId`, `refeicaoId`, `alimentoId`) aparece nos atributos e no rótulo da seta.
+Modelos em `nutricase/src/app/core/models/` (os campos são `readonly`, menos os de `Alimento`; `?` marca campo opcional). A chave que liga uma entidade à outra (`casoId`, `atletaId`, `etapaId`, `resolucaoId`, `refeicaoId`, `alimentoId`) aparece nos atributos e no rótulo da seta.
 
 ```mermaid
 classDiagram

@@ -9,7 +9,7 @@ Ferramenta educacional de nutrição esportiva. O estudante escolhe um caso fict
 
 ## Acesso e dados
 
-O app não tem login: abre direto. Os dados (casos, resoluções, alimentos cadastrados) ficam no `localStorage` do navegador de cada pessoa. Limpar os dados do navegador apaga tudo, e os casos de exemplo voltam na próxima abertura.
+O app não tem login: abre direto. Os dados (casos e resoluções) ficam no `localStorage` do navegador de cada pessoa. Limpar os dados do navegador apaga tudo, e os casos de exemplo voltam na próxima abertura.
 
 ## Como rodar
 

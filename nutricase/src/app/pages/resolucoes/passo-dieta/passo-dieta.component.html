@@ -151,34 +151,41 @@
       </p>
 
       <h3 class="comparativo-titulo">Total do dia e as metas que você calculou</h3>
-      <table class="comparativo" aria-label="Total do dia e metas calculadas">
-        <thead>
-          <tr>
-            <th scope="col">Nutriente</th>
-            <th scope="col">Total da dieta</th>
-            <th scope="col">Sua meta</th>
-            <th scope="col">Diferença</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (linha of comparativo(); track linha.nutriente) {
-            <tr class="comparativo-linha comparativo-{{ linha.nutriente }}">
-              <th scope="row">{{ linha.rotulo }}</th>
-              <td class="comparativo-total">{{ numero(linha.total) }} {{ linha.unidade }}</td>
-              @if (linha.meta === undefined) {
-                <td class="comparativo-meta comparativo-pendente" colspan="2">Preencha a etapa {{ linha.etapaFaltante }}</td>
-              } @else {
-                <td class="comparativo-meta">{{ numero(linha.meta) }} {{ linha.unidade }}</td>
-                <td class="comparativo-diferenca">
-                  {{ comSinal(linha.diferenca!) }} {{ linha.unidade }}
-                  @if (linha.percentual !== undefined) {
-                    ({{ comSinal(linha.percentual) }} %)
-                  }
-                </td>
+      <table mat-table class="comparativo" aria-label="Total do dia e metas calculadas" [dataSource]="comparativo()">
+        <ng-container matColumnDef="nutriente">
+          <th mat-header-cell *matHeaderCellDef>Nutriente</th>
+          <th mat-cell scope="row" *matCellDef="let linha">{{ linha.rotulo }}</th>
+        </ng-container>
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef>Total da dieta</th>
+          <td mat-cell class="comparativo-total" *matCellDef="let linha">{{ numero(linha.total) }} {{ linha.unidade }}</td>
+        </ng-container>
+        <ng-container matColumnDef="meta">
+          <th mat-header-cell *matHeaderCellDef>Sua meta</th>
+          <td mat-cell class="comparativo-meta" [class.comparativo-pendente]="linha.meta === undefined" *matCellDef="let linha">
+            @if (linha.meta === undefined) {
+              Preencha a etapa {{ linha.etapaFaltante }}
+            } @else {
+              {{ numero(linha.meta) }} {{ linha.unidade }}
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="diferenca">
+          <th mat-header-cell *matHeaderCellDef>Diferença</th>
+          <td mat-cell class="comparativo-diferenca" *matCellDef="let linha">
+            @if (linha.meta === undefined) {
+              —
+            } @else {
+              {{ comSinal(linha.diferenca!) }} {{ linha.unidade }}
+              @if (linha.percentual !== undefined) {
+                ({{ comSinal(linha.percentual) }} %)
               }
-            </tr>
-          }
-        </tbody>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="colunasComparativo"></tr>
+        <tr mat-row class="comparativo-linha comparativo-{{ linha.nutriente }}" *matRowDef="let linha; columns: colunasComparativo"></tr>
       </table>
     </section>
   }

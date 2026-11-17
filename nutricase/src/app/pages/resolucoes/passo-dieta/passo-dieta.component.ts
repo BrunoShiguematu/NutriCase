@@ -117,6 +117,8 @@ export class PassoDietaComponent {
     return { kcal: valorDe('GET'), cho: valorDe('CHO'), ptn: valorDe('PTN'), lip: valorDe('LIP') };
   });
 
+  protected readonly colunasComparativo = ['nutriente', 'total', 'meta', 'diferenca'];
+
   /**
    * Total do dia contra a meta do estudante (RF17): só números e a diferença. Usa o mesmo motor do resultado,
    * então os números aqui e lá são os mesmos, mas lê apenas total, meta e diferença: a situação ("dentro" ou

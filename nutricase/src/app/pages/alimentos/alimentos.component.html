@@ -20,24 +20,24 @@
           matInput
           type="search"
           autocomplete="off"
-          [value]="busca()"
-          (input)="buscar(campo.value)"
+          [value]="busca"
+          (input)="busca = campo.value; filtrar()"
         />
       </mat-form-field>
 
       <mat-form-field class="filtro filtro-grupo">
         <mat-label>Grupo</mat-label>
-        <mat-select [value]="grupoSelecionado()" (selectionChange)="filtrarGrupo($event.value)">
+        <mat-select [value]="grupo" (selectionChange)="grupo = $event.value; filtrar()">
           <mat-option [value]="todos">Todos</mat-option>
-          @for (grupo of grupos(); track grupo) {
-            <mat-option [value]="grupo">{{ grupo }}</mat-option>
+          @for (nome of grupos(); track nome) {
+            <mat-option [value]="nome">{{ nome }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
     </section>
 
     <section class="resultado">
-      @let total = resultados().length;
+      @let total = dataSource.filteredData.length;
       <p class="resultado-status" [class.sem-resultado]="total === 0" aria-live="polite">
         @if (total === 0) {
           Nenhum alimento encontrado
@@ -46,13 +46,14 @@
         }
       </p>
 
-      @if (total > 0) {
+      <!-- A tabela fica sempre no DOM (só escondida): o dataSource só filtra enquanto ela está ligada. -->
+      <div [hidden]="total === 0">
         <p class="tabela-nota">Valores por 100 g de parte comestível.</p>
         <table
           mat-table
           class="tabela-alimentos"
           aria-label="Base de alimentos TACO"
-          [dataSource]="paginaAtual()"
+          [dataSource]="dataSource"
         >
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Alimento</th>
@@ -101,13 +102,10 @@
 
         <mat-paginator
           aria-label="Páginas da base de alimentos"
-          [length]="total"
-          [pageIndex]="indicePagina()"
-          [pageSize]="tamanhoPagina()"
+          [pageSize]="opcoesPorPagina[0]"
           [pageSizeOptions]="opcoesPorPagina"
-          (page)="mudarPagina($event)"
         />
-      }
+      </div>
     </section>
   }
   @default {

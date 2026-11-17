@@ -1,6 +1,8 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { PageEvent } from '@angular/material/paginator';
-import { AlimentoService } from '../../core/services/alimento.service';
+import { Component, OnInit, ViewChild, computed, effect, inject } from '@angular/core';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatTableDataSource } from '@angular/material/table';
+import { Alimento } from '../../core/models';
+import { AlimentoService, nomeContem } from '../../core/services/alimento.service';
 
 /** Valor da opção "Todos" do filtro de grupo. */
 const TODOS = '';
@@ -19,27 +21,28 @@ export class AlimentosComponent implements OnInit {
   protected readonly todos = TODOS;
 
   protected readonly estado = this.alimentoService.estado;
-  protected readonly busca = signal('');
-  protected readonly grupoSelecionado = signal<string>(TODOS);
-  protected readonly indicePagina = signal(0);
-  protected readonly tamanhoPagina = signal(this.opcoesPorPagina[0]);
+  protected readonly grupos = computed(() => this.alimentoService.listarGrupos());
+  protected readonly dataSource = new MatTableDataSource<Alimento>();
+  protected busca = '';
+  protected grupo = TODOS;
 
-  protected readonly grupos = computed(() => {
-    return this.alimentoService.listarGrupos();
-  });
+  /** O paginador só existe com a base pronta: liga ao dataSource quando aparece. */
+  @ViewChild(MatPaginator) set paginador(paginador: MatPaginator) {
+    this.dataSource.paginator = paginador;
+  }
 
-  /** Resultado da busca por nome e do filtro de grupo, na ordem da TACO. */
-  protected readonly resultados = computed(() => {
-    const grupo = this.grupoSelecionado();
-    return this.alimentoService
-      .buscarPorNome(this.busca())
-      .filter((alimento) => grupo === TODOS || alimento.grupo === grupo);
-  });
-
-  protected readonly paginaAtual = computed(() => {
-    const inicio = this.indicePagina() * this.tamanhoPagina();
-    return this.resultados().slice(inicio, inicio + this.tamanhoPagina());
-  });
+  constructor() {
+    // Busca por nome (sem acento, todas as palavras) e grupo; o filtro vai como texto JSON porque o dataSource só aceita string.
+    this.dataSource.filterPredicate = (alimento, filtro) => {
+      const { busca, grupo } = JSON.parse(filtro) as { busca: string; grupo: string };
+      return (grupo === TODOS || alimento.grupo === grupo) && nomeContem(alimento.nome, busca);
+    };
+    effect(() => {
+      if (this.estado() === 'pronto') {
+        this.dataSource.data = this.alimentoService.listar();
+      }
+    });
+  }
 
   ngOnInit(): void {
     void this.alimentoService.carregar();
@@ -51,19 +54,9 @@ export class AlimentosComponent implements OnInit {
     void this.alimentoService.carregar();
   }
 
-  protected buscar(texto: string): void {
-    this.busca.set(texto);
-    this.indicePagina.set(0);
-  }
-
-  protected filtrarGrupo(grupo: string): void {
-    this.grupoSelecionado.set(grupo);
-    this.indicePagina.set(0);
-  }
-
-  protected mudarPagina(evento: PageEvent): void {
-    this.indicePagina.set(evento.pageIndex);
-    this.tamanhoPagina.set(evento.pageSize);
+  protected filtrar(): void {
+    this.dataSource.filter = JSON.stringify({ busca: this.busca, grupo: this.grupo });
+    this.dataSource.paginator?.firstPage();
   }
 
   /** Número no formato brasileiro, ex.: 25,8. */

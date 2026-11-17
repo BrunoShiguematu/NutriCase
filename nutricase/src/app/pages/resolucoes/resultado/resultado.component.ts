@@ -101,6 +101,18 @@ export class ResultadoComponent {
     }),
   );
 
+  protected readonly colunasEtapas = ['etapa', 'parametro', 'valor', 'esperado', 'classificacao'];
+  protected readonly colunasComparativo = ['nutriente', 'total', 'meta', 'diferenca', 'situacao'];
+  protected readonly colunasResumo = ['tipo', 'quantidade'];
+
+  /** Cada etapa é uma linha; a divergente ou com erro ganha logo depois uma linha de detalhe (critério e explicação). */
+  protected readonly linhasEtapas = computed(() =>
+    this.etapas().flatMap((etapa) =>
+      etapa.divergente || etapa.erro ? [{ etapa, detalhe: false }, { etapa, detalhe: true }] : [{ etapa, detalhe: false }],
+    ),
+  );
+  protected readonly ehDetalhe = (_indice: number, linha: { detalhe: boolean }): boolean => linha.detalhe;
+
   /** O comparativo da dieta com as metas do estudante (RF24, RN05). */
   protected readonly comparativo = computed(() =>
     (this.resultado()?.dieta?.comparativo ?? []).map((c) => {

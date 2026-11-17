@@ -39,6 +39,12 @@ function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
 }
 
+/** O nome tem todas as palavras do texto, sem olhar maiúsculas nem acentos. */
+export function nomeContem(nome: string, texto: string): boolean {
+  const normal = normalizar(nome);
+  return normalizar(texto).split(/\s+/).filter(Boolean).every((palavra) => normal.includes(palavra));
+}
+
 /**
  * Base de alimentos (RF13): a TACO, gravada no navegador na primeira abertura, e itens de outra origem.
  *
@@ -95,12 +101,8 @@ export class AlimentoService {
    * Texto vazio devolve todos.
    */
   buscarPorNome(texto: string): Alimento[] {
-    const palavras = normalizar(texto).split(/\s+/).filter(Boolean);
     return this.dados()
-      .filter((a) => {
-        const nome = normalizar(a.nome);
-        return palavras.every((p) => nome.includes(p));
-      })
+      .filter((a) => nomeContem(a.nome, texto))
       .map(copiar);
   }
 

@@ -1,18 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { AvaliacaoDieta, avaliarDieta, MetasDoAluno } from '../avaliacao/avaliar-dieta';
 import { AvaliacaoEtapa, avaliarEtapas } from '../avaliacao/avaliar-etapas';
-import {
-  Classificacao,
-  EtapaCalculo,
-  ItemRefeicao,
-  MarcadorRefeicao,
-  Refeicao,
-  Resolucao,
-  RespostaEtapa,
-  ResumoErros,
-  StatusResolucao,
-  TIPOS_ERRO,
-} from '../models';
+import { EtapaCalculo, ItemRefeicao, MarcadorRefeicao, Refeicao, Resolucao, RespostaEtapa, ResumoErros, TIPOS_ERRO } from '../models';
 import { AlimentoService } from './alimento.service';
 import { CasoService } from './caso.service';
 import { StorageService } from './storage.service';
@@ -77,27 +66,22 @@ export interface ResultadoResolucao {
 
 /** O que a submissão grava além do status: a avaliação feita naquele momento. */
 interface Submissao {
-  resolucaoId: string;
+  readonly resolucaoId: string;
   /** Resultado de `avaliarDieta` na submissão; alimenta o resumo "dieta fora das metas". */
-  dietaForaDasMetas: boolean;
+  readonly dietaForaDasMetas: boolean;
   /** As etapas (critérios) usadas na correção. */
-  etapas: EtapaCalculo[];
-  avaliacoes: AvaliacaoEtapa[];
+  readonly etapas: readonly EtapaCalculo[];
+  readonly avaliacoes: readonly AvaliacaoEtapa[];
 }
 
 interface DadosSalvos {
-  versao: number;
-  resolucoes: Resolucao[];
-  respostas: RespostaEtapa[];
-  refeicoes: Refeicao[];
-  itens: ItemRefeicao[];
-  submissoes: Submissao[];
+  readonly versao: number;
+  readonly resolucoes: readonly Resolucao[];
+  readonly respostas: readonly RespostaEtapa[];
+  readonly refeicoes: readonly Refeicao[];
+  readonly itens: readonly ItemRefeicao[];
+  readonly submissoes: readonly Submissao[];
 }
-
-const MARCADORES: readonly MarcadorRefeicao[] = ['pré-treino', 'pós-treino', 'nenhum'];
-const STATUS: readonly StatusResolucao[] = ['em andamento', 'submetida'];
-const CLASSIFICACOES: readonly Classificacao[] = ['correta', 'divergente', 'erro de fato'];
-const HORARIO = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 function dadosVazios(): DadosSalvos {
   return { versao: VERSAO, resolucoes: [], respostas: [], refeicoes: [], itens: [], submissoes: [] };
@@ -107,109 +91,13 @@ function gerarId(prefixo: string): string {
   return `${prefixo}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** Cópia profunda de dado simples (só JSON): ninguém recebe nem guarda referência ao estado interno. */
-function clonar<T>(valor: T): T {
-  return JSON.parse(JSON.stringify(valor)) as T;
-}
-
-const ehNumeroFinito = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-const ehTexto = (v: unknown): v is string => typeof v === 'string';
-
-function parametroValido(parametro: unknown): parametro is string | number {
-  return (ehTexto(parametro) && parametro.trim() !== '') || ehNumeroFinito(parametro);
-}
-
-function respostaValida(r: RespostaEtapa): boolean {
-  return parametroValido(r.parametro) && ehNumeroFinito(r.valor);
-}
-
-/** Dado salvo que parece o que deveria ser; o que vier torto é descartado na carga, sem quebrar. */
-function resolucaoBemFormada(r: unknown): r is Resolucao {
-  const x = r as Partial<Resolucao> | null;
-  return (
-    typeof x === 'object' &&
-    x !== null &&
-    ehTexto(x.id) &&
-    ehTexto(x.casoId) &&
-    ehTexto(x.data) &&
-    STATUS.includes(x.status as StatusResolucao) &&
-    ehTexto(x.justificativa) &&
-    (x.submetidaEm === undefined || ehTexto(x.submetidaEm))
-  );
-}
-
-function respostaBemFormada(r: unknown): r is RespostaEtapa {
-  const x = r as Partial<RespostaEtapa> | null;
-  return (
-    typeof x === 'object' &&
-    x !== null &&
-    ehTexto(x.id) &&
-    ehTexto(x.resolucaoId) &&
-    ehTexto(x.etapaId) &&
-    parametroValido(x.parametro) &&
-    ehNumeroFinito(x.valor) &&
-    (x.classificacao === undefined || CLASSIFICACOES.includes(x.classificacao)) &&
-    (x.tipoErro === undefined || TIPOS_ERRO.includes(x.tipoErro))
-  );
-}
-
-function refeicaoBemFormada(r: unknown): r is Refeicao {
-  const x = r as Partial<Refeicao> | null;
-  return (
-    typeof x === 'object' &&
-    x !== null &&
-    ehTexto(x.id) &&
-    ehTexto(x.resolucaoId) &&
-    ehTexto(x.nome) &&
-    ehTexto(x.horario) &&
-    MARCADORES.includes(x.marcador as MarcadorRefeicao)
-  );
-}
-
-function itemBemFormado(i: unknown): i is ItemRefeicao {
-  const x = i as Partial<ItemRefeicao> | null;
-  return (
-    typeof x === 'object' &&
-    x !== null &&
-    ehTexto(x.id) &&
-    ehTexto(x.refeicaoId) &&
-    ehTexto(x.alimentoId) &&
-    ehNumeroFinito(x.quantidadeGramas) &&
-    x.quantidadeGramas >= 0
-  );
-}
-
-function submissaoBemFormada(s: unknown): s is Submissao {
-  const x = s as Partial<Submissao> | null;
-  return (
-    typeof x === 'object' &&
-    x !== null &&
-    ehTexto(x.resolucaoId) &&
-    typeof x.dietaForaDasMetas === 'boolean' &&
-    Array.isArray(x.etapas) &&
-    Array.isArray(x.avaliacoes)
-  );
-}
-
-/** Refeição com os campos válidos e aparados, ou `undefined`. */
-function refeicaoValida(dados: DadosRefeicao): DadosRefeicao | undefined {
-  const nome = ehTexto(dados?.nome) ? dados.nome.trim() : '';
-  if (nome === '' || !ehTexto(dados.horario) || !HORARIO.test(dados.horario) || !MARCADORES.includes(dados.marcador)) {
-    return undefined;
-  }
-  return { nome, horario: dados.horario, marcador: dados.marcador };
-}
-
-const alimentoIdValido = (id: unknown): id is string => ehTexto(id) && id.trim() !== '';
-const quantidadeValida = (q: unknown): q is number => ehNumeroFinito(q) && q > 0;
-
 /**
  * As tentativas do estudante: resolução, respostas das etapas, refeições e itens da dieta (UC02–UC06, UC08).
- * Guardadas no navegador pelo StorageService, no mesmo padrão do CasoService: `resolucoes` é um signal,
- * tudo que sai é cópia, e dado salvo ruim é descartado ou consertado na carga em vez de quebrar.
+ * Guardadas no navegador pelo StorageService, no mesmo padrão do CasoService: `resolucoes` é um signal e os
+ * modelos são `readonly`. A validação dos campos é do formulário; o serviço só guarda.
  *
  * Funções de edição (responder, refeições, itens, justificativa) devolvem `undefined` ou `false`, sem mudar
- * nada, quando o id não existe, o dado é inválido ou a tentativa já foi submetida: uma tentativa submetida
+ * nada, quando o id não existe ou a tentativa já foi submetida: uma tentativa submetida
  * não aceita mais edição. Nada de certo ou errado existe antes da submissão (RF09).
  *
  * `submeter` e `resultado` são **assíncronas**: precisam da base de alimentos (a dieta vira kcal e gramas
@@ -250,12 +138,11 @@ export class ResolucaoService {
     };
     const atual = this.dados();
     this.salvar({ ...atual, resolucoes: [...atual.resolucoes, resolucao] });
-    return { ...resolucao };
+    return resolucao;
   }
 
   buscar(id: string): Resolucao | undefined {
-    const achada = this.dados().resolucoes.find((r) => r.id === id);
-    return achada ? { ...achada } : undefined;
+    return this.dados().resolucoes.find((r) => r.id === id);
   }
 
   /** Todas as tentativas, a mais recente primeiro. */
@@ -289,26 +176,21 @@ export class ResolucaoService {
 
   // ---------- etapas ----------
 
-  /** As respostas da tentativa, em cópias, na ordem das etapas do caso. */
+  /** As respostas da tentativa, na ordem das etapas do caso. */
   listarRespostas(resolucaoId: string): RespostaEtapa[] {
     const ordem = new Map(this.casos.listarEtapas(this.buscar(resolucaoId)?.casoId ?? '').map((e) => [e.id, e.ordem]));
     return this.dados()
       .respostas.filter((r) => r.resolucaoId === resolucaoId)
-      .sort((a, b) => (ordem.get(a.etapaId) ?? 99) - (ordem.get(b.etapaId) ?? 99))
-      .map((r) => ({ ...r }));
+      .sort((a, b) => (ordem.get(a.etapaId) ?? 99) - (ordem.get(b.etapaId) ?? 99));
   }
 
   /**
    * Guarda a resposta da etapa, substituindo a anterior da mesma etapa. `undefined` se a tentativa não
-   * existe ou já foi submetida, se a etapa não é uma das 5 do caso, ou se o parâmetro ou o valor não são
-   * válidos (parâmetro: texto não vazio ou número finito; valor: número finito).
+   * existe ou já foi submetida ou se a etapa não é uma das 5 do caso.
    */
   salvarResposta(resolucaoId: string, etapaId: string, parametro: string | number, valor: number): RespostaEtapa | undefined {
     const resolucao = this.emAndamento(resolucaoId);
     if (!resolucao || !this.casos.listarEtapas(resolucao.casoId).some((e) => e.id === etapaId)) {
-      return undefined;
-    }
-    if (!parametroValido(parametro) || !ehNumeroFinito(valor)) {
       return undefined;
     }
     const atual = this.dados();
@@ -317,7 +199,7 @@ export class ResolucaoService {
       id: anterior?.id ?? gerarId('resposta'),
       resolucaoId,
       etapaId,
-      parametro: typeof parametro === 'string' ? parametro.trim() : parametro,
+      parametro,
       valor,
     };
     this.salvar({
@@ -326,55 +208,47 @@ export class ResolucaoService {
         ? atual.respostas.map((r) => (r === anterior ? resposta : r))
         : [...atual.respostas, resposta],
     });
-    return { ...resposta };
+    return resposta;
   }
 
   // ---------- dieta ----------
 
-  /** As refeições da tentativa, em cópias, na ordem em que foram criadas. */
+  /** As refeições da tentativa, na ordem em que foram criadas. */
   listarRefeicoes(resolucaoId: string): Refeicao[] {
-    return this.dados()
-      .refeicoes.filter((r) => r.resolucaoId === resolucaoId)
-      .map((r) => ({ ...r }));
+    return this.dados().refeicoes.filter((r) => r.resolucaoId === resolucaoId);
   }
 
-  /** Os itens de uma refeição, em cópias. */
+  /** Os itens de uma refeição. */
   listarItens(refeicaoId: string): ItemRefeicao[] {
-    return this.dados()
-      .itens.filter((i) => i.refeicaoId === refeicaoId)
-      .map((i) => ({ ...i }));
+    return this.dados().itens.filter((i) => i.refeicaoId === refeicaoId);
   }
 
-  /** Os itens de todas as refeições da tentativa, em cópias. */
+  /** Os itens de todas as refeições da tentativa. */
   listarItensDaResolucao(resolucaoId: string): ItemRefeicao[] {
     const ids = new Set(this.listarRefeicoes(resolucaoId).map((r) => r.id));
-    return this.dados()
-      .itens.filter((i) => ids.has(i.refeicaoId))
-      .map((i) => ({ ...i }));
+    return this.dados().itens.filter((i) => ids.has(i.refeicaoId));
   }
 
-  /** Nome não vazio, horário "HH:mm" e marcador válido; senão `undefined`. */
+  /** `undefined` se a tentativa não existe ou já foi submetida. */
   criarRefeicao(resolucaoId: string, dados: DadosRefeicao): Refeicao | undefined {
-    const valida = refeicaoValida(dados);
-    if (!valida || !this.emAndamento(resolucaoId)) {
+    if (!this.emAndamento(resolucaoId)) {
       return undefined;
     }
-    const refeicao: Refeicao = { id: gerarId('refeicao'), resolucaoId, ...valida };
+    const refeicao: Refeicao = { id: gerarId('refeicao'), resolucaoId, ...dados };
     const atual = this.dados();
     this.salvar({ ...atual, refeicoes: [...atual.refeicoes, refeicao] });
-    return { ...refeicao };
+    return refeicao;
   }
 
   atualizarRefeicao(refeicaoId: string, dados: DadosRefeicao): Refeicao | undefined {
-    const valida = refeicaoValida(dados);
     const atual = this.dados();
     const existente = atual.refeicoes.find((r) => r.id === refeicaoId);
-    if (!valida || !existente || !this.emAndamento(existente.resolucaoId)) {
+    if (!existente || !this.emAndamento(existente.resolucaoId)) {
       return undefined;
     }
-    const nova: Refeicao = { ...existente, ...valida };
+    const nova: Refeicao = { ...existente, ...dados };
     this.salvar({ ...atual, refeicoes: atual.refeicoes.map((r) => (r === existente ? nova : r)) });
-    return { ...nova };
+    return nova;
   }
 
   /** Exclui a refeição e os itens dela. */
@@ -392,36 +266,24 @@ export class ResolucaoService {
     return true;
   }
 
-  /**
-   * Alimento (id não vazio) e quantidade maior que zero. O serviço não confere se o alimento existe na
-   * base: a tela escolhe da lista, e um id que sumiu da base conta como item incompleto na avaliação.
-   */
+  /** O serviço não confere se o alimento existe na base: a tela escolhe da lista, e um id que sumiu conta como item incompleto na avaliação. */
   criarItem(refeicaoId: string, dados: DadosItem): ItemRefeicao | undefined {
     const refeicao = this.dados().refeicoes.find((r) => r.id === refeicaoId);
     if (!refeicao || !this.emAndamento(refeicao.resolucaoId)) {
       return undefined;
     }
-    if (!alimentoIdValido(dados?.alimentoId) || !quantidadeValida(dados.quantidadeGramas)) {
-      return undefined;
-    }
     const item: ItemRefeicao = { id: gerarId('item'), refeicaoId, alimentoId: dados.alimentoId, quantidadeGramas: dados.quantidadeGramas };
     const atual = this.dados();
     this.salvar({ ...atual, itens: [...atual.itens, item] });
-    return { ...item };
+    return item;
   }
 
-  /** Muda o alimento e/ou a quantidade do item; só o que vier é validado e trocado. */
+  /** Muda o alimento e/ou a quantidade do item; só o que vier é trocado. */
   atualizarItem(itemId: string, dados: Partial<DadosItem>): ItemRefeicao | undefined {
     const atual = this.dados();
     const existente = atual.itens.find((i) => i.id === itemId);
     const refeicao = existente && atual.refeicoes.find((r) => r.id === existente.refeicaoId);
     if (!existente || !refeicao || !this.emAndamento(refeicao.resolucaoId)) {
-      return undefined;
-    }
-    if (dados.alimentoId !== undefined && !alimentoIdValido(dados.alimentoId)) {
-      return undefined;
-    }
-    if (dados.quantidadeGramas !== undefined && !quantidadeValida(dados.quantidadeGramas)) {
       return undefined;
     }
     const novo: ItemRefeicao = {
@@ -430,7 +292,7 @@ export class ResolucaoService {
       ...(dados.quantidadeGramas !== undefined ? { quantidadeGramas: dados.quantidadeGramas } : {}),
     };
     this.salvar({ ...atual, itens: atual.itens.map((i) => (i === existente ? novo : i)) });
-    return { ...novo };
+    return novo;
   }
 
   excluirItem(itemId: string): boolean {
@@ -449,17 +311,17 @@ export class ResolucaoService {
   /** A justificativa nunca é avaliada (RN10). */
   salvarJustificativa(resolucaoId: string, texto: string): Resolucao | undefined {
     const resolucao = this.emAndamento(resolucaoId);
-    if (!resolucao || !ehTexto(texto)) {
+    if (!resolucao) {
       return undefined;
     }
     const nova: Resolucao = { ...resolucao, justificativa: texto };
     const atual = this.dados();
     this.salvar({ ...atual, resolucoes: atual.resolucoes.map((r) => (r.id === resolucaoId ? nova : r)) });
-    return { ...nova };
+    return nova;
   }
 
   /**
-   * O que falta para poder submeter (UC06, fluxo 2a): cada etapa do caso sem resposta válida, na ordem, e
+   * O que falta para poder submeter (UC06, fluxo 2a): cada etapa do caso sem resposta, na ordem, e
    * "dieta sem itens". Vazia quando já dá para submeter. `undefined` se a tentativa não existe.
    */
   pendencias(resolucaoId: string): Pendencia[] | undefined {
@@ -469,7 +331,7 @@ export class ResolucaoService {
     }
     const respondidas = new Set(
       this.dados()
-        .respostas.filter((r) => r.resolucaoId === resolucaoId && respostaValida(r))
+        .respostas.filter((r) => r.resolucaoId === resolucaoId)
         .map((r) => r.etapaId),
     );
     const pendencias: Pendencia[] = this.casos
@@ -532,13 +394,13 @@ export class ResolucaoService {
           )
         : undefined;
     return {
-      resolucao: { ...resolucao },
-      etapas: clonar(submissao.etapas)
+      resolucao,
+      etapas: [...submissao.etapas]
         .sort((a, b) => a.ordem - b.ordem)
         .map((etapa) => ({
           etapa,
-          resposta: { ...respostas.find((r) => r.etapaId === etapa.id)! },
-          avaliacao: clonar(submissao.avaliacoes.find((a) => a.etapaId === etapa.id)!),
+          resposta: respostas.find((r) => r.etapaId === etapa.id)!,
+          avaliacao: submissao.avaliacoes.find((a) => a.etapaId === etapa.id)!,
         })),
       metasDoAluno,
       ...(dieta ? { dieta } : {}),
@@ -580,10 +442,7 @@ export class ResolucaoService {
 
   private ordenadas(resolucoes: readonly Resolucao[]): Resolucao[] {
     // Mais recente primeiro; na mesma hora, a criada por último vem antes (a ordenação é estável).
-    return [...resolucoes]
-      .reverse()
-      .sort((a, b) => b.data.localeCompare(a.data))
-      .map((r) => ({ ...r }));
+    return [...resolucoes].reverse().sort((a, b) => b.data.localeCompare(a.data));
   }
 
   /** A tentativa, se existe e ainda aceita edição. */
@@ -633,8 +492,8 @@ export class ResolucaoService {
     const submissao: Submissao = {
       resolucaoId,
       dietaForaDasMetas: dieta.dietaForaDasMetas,
-      etapas: clonar(etapas),
-      avaliacoes: clonar(avaliacoes),
+      etapas,
+      avaliacoes,
     };
     this.salvar({
       ...atual,
@@ -649,7 +508,7 @@ export class ResolucaoService {
       }),
       submissoes: [...atual.submissoes.filter((s) => s.resolucaoId !== resolucaoId), submissao],
     });
-    return { ...submetida };
+    return submetida;
   }
 
   /** Tudo que o resultado precisa, ou `undefined` se a tentativa não está submetida ou o caso sumiu. */
@@ -687,77 +546,7 @@ export class ResolucaoService {
     this.storage.gravar(CHAVE, novo);
   }
 
-  /** Lê o que o navegador tem, conserta o que dá e descarta o que não dá; regrava só se algo mudou. */
   private carregar(): DadosSalvos {
-    const lido = this.storage.ler<Partial<Record<keyof DadosSalvos, unknown>>>(CHAVE);
-    if (!lido || typeof lido !== 'object') {
-      return dadosVazios();
-    }
-    const { dados, alterado } = this.normalizar(lido);
-    if (alterado) {
-      this.storage.gravar(CHAVE, dados);
-    }
-    return dados;
-  }
-
-  /**
-   * - descarta itens malformados (cada lista pode estar ausente, não ser lista ou ter itens tortos);
-   * - descarta respostas, refeições e itens cujo pai não existe, e respostas repetidas da mesma etapa (fica a última);
-   * - tentativa "submetida" sem a avaliação guardada volta a "em andamento" e perde as classificações,
-   *   porque não há como mostrar o resultado e o estudante pode submeter de novo;
-   * - tentativa "em andamento" não guarda classificação (RF09) nem avaliação de submissão.
-   */
-  private normalizar(lido: Partial<Record<keyof DadosSalvos, unknown>>): { dados: DadosSalvos; alterado: boolean } {
-    let alterado = false;
-    /** Lê uma lista do dado salvo: ausente vale vazia; o que não é lista ou é torto é descartado. */
-    const lista = <T>(valor: unknown, serve: (x: unknown) => x is T): T[] => {
-      const itens: unknown[] = Array.isArray(valor) ? valor : [];
-      const bons = itens.filter(serve);
-      if ((valor !== undefined && !Array.isArray(valor)) || bons.length !== itens.length) {
-        alterado = true;
-      }
-      return bons.map(clonar);
-    };
-    const manter = <T>(itens: T[], serve: (x: T) => boolean): T[] => {
-      const mantidos = itens.filter(serve);
-      if (mantidos.length !== itens.length) {
-        alterado = true;
-      }
-      return mantidos;
-    };
-
-    const submissoesLidas = lista(lido.submissoes, submissaoBemFormada);
-    const comSubmissao = new Set(submissoesLidas.map((s) => s.resolucaoId));
-    const resolucoes = lista(lido.resolucoes, resolucaoBemFormada).map((r) => {
-      if (r.status === 'submetida' && !comSubmissao.has(r.id)) {
-        alterado = true;
-        const { submetidaEm: _submetidaEm, ...semData } = r;
-        return { ...semData, status: 'em andamento' as const };
-      }
-      return r;
-    });
-    const ids = new Set(resolucoes.map((r) => r.id));
-    const submetidas = new Set(resolucoes.filter((r) => r.status === 'submetida').map((r) => r.id));
-
-    const submissoes = manter(submissoesLidas, (s) => submetidas.has(s.resolucaoId));
-    const refeicoes = manter(lista(lido.refeicoes, refeicaoBemFormada), (r) => ids.has(r.resolucaoId));
-    const refeicoesIds = new Set(refeicoes.map((r) => r.id));
-    const itens = manter(lista(lido.itens, itemBemFormado), (i) => refeicoesIds.has(i.refeicaoId));
-
-    const comPai = manter(lista(lido.respostas, respostaBemFormada), (r) => ids.has(r.resolucaoId));
-    const ultimaPorEtapa = new Map(comPai.map((r) => [`${r.resolucaoId}|${r.etapaId}`, r]));
-    if (ultimaPorEtapa.size !== comPai.length) {
-      alterado = true; // etapa respondida duas vezes: fica a última
-    }
-    const respostas = [...ultimaPorEtapa.values()].map((r) => {
-      if (!submetidas.has(r.resolucaoId) && (r.classificacao !== undefined || r.tipoErro !== undefined)) {
-        alterado = true;
-        const { classificacao: _classificacao, tipoErro: _tipoErro, ...semVeredito } = r;
-        return semVeredito;
-      }
-      return r;
-    });
-
-    return { dados: { versao: VERSAO, resolucoes, respostas, refeicoes, itens, submissoes }, alterado };
+    return this.storage.ler<DadosSalvos>(CHAVE) ?? dadosVazios();
   }
 }

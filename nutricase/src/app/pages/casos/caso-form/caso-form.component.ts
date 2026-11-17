@@ -14,12 +14,6 @@ function textoObrigatorio(controle: AbstractControl): ValidationErrors | null {
   return String(controle.value ?? '').trim() === '' ? { required: true } : null;
 }
 
-/** Número preenchido tem que ser maior que zero (vazio é com o `required`). */
-function positivo(controle: AbstractControl): ValidationErrors | null {
-  const valor = controle.value;
-  return valor !== null && valor !== '' && Number(valor) <= 0 ? { positivo: true } : null;
-}
-
 /** Idade plausível de um atleta do catálogo, em anos inteiros (decisão da A5: de 10 a 100). */
 export const IDADE_MINIMA = 10;
 export const IDADE_MAXIMA = 100;
@@ -121,16 +115,16 @@ export class CasoFormComponent {
     competencia: ['', textoObrigatorio],
     descricao: ['', textoObrigatorio],
     comentarioReferencia: [''],
-    toleranciaDieta: this.fb.control<number | null>(TOLERANCIA_DIETA_PADRAO, [Validators.required, positivo]),
+    toleranciaDieta: this.fb.control<number | null>(TOLERANCIA_DIETA_PADRAO, [Validators.required, numeroPositivo]),
     // Etapas de cálculo (um grupo por tipo, na ordem de `tipos`)
     etapas: this.fb.array(TIPOS_ETAPA.map((tipo) => this.criarGrupoDaEtapa(tipo))),
     // Ficha do atleta
     nome: ['', textoObrigatorio],
     idade: this.fb.control<number | null>(null, [Validators.required, inteiro, Validators.min(IDADE_MINIMA), Validators.max(IDADE_MAXIMA)]),
     sexo: this.fb.control<Sexo | ''>('', Validators.required),
-    peso: this.fb.control<number | null>(null, [Validators.required, positivo]),
-    altura: this.fb.control<number | null>(null, [Validators.required, positivo]),
-    percentualGordura: this.fb.control<number | null>(null, [positivo, Validators.max(100)]),
+    peso: this.fb.control<number | null>(null, [Validators.required, numeroPositivo]),
+    altura: this.fb.control<number | null>(null, [Validators.required, numeroPositivo]),
+    percentualGordura: this.fb.control<number | null>(null, [numeroPositivo, Validators.max(100)]),
     volumeTreino: ['', textoObrigatorio],
     horarioTreino: ['', textoObrigatorio],
     fasePeriodizacao: ['', textoObrigatorio],

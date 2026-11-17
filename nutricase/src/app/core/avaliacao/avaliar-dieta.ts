@@ -213,7 +213,7 @@ function parcelaDoItem(item: ItemRefeicao, alimento: Alimento | undefined): Tota
 // ---------- comparativo ----------
 
 function toleranciaValida(tolerancia: number | undefined): number {
-  return numeroFinito(tolerancia) && tolerancia >= 0 ? tolerancia : TOLERANCIA_DIETA_PADRAO;
+  return numeroFinito(tolerancia) && tolerancia > 0 ? tolerancia : TOLERANCIA_DIETA_PADRAO;
 }
 
 function compararComMeta(nutriente: NutrienteMeta, total: number, meta: Meta, tolerancia: number): ComparativoMeta {

@@ -8,25 +8,25 @@ export type TipoEtapa = 'TMB' | 'GET' | 'CHO' | 'PTN' | 'LIP';
  * até a validação docente; ficam nos dados do caso para o docente poder editá-los.
  */
 export interface EtapaCalculo {
-  id: string;
-  casoId: string;
+  readonly id: string;
+  readonly casoId: string;
   /** Posição da etapa no caso, começando em 1. */
-  ordem: number;
-  tipo: TipoEtapa;
+  readonly ordem: number;
+  readonly tipo: TipoEtapa;
   /**
    * Parâmetro de referência do caso. Na TMB é texto (o nome da equação, ex.: "Mifflin-St Jeor");
    * nas outras etapas é número (fator de atividade ou g/kg/dia).
    */
-  parametroReferencia: string | number;
+  readonly parametroReferencia: string | number;
   /** Só na TMB: as equações aceitáveis. Escolher uma fora desta lista é erro de "escolha de equação". */
-  opcoesAceitaveis?: string[];
+  readonly opcoesAceitaveis?: readonly string[];
   /**
    * Só nas etapas numéricas: faixa aceitável do parâmetro. Dentro dela e fora da referência é
    * divergência (RN02); fora dela é "meta fora de faixa".
    */
-  faixaAceitavel?: { min: number; max: number };
+  readonly faixaAceitavel?: { readonly min: number; readonly max: number };
   /** Tolerância em %, usada para comparar o valor do estudante com o esperado. */
-  tolerancia: number;
+  readonly tolerancia: number;
   /** Critério de referência do caso, em texto, mostrado nas etapas divergentes (RF23). */
-  criterioReferencia: string;
+  readonly criterioReferencia: string;
 }

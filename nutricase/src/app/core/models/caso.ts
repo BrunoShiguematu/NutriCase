@@ -5,17 +5,17 @@ export const TOLERANCIA_DIETA_PADRAO = 10;
 
 /** Exercício do catálogo (RF01–RF03, RF36). A ficha do atleta fica em `Atleta`. */
 export interface Caso {
-  id: string;
-  atletaId: string;
-  titulo: string;
-  modalidade: string;
-  nivel: Nivel;
-  competencia: string;
-  descricao: string;
-  comentarioReferencia: string;
+  readonly id: string;
+  readonly atletaId: string;
+  readonly titulo: string;
+  readonly modalidade: string;
+  readonly nivel: Nivel;
+  readonly competencia: string;
+  readonly descricao: string;
+  readonly comentarioReferencia: string;
   /**
    * Tolerância (%) para comparar a dieta do estudante com as metas que ele calculou (RF24, RN05).
    * Valor de exemplo até a validação docente.
    */
-  toleranciaDieta: number;
+  readonly toleranciaDieta: number;
 }

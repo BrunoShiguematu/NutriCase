@@ -21,8 +21,7 @@ const HOMEM: Atleta = {
   preferencias: [],
 };
 
-const SEM_GORDURA: Atleta = { ...HOMEM };
-delete SEM_GORDURA.percentualGordura;
+const { percentualGordura: _gordura, ...SEM_GORDURA }: Atleta = HOMEM;
 
 const MIFFLIN = 1648.75;
 const HARRIS = 1695.667;

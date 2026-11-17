@@ -2,20 +2,10 @@
 // Isto vale para os casos, as fichas e também para as etapas de cálculo (referências, faixas e
 // tolerâncias): são exemplos, não critério validado.
 //
-// Sobe a versão quando os exemplos mudarem: na próxima abertura, o CasoService troca os
-// exemplos antigos pelos novos e mantém os casos criados pelo usuário.
-//
-// Um exemplo que o usuário editou pela tela (caso, ficha ou etapas) é mantido como ele deixou na troca de
-// versão, e um que ele excluiu não volta. Só os exemplos intactos são trocados pelos novos.
+// O CasoService só grava estes exemplos na primeira abertura. Para ver exemplos novos, limpe o localStorage.
 
 import { EQUACOES_TMB } from '../avaliacao/formulas';
 import { Atleta, Caso, EtapaCalculo, TipoEtapa, TOLERANCIA_DIETA_PADRAO } from '../models';
-
-/** 2: os casos ganharam as 5 etapas de cálculo e a tolerância da dieta. */
-export const VERSAO_CASOS_EXEMPLO = 2;
-
-/** Ids dos exemplos começam com isto; é como o serviço separa exemplos de casos do usuário. */
-export const PREFIXO_ID_EXEMPLO = 'exemplo-';
 
 const COMENTARIO_REFERENCIA =
   'Comentário de referência de exemplo; o texto do docente entra aqui após a validação.';

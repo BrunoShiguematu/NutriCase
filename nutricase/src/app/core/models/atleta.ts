@@ -2,23 +2,23 @@ export type Sexo = 'feminino' | 'masculino';
 
 /** Ficha do atleta fictício de um caso (RF04–RF05). */
 export interface Atleta {
-  id: string;
+  readonly id: string;
   /** Nome fictício. */
-  nome: string;
-  idade: number;
-  sexo: Sexo;
+  readonly nome: string;
+  readonly idade: number;
+  readonly sexo: Sexo;
   /** Em kg. */
-  peso: number;
+  readonly peso: number;
   /** Em cm. */
-  altura: number;
+  readonly altura: number;
   /** Em %; vazio quando o caso não informa. */
-  percentualGordura?: number;
+  readonly percentualGordura?: number;
   /** Texto livre, ex.: "90 min/dia, 5x por semana". */
-  volumeTreino: string;
+  readonly volumeTreino: string;
   /** Texto livre, ex.: "06h00". */
-  horarioTreino: string;
-  fasePeriodizacao: string;
-  objetivo: string;
-  restricoes: string[];
-  preferencias: string[];
+  readonly horarioTreino: string;
+  readonly fasePeriodizacao: string;
+  readonly objetivo: string;
+  readonly restricoes: readonly string[];
+  readonly preferencias: readonly string[];
 }

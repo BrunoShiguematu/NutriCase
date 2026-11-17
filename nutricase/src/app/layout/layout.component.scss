@@ -41,17 +41,29 @@ $janela-aviso-quebra: 44rem;
   // O anel verde de foco do Material (styles.scss) não apareceria sobre o menu verde: aqui ele fica desligado
   // e vale o contorno branco abaixo.
   --mat-focus-indicator-display: none;
-  padding-top: 0.75rem;
+  --mat-icon-button-icon-color: #fff;
 
   a[aria-current='page'] {
     --mat-list-list-item-label-text-weight: 700;
   }
 
   // Foco do teclado (RNF04): contorno branco de 3 px dentro do item.
-  a:focus-visible {
+  a:focus-visible,
+  button:focus-visible {
     outline: 3px solid #fff;
     outline-offset: -3px;
   }
+}
+
+// Topo do menu: logo à esquerda e o botão de abrir/fechar à direita, na altura da barra do conteúdo.
+.side-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  height: $barra;
+  margin-bottom: 0.5rem;
+  padding: 0 0.5rem 0 1rem;
 }
 
 .content {
@@ -71,11 +83,6 @@ $janela-aviso-quebra: 44rem;
   --mat-toolbar-container-text-color: #{m.$verde};
   flex: none;
   border-bottom: 1px solid m.$borda;
-}
-
-.brand {
-  margin-left: 0.5rem;
-  font: 700 1.25rem/1 var(--fonte-titulo);
 }
 
 // Aviso educacional (RNF06): fixo abaixo da barra, na mesma margem lateral do conteúdo.

@@ -1,5 +1,11 @@
 <mat-sidenav-container class="shell">
   <mat-sidenav class="side" mode="side" opened #sidenav>
+    <div class="side-topo">
+      <img class="brand" src="nutricase-logo-negativa.svg" alt="NutriCase" height="32" />
+      <button mat-icon-button type="button" (click)="sidenav.toggle()" [attr.aria-expanded]="sidenav.opened" aria-label="Abrir ou fechar o menu">
+        <mat-icon>menu</mat-icon>
+      </button>
+    </div>
     <nav aria-label="Navegação principal">
       <mat-nav-list>
         <a mat-list-item class="menu-dashboard" routerLink="/dashboard" routerLinkActive ariaCurrentWhenActive="page" #rlaDashboard="routerLinkActive"
@@ -33,10 +39,11 @@
 
   <mat-sidenav-content class="content">
     <mat-toolbar class="top">
-      <button mat-icon-button type="button" (click)="sidenav.toggle()" [attr.aria-expanded]="sidenav.opened" aria-label="Abrir ou fechar o menu">
-        <mat-icon>menu</mat-icon>
-      </button>
-      <img class="brand" src="nutricase-logo.svg" alt="NutriCase" height="32" />
+      @if (!sidenav.opened) {
+        <button mat-icon-button type="button" (click)="sidenav.toggle()" aria-expanded="false" aria-label="Abrir ou fechar o menu">
+          <mat-icon>menu</mat-icon>
+        </button>
+      }
     </mat-toolbar>
 
     <p class="disclaimer">Ferramenta educacional · casos fictícios · sem finalidade clínica</p>

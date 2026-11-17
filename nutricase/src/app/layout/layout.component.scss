@@ -81,8 +81,38 @@ $janela-aviso-quebra: 44rem;
   --mat-toolbar-standard-height: #{$barra};
   --mat-toolbar-container-background-color: #fff;
   --mat-toolbar-container-text-color: #{m.$verde};
+  position: relative;
   flex: none;
   border-bottom: 1px solid m.$borda;
+}
+
+// Pesquisa de telas: centrada na barra (absoluta, para o botão do menu não empurrar), em pílula e com borda verde.
+// A borda fica no próprio mat-form-field (o contorno interno do Material só existe no modo outline); o preenchimento
+// do Material fica com formato de pílula, sem a linha de baixo, e a altura total é 36 px + 2 × 2 px de borda = 40 px.
+.pesquisa {
+  --mat-form-field-container-height: 36px;
+  --mat-form-field-container-vertical-padding: 6px;
+  --mat-form-field-filled-container-shape: 999px;
+  --mat-form-field-filled-container-color: #fff;
+  --mat-form-field-filled-active-indicator-height: 0;
+  --mat-form-field-filled-focus-active-indicator-height: 0;
+  --mat-form-field-filled-hover-state-layer-opacity: 0;
+  --mat-form-field-filled-focus-state-layer-opacity: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  box-sizing: border-box;
+  width: 22.5rem;
+  transform: translate(-50%, -50%);
+  border: 2px solid m.$verde;
+  border-radius: 999px;
+  // O preenchimento do Material tem os cantos de baixo retos: o overflow recorta pela pílula.
+  overflow: hidden;
+
+  // Foco do teclado (RNF04): anel de 2 px por fora da borda.
+  &:focus-within {
+    box-shadow: 0 0 0 2px m.$verde;
+  }
 }
 
 // Aviso educacional (RNF06): fixo abaixo da barra, na mesma margem lateral do conteúdo.

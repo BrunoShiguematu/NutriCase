@@ -45,9 +45,19 @@ export function nomeContem(nome: string, texto: string): boolean {
   return normalizar(texto).split(/\s+/).filter(Boolean).every((palavra) => normal.includes(palavra));
 }
 
-/** O nome começa com o texto, sem olhar maiúsculas nem acentos. */
-export function nomeComecaCom(nome: string, texto: string): boolean {
-  return normalizar(nome).startsWith(normalizar(texto));
+const palavrasDe = (texto: string): string[] => normalizar(texto).split(/[^a-z0-9]+/).filter(Boolean);
+
+/**
+ * Quão bem o nome casa com o texto (de um nome que já contém todas as palavras do texto), para ordenar a busca:
+ * 0 = o nome começa pela 1ª palavra digitada; 1 = cada palavra digitada começa alguma palavra do nome; 2 = só contém.
+ */
+export function grauDaBusca(nome: string, texto: string): 0 | 1 | 2 {
+  const digitadas = palavrasDe(texto);
+  const doNome = palavrasDe(nome);
+  if (digitadas.length > 0 && doNome[0]?.startsWith(digitadas[0])) {
+    return 0;
+  }
+  return digitadas.every((d) => doNome.some((p) => p.startsWith(d))) ? 1 : 2;
 }
 
 /**

@@ -3,11 +3,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, FormGroupDirective, ValidationErrors, Validators } from '@angular/forms';
 import { debounceTime } from 'rxjs';
 import { Alimento } from '../../../../core/models';
-import { AlimentoService, nomeComecaCom } from '../../../../core/services/alimento.service';
+import { AlimentoService, grauDaBusca } from '../../../../core/services/alimento.service';
 import { mensagemNumero, numeroPositivo } from '../../etapas-ui';
 
 /** Quantas sugestões a lista mostra, quantas letras é preciso digitar para buscar e a pausa na digitação antes de buscar (ms). */
-export const LIMITE_SUGESTOES = 15;
+export const LIMITE_SUGESTOES = 10;
 export const MIN_LETRAS_BUSCA = 3;
 export const PAUSA_DA_BUSCA_MS = 300;
 
@@ -24,8 +24,8 @@ function alimentoEscolhido(controle: AbstractControl): ValidationErrors | null {
 
 /**
  * Busca um alimento da TACO pelo nome (sem acento nem maiúsculas, RF13) e inclui com a quantidade em
- * gramas (RF14). Uma lista curta de sugestões aparece depois de uma pausa na digitação, com os nomes que
- * começam com o texto antes dos que só o contêm; o alimento precisa ser escolhido dela e não pode já estar na
+ * gramas (RF14). Uma lista curta de sugestões aparece depois de uma pausa na digitação: todo nome que contém
+ * cada palavra digitada, em qualquer ordem, com os que começam pelo texto antes (veja `grauDaBusca`); o alimento precisa ser escolhido dela e não pode já estar na
  * refeição (`jaNaRefeicao`). Quem usa recebe o resultado em `incluir` e decide o que fazer; a base de alimentos precisa estar
  * carregada, senão a busca não acha nada.
  */
@@ -68,9 +68,12 @@ export class BuscaAlimentoComponent {
     if (consulta === null) {
       return [];
     }
-    const achados = this.alimentos.buscarPorNome(consulta);
-    const comecam = achados.filter((a) => nomeComecaCom(a.nome, consulta));
-    return [...comecam, ...achados.filter((a) => !comecam.includes(a))].slice(0, LIMITE_SUGESTOES);
+    return this.alimentos
+      .buscarPorNome(consulta)
+      .map((alimento) => ({ alimento, grau: grauDaBusca(alimento.nome, consulta) }))
+      .sort((a, b) => a.grau - b.grau || a.alimento.nome.localeCompare(b.alimento.nome, 'pt-BR'))
+      .slice(0, LIMITE_SUGESTOES)
+      .map(({ alimento }) => alimento);
   });
 
   protected readonly semResultado = computed(() => this.consulta() !== null && this.sugestoes().length === 0);

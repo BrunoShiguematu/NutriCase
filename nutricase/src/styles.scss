@@ -69,6 +69,56 @@ html {
   --mat-table-header-headline-weight: 700;
 }
 
+// Erro de campo (mat-form-field inválido e tocado): vermelho vivo, só para isto; o vinho da marca segue nos outros usos.
+// #C62828 dá 5,6:1 sobre o branco e 4,8:1 sobre o fundo do campo (#E9EEEB), acima dos 4,5:1 do RNF04.
+$erro-campo: #c62828;
+
+html {
+  --mat-form-field-error-text-color: #{$erro-campo};
+  --mat-form-field-error-trailing-icon-color: #{$erro-campo};
+  --mat-form-field-error-hover-trailing-icon-color: #{$erro-campo};
+  --mat-form-field-error-focus-trailing-icon-color: #{$erro-campo};
+  --mat-form-field-filled-error-label-text-color: #{$erro-campo};
+  --mat-form-field-filled-error-hover-label-text-color: #{$erro-campo};
+  --mat-form-field-filled-error-focus-label-text-color: #{$erro-campo};
+  --mat-form-field-filled-error-active-indicator-color: #{$erro-campo};
+  --mat-form-field-filled-error-hover-active-indicator-color: #{$erro-campo};
+  --mat-form-field-filled-error-focus-active-indicator-color: #{$erro-campo};
+  --mat-form-field-filled-error-caret-color: #{$erro-campo};
+  --mat-form-field-outlined-error-label-text-color: #{$erro-campo};
+  --mat-form-field-outlined-error-hover-label-text-color: #{$erro-campo};
+  --mat-form-field-outlined-error-focus-label-text-color: #{$erro-campo};
+  --mat-form-field-outlined-error-outline-color: #{$erro-campo};
+  --mat-form-field-outlined-error-hover-outline-color: #{$erro-campo};
+  --mat-form-field-outlined-error-focus-outline-color: #{$erro-campo};
+  --mat-form-field-outlined-error-caret-color: #{$erro-campo};
+  --mat-select-invalid-arrow-color: #{$erro-campo};
+}
+
+// Linha de baixo mais grossa (2 px) e fundo rosado da marca no campo em erro. Não há token de espessura só do erro: o
+// Material põe a classe .mat-form-field-invalid no campo e os tokens abaixo valem só dentro dele.
+.mat-form-field-invalid {
+  --mat-form-field-filled-active-indicator-height: 2px;
+  --mat-form-field-filled-hover-active-indicator-height: 2px;
+  --mat-form-field-filled-focus-active-indicator-height: 2px;
+  --mat-form-field-filled-container-color: #{m.$vinho-claro};
+}
+
+// Texto do erro em negrito, com o ícone de erro antes (a cor não é a única pista: RNF04).
+// O Material já usa o ::before do erro (content vazio, para alinhar a linha), então o seletor leva a classe dele para vencer.
+mat-error.mat-mdc-form-field-error {
+  font-weight: 600;
+
+  &::before {
+    content: 'error';
+    height: auto;
+    margin-right: 0.25rem;
+    font: 400 1rem/1 'Material Symbols Outlined';
+    font-feature-settings: 'liga';
+    vertical-align: -0.1875rem;
+  }
+}
+
 // O Material não tem token para o fundo do cabeçalho; Resultado e Dieta trocam esta cor no próprio .scss.
 table.mat-mdc-table .mat-mdc-header-cell {
   background-color: m.$fundo;

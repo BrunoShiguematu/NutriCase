@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, FormGroupDirective, ValidationErrors, Validators } from '@angular/forms';
 import { debounceTime } from 'rxjs';
 import { Alimento } from '../../../../core/models';
-import { AlimentoService, grauDaBusca } from '../../../../core/services/alimento.service';
+import { AlimentoService, grauDaBusca, nomeContem } from '../../../../core/services/alimento.service';
 import { mensagemNumero, numeroPositivo } from '../../etapas-ui';
 
 /** Quantas sugestões a lista mostra, quantas letras é preciso digitar para buscar e a pausa na digitação antes de buscar (ms). */
@@ -69,13 +69,14 @@ export class BuscaAlimentoComponent {
   protected readonly sugestoes = computed(() => {
     const consulta = this.consulta();
     if (consulta === null) {
-      return { itens: [], total: 0 };
+      return { itens: [], total: 0, leite: false };
     }
     const achados = this.alimentos
       .buscarPorNome(consulta)
       .map((alimento) => ({ alimento, grau: grauDaBusca(alimento.nome, consulta) }))
       .sort((a, b) => a.grau - b.grau || a.alimento.nome.localeCompare(b.alimento.nome, 'pt-BR'));
-    return { itens: achados.slice(0, LIMITE_SUGESTOES).map(({ alimento }) => alimento), total: achados.length };
+    // A TACO 4ª ed. não publica valores do leite de vaca fluido; quem busca 'leite' é avisado (nomeContem normaliza o texto: sem acento nem maiúsculas).
+    return { itens: achados.slice(0, LIMITE_SUGESTOES).map(({ alimento }) => alimento), total: achados.length, leite: nomeContem(consulta, 'leite') };
   });
 
   protected readonly semResultado = computed(() => this.consulta() !== null && this.sugestoes().total === 0);

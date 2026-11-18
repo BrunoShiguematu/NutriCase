@@ -11,6 +11,9 @@
       @if (sugestoes().total > limite) {
         <mat-option class="lista-cortada" [disabled]="true">Mostrando {{ limite }} de {{ sugestoes().total }}. Continue digitando para afinar.</mat-option>
       }
+      @if (sugestoes().leite) {
+        <mat-option class="aviso-leite" [disabled]="true">Leite de vaca fluido não consta na TACO; use Leite, de vaca, em pó.</mat-option>
+      }
       @if (semResultado()) {
         <mat-option class="sem-resultado" [disabled]="true">Nenhum alimento encontrado</mat-option>
       }

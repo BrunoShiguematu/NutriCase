@@ -131,3 +131,156 @@ function somarErros(tiposDoFiltro: readonly TipoErro[], resumos: readonly (Resum
   }));
   return { tipos, total: tipos.reduce((soma, t) => soma + t.quantidade, 0) };
 }
+
+// ---------- Ofensiva, nível, conquistas e série do gráfico ----------
+// Todas puras e por data LOCAL (o dia que a pessoa vê), sem olhar o filtro do dashboard: ofensiva, nível e
+// conquistas são hábito e progresso acumulado; só a série do gráfico respeita o tipo e o período.
+
+/** Número inteiro do dia local (sem hora), para contar dias seguidos sem erro de horário de verão. */
+const indiceDoDia = (d: Date): number => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86_400_000;
+
+const somarDias = (d: Date, dias: number): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate() + dias);
+const fimDoDia = (d: Date): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+const diaEMes = (d: Date): string => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+const submetidasComData = (resolucoes: readonly Resolucao[]): Resolucao[] =>
+  resolucoes.filter((r) => r.status === 'submetida' && !Number.isNaN(Date.parse(r.submetidaEm ?? '')));
+
+/** Os dias locais (como `indiceDoDia`) em que houve pelo menos uma submissão. */
+const diasComSubmissao = (resolucoes: readonly Resolucao[]): Set<number> =>
+  new Set(submetidasComData(resolucoes).map((r) => indiceDoDia(new Date(r.submetidaEm!))));
+
+/** Quantos casos diferentes têm pelo menos uma tentativa submetida. */
+export function casosConcluidos(resolucoes: readonly Resolucao[]): number {
+  return new Set(resolucoes.filter((r) => r.status === 'submetida').map((r) => r.casoId)).size;
+}
+
+/**
+ * Dias seguidos com pelo menos uma submissão, de hoje para trás. Se hoje ainda não teve, conta a partir de
+ * ontem: a sequência só se quebra quando o dia acaba sem submissão.
+ */
+export function ofensiva(hoje: Date, resolucoes: readonly Resolucao[]): number {
+  const dias = diasComSubmissao(resolucoes);
+  let dia = indiceDoDia(hoje);
+  if (!dias.has(dia)) {
+    dia -= 1;
+  }
+  let seguidos = 0;
+  while (dias.has(dia)) {
+    seguidos += 1;
+    dia -= 1;
+  }
+  return seguidos;
+}
+
+/** A maior sequência de dias seguidos com submissão que já houve (a conquista da ofensiva fica para sempre). */
+export function maiorOfensiva(resolucoes: readonly Resolucao[]): number {
+  let maior = 0;
+  let atual = 0;
+  let anterior: number | undefined;
+  for (const dia of [...diasComSubmissao(resolucoes)].sort((a, b) => a - b)) {
+    atual = anterior !== undefined && dia === anterior + 1 ? atual + 1 : 1;
+    maior = Math.max(maior, atual);
+    anterior = dia;
+  }
+  return maior;
+}
+
+export type NomeNivel = 'Bronze' | 'Prata' | 'Ouro';
+
+/** O nível e o caminho até o próximo: `meta` é quantos casos pedem o próximo nível (`null` no último). */
+export interface Nivel {
+  nome: NomeNivel;
+  proximo: NomeNivel | null;
+  casos: number;
+  meta: number | null;
+  faltam: number;
+  /** Inteiro de 0 a 100: casos / meta; 100 no último nível. */
+  percentual: number;
+}
+
+const NIVEIS: readonly { nome: NomeNivel; apartirDe: number }[] = [
+  { nome: 'Bronze', apartirDe: 0 },
+  { nome: 'Prata', apartirDe: 3 },
+  { nome: 'Ouro', apartirDe: 6 },
+];
+
+/** Bronze de 0 a 2 casos distintos, Prata de 3 a 5, Ouro de 6 em diante. */
+export function nivel(casosDistintos: number): Nivel {
+  const casos = Math.max(0, casosDistintos);
+  let posicao = 0;
+  NIVEIS.forEach((n, i) => (casos >= n.apartirDe ? (posicao = i) : undefined));
+  const proximo = NIVEIS[posicao + 1];
+  if (!proximo) {
+    return { nome: NIVEIS[posicao].nome, proximo: null, casos, meta: null, faltam: 0, percentual: 100 };
+  }
+  return {
+    nome: NIVEIS[posicao].nome,
+    proximo: proximo.nome,
+    casos,
+    meta: proximo.apartirDe,
+    faltam: proximo.apartirDe - casos,
+    percentual: Math.round((casos * 100) / proximo.apartirDe),
+  };
+}
+
+export interface Conquista {
+  id: 'primeiro-caso' | 'cinco-casos' | 'ofensiva-3' | 'cem-por-cento';
+  titulo: string;
+  descricao: string;
+  obtida: boolean;
+}
+
+/**
+ * As 4 conquistas, sempre na mesma ordem. `ofensiva-3` vale se alguma sequência chegou a 3 dias, mesmo que já
+ * tenha acabado. `cem-por-cento`: uma tentativa com pelo menos uma etapa avaliada e nenhuma com erro de fato
+ * (a dieta não entra).
+ */
+export function conquistas({ resolucoes, respostas }: Pick<EntradaKpis, 'resolucoes' | 'respostas'>): Conquista[] {
+  const casos = casosConcluidos(resolucoes);
+  const submetidas = resolucoes.filter((r) => r.status === 'submetida');
+  const cemPorCento = submetidas.some((r) => {
+    const avaliadas = respostas.filter((x) => x.resolucaoId === r.id && x.classificacao !== undefined);
+    return avaliadas.length > 0 && avaliadas.every((x) => x.classificacao !== 'erro de fato');
+  });
+  return [
+    { id: 'primeiro-caso', titulo: 'Primeiro caso', descricao: 'Submeta a primeira resolução.', obtida: casos >= 1 },
+    { id: 'cinco-casos', titulo: '5 casos distintos', descricao: 'Resolva 5 casos diferentes.', obtida: casos >= 5 },
+    { id: 'ofensiva-3', titulo: 'Ofensiva de 3 dias', descricao: 'Submeta resoluções em 3 dias seguidos.', obtida: maiorOfensiva(resolucoes) >= 3 },
+    { id: 'cem-por-cento', titulo: '100% em um caso', descricao: 'Tenha todas as etapas de uma tentativa corretas ou aceitáveis.', obtida: cemPorCento },
+  ];
+}
+
+/** Um ponto do gráfico: o rótulo do dia ou da semana, o aproveitamento (`null` sem dados) e as tentativas submetidas. */
+export interface PontoDaSerie {
+  rotulo: string;
+  percentual: number | null;
+  casos: number;
+}
+
+/**
+ * O aproveitamento ao longo do período do filtro, no tipo dele: um ponto por dia até 14 dias (e para 1 dia só),
+ * um por semana acima disso. A semana é um bloco de 7 dias contado do início do período; o último pode ser menor.
+ */
+export function serieAproveitamento(entrada: EntradaKpis, filtro: FiltroKpis): PontoDaSerie[] {
+  const primeiro = new Date(filtro.inicio.getFullYear(), filtro.inicio.getMonth(), filtro.inicio.getDate());
+  const dias = indiceDoDia(filtro.fim) - indiceDoDia(primeiro) + 1;
+  const passo = dias <= 14 ? 1 : 7;
+  const pontos: PontoDaSerie[] = [];
+  for (let i = 0; i < dias; i += passo) {
+    const primeiroDia = somarDias(primeiro, i);
+    const ultimoDia = somarDias(primeiro, Math.min(i + passo, dias) - 1);
+    const kpis = calcularKpis(entrada, {
+      tipo: filtro.tipo,
+      // A primeira e a última ponta respeitam a hora do filtro; as de dentro vão de 00:00 a 23:59:59.999.
+      inicio: i === 0 ? filtro.inicio : primeiroDia,
+      fim: i + passo >= dias ? filtro.fim : fimDoDia(ultimoDia),
+    });
+    pontos.push({
+      rotulo: passo === 1 ? diaEMes(primeiroDia) : `${diaEMes(primeiroDia)} – ${diaEMes(ultimoDia)}`,
+      percentual: kpis.aproveitamento,
+      casos: kpis.casosResolvidos.tentativas,
+    });
+  }
+  return pontos;
+}

@@ -1,5 +1,5 @@
 import { Classificacao, Resolucao, RespostaEtapa, ResumoErros, TIPOS_ERRO, TipoErro } from '../models';
-import { calcularKpis, EntradaKpis, FiltroKpis, Kpis, TIPOS_ERRO_CALCULO, ultimosDias } from './kpis';
+import { calcularKpis, conquistas, EntradaKpis, FiltroKpis, Kpis, maiorOfensiva, nivel, ofensiva, serieAproveitamento, TIPOS_ERRO_CALCULO, ultimosDias } from './kpis';
 
 let contador = 0;
 const DIA_10 = '2026-11-10T15:00:00.000Z';
@@ -304,4 +304,210 @@ it('calcularKpis não altera os dados recebidos', () => {
   calcularKpis(original, DIETA);
 
   expect({ ...original, resumosErros: [...original.resumosErros] }).toEqual(copia);
+});
+
+// ---------- D4: ofensiva, nível, conquistas e série ----------
+
+/** Um instante no horário LOCAL (o fuso da máquina que roda o teste), como texto ISO, que é o que a submissão guarda. */
+const em = (ano: number, mes: number, dia: number, hora = 12, min = 0, seg = 0, ms = 0): string =>
+  new Date(ano, mes - 1, dia, hora, min, seg, ms).toISOString();
+
+/** Uma tentativa submetida em cada instante dado. */
+const submetidasEm = (...instantes: string[]): Resolucao[] => instantes.map((i) => resolucao(`caso-${i}`, 'submetida', i));
+
+describe('ofensiva', () => {
+  const hoje = new Date(2026, 10, 18, 15, 0); // 18/11/2026
+
+  it('sem submissões: 0', () => {
+    expect(ofensiva(hoje, [])).toBe(0);
+  });
+
+  it('hoje, ontem e anteontem: 3', () => {
+    expect(ofensiva(hoje, submetidasEm(em(2026, 11, 18), em(2026, 11, 17), em(2026, 11, 16)))).toBe(3);
+  });
+
+  it('sem submissão hoje, a conta começa de ontem e a sequência ainda vale', () => {
+    expect(ofensiva(hoje, submetidasEm(em(2026, 11, 17), em(2026, 11, 16)))).toBe(2);
+  });
+
+  it('sem submissão hoje nem ontem: 0, mesmo com sequência antiga', () => {
+    expect(ofensiva(hoje, submetidasEm(em(2026, 11, 15), em(2026, 11, 14), em(2026, 11, 13)))).toBe(0);
+  });
+
+  it('um buraco de 1 dia corta a sequência: conta só o trecho de hoje para trás', () => {
+    expect(ofensiva(hoje, submetidasEm(em(2026, 11, 18), em(2026, 11, 17), em(2026, 11, 15), em(2026, 11, 14)))).toBe(2);
+  });
+
+  it('várias submissões no mesmo dia contam 1 dia; em andamento não conta', () => {
+    const resolucoes = [...submetidasEm(em(2026, 11, 18, 8), em(2026, 11, 18, 20), em(2026, 11, 17)), resolucao('x', 'em andamento')];
+
+    expect(ofensiva(hoje, resolucoes)).toBe(2);
+  });
+
+  it('a virada do dia é a meia-noite LOCAL: 23:59:59.999 e 00:00:00.000 são dias diferentes', () => {
+    const viradas = submetidasEm(em(2026, 11, 17, 23, 59, 59, 999), em(2026, 11, 18, 0, 0, 0, 0));
+
+    expect(ofensiva(new Date(2026, 10, 18, 0, 0, 0, 0), viradas)).toBe(2);
+    expect(ofensiva(hoje, submetidasEm(em(2026, 11, 17, 23, 58), em(2026, 11, 17, 23, 59, 59, 999)))).toBe(1);
+  });
+
+  it('atravessa a virada de mês e de ano', () => {
+    expect(ofensiva(new Date(2027, 0, 2, 10), submetidasEm(em(2027, 1, 2), em(2027, 1, 1), em(2026, 12, 31)))).toBe(3);
+  });
+});
+
+describe('maiorOfensiva', () => {
+  it('é a maior sequência que já houve, mesmo depois de quebrada', () => {
+    const resolucoes = submetidasEm(em(2026, 10, 1), em(2026, 10, 2), em(2026, 10, 3), em(2026, 10, 10), em(2026, 10, 11));
+
+    expect(maiorOfensiva(resolucoes)).toBe(3);
+    expect(maiorOfensiva([])).toBe(0);
+  });
+});
+
+describe('nivel', () => {
+  it.each([
+    [0, 'Bronze', 'Prata', 3, 3, 0],
+    [1, 'Bronze', 'Prata', 3, 2, 33],
+    [2, 'Bronze', 'Prata', 3, 1, 67],
+    [3, 'Prata', 'Ouro', 6, 3, 50],
+    [4, 'Prata', 'Ouro', 6, 2, 67],
+    [5, 'Prata', 'Ouro', 6, 1, 83],
+  ])('%i casos: %s, próximo %s com meta %i, faltam %i, %i%', (casos, nome, proximo, meta, faltam, percentual) => {
+    expect(nivel(casos)).toEqual({ nome, proximo, casos, meta, faltam, percentual });
+  });
+
+  it.each([6, 7, 20])('%i casos: Ouro, completo (sem próximo, meta null, 100%)', (casos) => {
+    expect(nivel(casos)).toEqual({ nome: 'Ouro', proximo: null, casos, meta: null, faltam: 0, percentual: 100 });
+  });
+
+  it('número negativo não quebra: vira Bronze com 0', () => {
+    expect(nivel(-2)).toMatchObject({ nome: 'Bronze', casos: 0, faltam: 3 });
+  });
+});
+
+describe('conquistas', () => {
+  const obtidas = (...args: Parameters<typeof conquistas>) => conquistas(...args).filter((c) => c.obtida).map((c) => c.id);
+
+  it('sem nada: as 4, na ordem, nenhuma obtida', () => {
+    expect(conquistas({ resolucoes: [], respostas: [] }).map((c) => [c.id, c.obtida])).toEqual([
+      ['primeiro-caso', false],
+      ['cinco-casos', false],
+      ['ofensiva-3', false],
+      ['cem-por-cento', false],
+    ]);
+  });
+
+  it('primeiro caso: uma submetida basta; em andamento não', () => {
+    expect(obtidas({ resolucoes: [resolucao('a', 'em andamento')], respostas: [] })).toEqual([]);
+    expect(obtidas({ resolucoes: [resolucao('a')], respostas: [] })).toEqual(['primeiro-caso']);
+  });
+
+  it('5 casos distintos: 4 casos ou 5 tentativas do mesmo caso não bastam', () => {
+    const quatro = ['a', 'b', 'c', 'd'].map((c) => resolucao(c));
+    const mesmoCaso = Array.from({ length: 5 }, () => resolucao('a'));
+
+    expect(obtidas({ resolucoes: quatro, respostas: [] })).not.toContain('cinco-casos');
+    expect(obtidas({ resolucoes: mesmoCaso, respostas: [] })).not.toContain('cinco-casos');
+    expect(obtidas({ resolucoes: [...quatro, resolucao('e')], respostas: [] })).toContain('cinco-casos');
+  });
+
+  it('ofensiva de 3 dias vale para sempre, mesmo quebrada; 2 dias não bastam', () => {
+    expect(obtidas({ resolucoes: submetidasEm(em(2026, 9, 1), em(2026, 9, 2), em(2026, 9, 3)), respostas: [] })).toContain('ofensiva-3');
+    expect(obtidas({ resolucoes: submetidasEm(em(2026, 9, 1), em(2026, 9, 2), em(2026, 9, 4)), respostas: [] })).not.toContain('ofensiva-3');
+  });
+
+  it('100% num caso: todas as avaliadas corretas ou aceitáveis, e pelo menos uma', () => {
+    const boa = resolucao('a');
+    const comErro = resolucao('b');
+    const semAvaliada = resolucao('c');
+
+    expect(obtidas({ resolucoes: [boa], respostas: respostas(boa, 'correta', 'divergente', undefined) })).toContain('cem-por-cento');
+    expect(obtidas({ resolucoes: [comErro], respostas: respostas(comErro, 'correta', 'erro de fato') })).not.toContain('cem-por-cento');
+    expect(obtidas({ resolucoes: [semAvaliada], respostas: respostas(semAvaliada, undefined) })).not.toContain('cem-por-cento');
+  });
+
+  it('uma tentativa boa basta, mesmo com outra ruim do mesmo caso; a em andamento não conta', () => {
+    const ruim = resolucao('a');
+    const boa = resolucao('a');
+    const andamento = resolucao('b', 'em andamento');
+
+    expect(obtidas({ resolucoes: [ruim, boa], respostas: [...respostas(ruim, 'erro de fato'), ...respostas(boa, 'correta')] })).toContain('cem-por-cento');
+    expect(obtidas({ resolucoes: [andamento], respostas: respostas(andamento, 'correta') })).not.toContain('cem-por-cento');
+  });
+});
+
+describe('serieAproveitamento', () => {
+  /** Uma submetida em `quando`: 2 etapas corretas e 1 com erro de fato (67%), dieta dentro das metas. */
+  function com(...instantes: string[]): EntradaKpis {
+    const feitas = submetidasEm(...instantes);
+    return entrada({
+      resolucoes: feitas,
+      respostas: feitas.flatMap((r) => respostas(r, 'correta', 'correta', 'erro de fato')),
+      resumosErros: new Map(feitas.map((r) => [r.id, resumo()])),
+    });
+  }
+  const periodo = (tipo: FiltroKpis['tipo'], de: Date, ate: Date): FiltroKpis => ({ tipo, inicio: de, fim: ate });
+
+  it('1 dia: 1 ponto', () => {
+    const serie = serieAproveitamento(com(em(2026, 11, 18, 10)), periodo('calculos', new Date(2026, 10, 18), new Date(2026, 10, 18, 23, 59, 59, 999)));
+
+    expect(serie).toEqual([{ rotulo: '18/11', percentual: 67, casos: 1 }]);
+  });
+
+  it('7 dias: 1 ponto por dia, com null nos dias sem dados', () => {
+    const serie = serieAproveitamento(com(em(2026, 11, 14), em(2026, 11, 14, 18), em(2026, 11, 18)), { tipo: 'calculos', ...ultimosDias(7, new Date(2026, 10, 18)) });
+
+    expect(serie.map((p) => p.rotulo)).toEqual(['12/11', '13/11', '14/11', '15/11', '16/11', '17/11', '18/11']);
+    expect(serie.map((p) => p.casos)).toEqual([0, 0, 2, 0, 0, 0, 1]);
+    expect(serie.map((p) => p.percentual)).toEqual([null, null, 67, null, null, null, 67]);
+  });
+
+  it('14 dias ainda é por dia; 15 dias passa a ser por semana', () => {
+    const quatorze = serieAproveitamento(com(), { tipo: 'calculos', ...ultimosDias(14, new Date(2026, 10, 18)) });
+    const quinze = serieAproveitamento(com(), { tipo: 'calculos', ...ultimosDias(15, new Date(2026, 10, 18)) });
+
+    expect(quatorze).toHaveLength(14);
+    expect(quinze.map((p) => p.rotulo)).toEqual(['04/11 – 10/11', '11/11 – 17/11', '18/11 – 18/11']);
+  });
+
+  it('30 dias: 5 pontos, 4 semanas de 7 dias e a última com 2', () => {
+    const serie = serieAproveitamento(com(em(2026, 11, 1), em(2026, 11, 8), em(2026, 11, 29), em(2026, 11, 30)), {
+      tipo: 'calculos',
+      ...ultimosDias(30, new Date(2026, 10, 30)),
+    });
+
+    expect(serie.map((p) => p.rotulo)).toEqual(['01/11 – 07/11', '08/11 – 14/11', '15/11 – 21/11', '22/11 – 28/11', '29/11 – 30/11']);
+    expect(serie.map((p) => p.casos)).toEqual([1, 1, 0, 0, 2]);
+  });
+
+  it('as pontas de cada semana entram: 23:59:59.999 do 7º dia fica na semana 1, 00:00 do 8º vai para a 2', () => {
+    const serie = serieAproveitamento(com(em(2026, 11, 7, 23, 59, 59, 999), em(2026, 11, 8, 0, 0, 0, 0)), {
+      tipo: 'calculos',
+      ...ultimosDias(30, new Date(2026, 10, 30)),
+    });
+
+    expect(serie.slice(0, 2).map((p) => p.casos)).toEqual([1, 1]);
+  });
+
+  it('um período com hora no começo ou no fim respeita a hora nas pontas', () => {
+    const entradaDoDia = com(em(2026, 11, 18, 9), em(2026, 11, 18, 15));
+
+    const serie = serieAproveitamento(entradaDoDia, periodo('calculos', new Date(2026, 10, 18, 12), new Date(2026, 10, 18, 18)));
+
+    expect(serie).toEqual([{ rotulo: '18/11', percentual: 67, casos: 1 }]);
+  });
+
+  it('respeita o tipo: a dieta usa as tentativas dentro das metas', () => {
+    const [a, b] = submetidasEm(em(2026, 11, 18, 9), em(2026, 11, 18, 10));
+    const dieta = entrada({ resolucoes: [a, b], resumosErros: new Map([[a.id, resumo()], [b.id, resumo({ 'dieta fora das metas': 1 })]]) });
+    const hoje = periodo('dieta', new Date(2026, 10, 18), new Date(2026, 10, 18, 23, 59, 59, 999));
+
+    expect(serieAproveitamento(dieta, hoje)).toEqual([{ rotulo: '18/11', percentual: 50, casos: 2 }]);
+    expect(serieAproveitamento(dieta, { ...hoje, tipo: 'calculos' })).toEqual([{ rotulo: '18/11', percentual: null, casos: 2 }]);
+  });
+
+  it('fim antes do início: sem pontos', () => {
+    expect(serieAproveitamento(com(), periodo('calculos', new Date(2026, 10, 18), new Date(2026, 10, 10)))).toEqual([]);
+  });
 });

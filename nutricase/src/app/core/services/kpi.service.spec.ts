@@ -195,6 +195,24 @@ describe('KpiService', () => {
     expect(s.kpis.kpis()).toMatchObject({ casosResolvidos: { tentativas: 0, casosDistintos: 0 }, aproveitamento: null, total: null });
   });
 
+  it('ofensiva, nível, conquistas e série vêm do serviço e ignoram o tipo do filtro (menos a série)', async () => {
+    const s = abrir();
+    expect(s.kpis.ofensiva()).toBe(0);
+    expect(s.kpis.nivel()).toMatchObject({ nome: 'Bronze', casos: 0, faltam: 3 });
+    expect(s.kpis.conquistas().filter((c) => c.obtida)).toEqual([]);
+
+    await submeter(s); // agora, toda correta
+
+    expect(s.kpis.ofensiva()).toBe(1);
+    expect(s.kpis.nivel()).toMatchObject({ nome: 'Bronze', casos: 1, faltam: 2 });
+    expect(s.kpis.conquistas().filter((c) => c.obtida).map((c) => c.id)).toEqual(['primeiro-caso', 'cem-por-cento']);
+    expect(s.kpis.serie()).toHaveLength(7); // padrão: 7 dias, 1 ponto por dia
+    expect(s.kpis.serie().at(-1)).toMatchObject({ percentual: 100, casos: 1 }); // hoje
+    s.kpis.filtro.set({ tipo: 'dieta', inicio: new Date(2000, 0, 1), fim: new Date(2000, 0, 1, 23) });
+    expect(s.kpis.ofensiva()).toBe(1); // o filtro não mexe nela
+    expect(s.kpis.serie()).toEqual([{ rotulo: '01/01', percentual: null, casos: 0 }]);
+  });
+
   it('não grava nada no navegador ao calcular', async () => {
     const s = abrir();
     await submeter(s);

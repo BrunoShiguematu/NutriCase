@@ -37,9 +37,9 @@
 
 @if (erroDoPeriodo(); as erro) {
   <p class="periodo-erro" role="alert">{{ erro }}</p>
-} @else if (faltaData()) {
-  <p class="periodo-aviso" role="status">Escolha a data inicial e a final. Enquanto isso, os números são os do período anterior.</p>
 }
+<!-- Região de status fixa no DOM: só o texto muda, para o leitor de tela anunciar o aviso quando ele aparece. -->
+<p class="periodo-aviso" role="status">{{ !erroDoPeriodo() && faltaData() ? 'Escolha a data inicial e a final. Enquanto isso, os números são os do período anterior.' : '' }}</p>
 
 <section class="kpis" aria-label="Indicadores das suas resoluções">
   <mat-card class="kpi kpi-casos" appearance="outlined">
@@ -129,36 +129,6 @@
       <p class="kpi-explicacao">Não depende do período escolhido.</p>
     </mat-card-content>
   </mat-card>
-
-  <mat-card class="kpi kpi-erros" appearance="outlined">
-    <mat-card-header>
-      <h2 mat-card-title class="kpi-titulo">Erros por tipo</h2>
-    </mat-card-header>
-    <mat-card-content>
-      @if (semDados()) {
-        <p class="kpi-valor kpi-vazio">—</p>
-      } @else {
-        <p class="kpi-valor">{{ k.errosPorTipo.total }}</p>
-        <p class="kpi-detalhe">{{ errosTexto() }} no total</p>
-        <ul class="lista-erros">
-          @for (linha of linhasErro(); track linha.tipo) {
-            <li class="erro-tipo">
-              <span class="erro-rotulo">{{ linha.tipo }}</span>
-              <span class="erro-quantidade">{{ linha.quantidade }}</span>
-              <span class="erro-barra" aria-hidden="true">
-                <span class="erro-barra-preenchida" [style.width.%]="linha.largura"></span>
-              </span>
-            </li>
-          }
-        </ul>
-      }
-      @if (dieta) {
-        <p class="kpi-explicacao">Tentativas do período com a dieta fora das metas.</p>
-      } @else {
-        <p class="kpi-explicacao">Erros das etapas de cálculo do período, pelos 4 tipos de cálculo.</p>
-      }
-    </mat-card-content>
-  </mat-card>
 </section>
 
 @let n = nivel();
@@ -215,6 +185,36 @@
     </svg>
     @if (semDados()) {
       <p class="kpi-explicacao grafico-vazio">Nenhuma tentativa submetida neste período.</p>
+    }
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="kpi kpi-erros" appearance="outlined">
+  <mat-card-header>
+    <h2 mat-card-title class="kpi-titulo">Erros por tipo</h2>
+  </mat-card-header>
+  <mat-card-content>
+    @if (semDados()) {
+      <p class="kpi-valor kpi-vazio">—</p>
+    } @else {
+      <p class="kpi-valor">{{ k.errosPorTipo.total }}</p>
+      <p class="kpi-detalhe">{{ errosTexto() }} no total</p>
+      <ul class="lista-erros">
+        @for (linha of linhasErro(); track linha.tipo) {
+          <li class="erro-tipo">
+            <span class="erro-rotulo">{{ linha.tipo }}</span>
+            <span class="erro-quantidade">{{ linha.quantidade }}</span>
+            <span class="erro-barra" aria-hidden="true">
+              <span class="erro-barra-preenchida" [style.width.%]="linha.largura"></span>
+            </span>
+          </li>
+        }
+      </ul>
+    }
+    @if (dieta) {
+      <p class="kpi-explicacao">Tentativas do período com a dieta fora das metas.</p>
+    } @else {
+      <p class="kpi-explicacao">Erros das etapas de cálculo do período, pelos 4 tipos de cálculo.</p>
     }
   </mat-card-content>
 </mat-card>

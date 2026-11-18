@@ -12,8 +12,8 @@
         <mat-option class="sem-resultado" [disabled]="true">Nenhum alimento encontrado</mat-option>
       }
     </mat-autocomplete>
-    <mat-hint>Digite ao menos 2 letras e escolha da lista</mat-hint>
-    <mat-error>Escolha um alimento da lista</mat-error>
+    <mat-hint>Digite ao menos 3 letras e escolha da lista</mat-hint>
+    <mat-error>{{ mensagemBusca() }}</mat-error>
   </mat-form-field>
 
   <mat-form-field class="campo campo-quantidade">

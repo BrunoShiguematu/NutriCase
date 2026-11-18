@@ -45,6 +45,11 @@ export function nomeContem(nome: string, texto: string): boolean {
   return normalizar(texto).split(/\s+/).filter(Boolean).every((palavra) => normal.includes(palavra));
 }
 
+/** O nome começa com o texto, sem olhar maiúsculas nem acentos. */
+export function nomeComecaCom(nome: string, texto: string): boolean {
+  return normalizar(nome).startsWith(normalizar(texto));
+}
+
 /**
  * Base de alimentos (RF13): a TACO, gravada no navegador na primeira abertura, e itens de outra origem.
  *

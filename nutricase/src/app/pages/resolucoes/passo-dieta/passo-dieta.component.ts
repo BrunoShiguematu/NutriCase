@@ -102,6 +102,7 @@ export class PassoDietaComponent {
         itens: itens
           .filter((item) => item.refeicaoId === refeicao.id)
           .map((item) => ({ item, alimento: this.alimentos.buscarPorId(item.alimentoId) as Alimento | undefined, incompleto: incompletos.has(item.id) })),
+        alimentoIds: itens.filter((item) => item.refeicaoId === refeicao.id).map((item) => item.alimentoId),
         totais: totais.porRefeicao.find((r) => r.refeicaoId === refeicao.id)?.totais ?? { kcal: 0, cho: 0, ptn: 0, lip: 0 },
       }));
   });

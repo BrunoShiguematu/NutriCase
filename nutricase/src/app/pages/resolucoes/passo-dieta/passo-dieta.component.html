@@ -105,7 +105,7 @@
         }
 
         @if (estadoAlimentos() === 'pronto') {
-          <app-busca-alimento (incluir)="incluirItem(cartao.refeicao.id, $event)" />
+          <app-busca-alimento [jaNaRefeicao]="cartao.alimentoIds" (incluir)="incluirItem(cartao.refeicao.id, $event)" />
           <p class="refeicao-totais">
             Total da refeição:
             <span class="total-kcal">{{ numero(cartao.totais.kcal) }} kcal</span> ·

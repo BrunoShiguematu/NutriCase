@@ -1,37 +1,132 @@
-<header class="page-header">
-  <h1 class="page-title">Dashboard</h1>
+@let k = kpis();
+@let dieta = tipo() === 'dieta';
+
+<header class="page-header cabecalho">
+  <div class="cabecalho-texto">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitulo">Acompanhe seu desempenho nos casos</p>
+  </div>
+
+  <div class="filtros">
+    <mat-button-toggle-group class="filtro-tipo" hideSingleSelectionIndicator aria-label="Tipo de indicador" [value]="tipo()" (change)="trocarTipo($event.value)">
+      <mat-button-toggle value="calculos">Cálculos</mat-button-toggle>
+      <mat-button-toggle value="dieta">Dieta</mat-button-toggle>
+    </mat-button-toggle-group>
+
+    <mat-form-field class="filtro-periodo" subscriptSizing="dynamic">
+      <mat-label>Período</mat-label>
+      <mat-select [value]="periodo()" (selectionChange)="trocarPeriodo($event.value)">
+        @for (opcao of periodos; track opcao.valor) {
+          <mat-option [value]="opcao.valor">{{ opcao.rotulo }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (periodo() === 'especifico') {
+      <mat-form-field class="filtro-datas" subscriptSizing="dynamic">
+        <mat-date-range-input [rangePicker]="seletor">
+          <input matStartDate placeholder="dd/mm/aaaa" aria-label="Data inicial" (dateChange)="escolherInicio($event.value)" />
+          <input matEndDate placeholder="dd/mm/aaaa" aria-label="Data final" (dateChange)="escolherFim($event.value)" />
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="seletor" />
+        <mat-date-range-picker #seletor />
+      </mat-form-field>
+    }
+  </div>
 </header>
+
+@if (erroDoPeriodo(); as erro) {
+  <p class="periodo-erro" role="alert">{{ erro }}</p>
+} @else if (faltaData()) {
+  <p class="periodo-aviso" role="status">Escolha a data inicial e a final. Enquanto isso, os números são os do período anterior.</p>
+}
 
 <section class="kpis" aria-label="Indicadores das suas resoluções">
   <mat-card class="kpi kpi-casos" appearance="outlined">
     <mat-card-header>
-      <h2 mat-card-title class="kpi-titulo">Tentativas submetidas</h2>
+      <h2 mat-card-title class="kpi-titulo">Casos resolvidos</h2>
     </mat-card-header>
     <mat-card-content>
-      @if (semSubmissoes) {
+      @if (semDados()) {
         <p class="kpi-valor kpi-vazio">—</p>
       } @else {
-        <p class="kpi-valor">{{ kpis.casosResolvidos.tentativas }}</p>
-        <p class="kpi-detalhe">em {{ casosTexto }}</p>
+        <p class="kpi-valor">{{ k.casosResolvidos.tentativas }}</p>
       }
-      <p class="kpi-explicacao">Conta as tentativas submetidas nos últimos 7 dias, inclusive as refeitas.</p>
+      <p class="kpi-detalhe">concluídos no período</p>
+      <p class="kpi-explicacao">Conta as tentativas submetidas, inclusive as refeitas, em {{ casosTexto() }}.</p>
     </mat-card-content>
   </mat-card>
 
   <mat-card class="kpi kpi-aproveitamento" appearance="outlined">
     <mat-card-header>
-      <h2 mat-card-title class="kpi-titulo">Aproveitamento nos cálculos</h2>
+      <h2 mat-card-title class="kpi-titulo">Aproveitamento</h2>
     </mat-card-header>
     <mat-card-content>
-      @if (kpis.aproveitamento !== null) {
-        <p class="kpi-valor">{{ kpis.aproveitamento }}%</p>
-        <p class="kpi-detalhe">
-          {{ kpis.corretas! + kpis.aceitaveis! }} de {{ kpis.total }} etapas corretas ou aceitáveis
-        </p>
+      @if (k.aproveitamento !== null) {
+        <p class="kpi-valor">{{ k.aproveitamento }}%</p>
       } @else {
         <p class="kpi-valor kpi-vazio">—</p>
       }
-      <p class="kpi-explicacao">Etapas corretas ou aceitáveis sobre o total de etapas respondidas nas tentativas submetidas nos últimos 7 dias.</p>
+      @if (dieta) {
+        <p class="kpi-detalhe">das dietas dentro da meta</p>
+        <p class="kpi-explicacao">Tentativas com a dieta dentro das metas que você calculou, sobre o total de tentativas do período.</p>
+      } @else {
+        <p class="kpi-detalhe">das etapas corretas ou aceitáveis</p>
+        <p class="kpi-explicacao">Etapas corretas ou aceitáveis sobre o total de etapas respondidas no período.</p>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="kpi kpi-corretas" appearance="outlined">
+    <mat-card-header>
+      <h2 mat-card-title class="kpi-titulo">{{ dieta ? 'Dietas dentro da meta' : 'Etapas corretas' }}</h2>
+    </mat-card-header>
+    <mat-card-content>
+      @if (k.corretas !== null) {
+        <p class="kpi-valor">{{ k.corretas }} <span class="kpi-total">/ {{ k.total }}</span></p>
+      } @else {
+        <p class="kpi-valor kpi-vazio">—</p>
+      }
+      <p class="kpi-detalhe">{{ dieta ? 'dentro da meta / tentativas' : 'corretas / total' }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="kpi kpi-aceitaveis" appearance="outlined">
+    <mat-card-header>
+      <h2 mat-card-title class="kpi-titulo">Aceitáveis</h2>
+    </mat-card-header>
+    <mat-card-content>
+      @if (k.aceitaveis !== null) {
+        <p class="kpi-valor kpi-aceitavel">{{ k.aceitaveis }}</p>
+      } @else {
+        <p class="kpi-valor kpi-vazio">—</p>
+      }
+      <p class="kpi-detalhe">{{ dieta ? 'não se aplica à dieta' : 'julgamento válido, não é erro' }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="kpi kpi-erros-de-fato" appearance="outlined">
+    <mat-card-header>
+      <h2 mat-card-title class="kpi-titulo">Erros de fato</h2>
+    </mat-card-header>
+    <mat-card-content>
+      @if (k.errosDeFato !== null) {
+        <p class="kpi-valor kpi-erro">{{ k.errosDeFato }}</p>
+      } @else {
+        <p class="kpi-valor kpi-vazio">—</p>
+      }
+      <p class="kpi-detalhe">no período</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="kpi kpi-ofensiva" appearance="outlined">
+    <mat-card-header>
+      <h2 mat-card-title class="kpi-titulo">Ofensiva</h2>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="kpi-valor"><mat-icon class="kpi-icone" aria-hidden="true">local_fire_department</mat-icon> {{ ofensiva() }}</p>
+      <p class="kpi-detalhe">dias seguidos de prática</p>
+      <p class="kpi-explicacao">Não depende do período escolhido.</p>
     </mat-card-content>
   </mat-card>
 
@@ -40,13 +135,13 @@
       <h2 mat-card-title class="kpi-titulo">Erros por tipo</h2>
     </mat-card-header>
     <mat-card-content>
-      @if (semSubmissoes) {
+      @if (semDados()) {
         <p class="kpi-valor kpi-vazio">—</p>
       } @else {
-        <p class="kpi-valor">{{ kpis.errosPorTipo.total }}</p>
-        <p class="kpi-detalhe">{{ errosTexto }} no total</p>
+        <p class="kpi-valor">{{ k.errosPorTipo.total }}</p>
+        <p class="kpi-detalhe">{{ errosTexto() }} no total</p>
         <ul class="lista-erros">
-          @for (linha of linhasErro; track linha.tipo) {
+          @for (linha of linhasErro(); track linha.tipo) {
             <li class="erro-tipo">
               <span class="erro-rotulo">{{ linha.tipo }}</span>
               <span class="erro-quantidade">{{ linha.quantidade }}</span>
@@ -57,12 +152,16 @@
           }
         </ul>
       }
-      <p class="kpi-explicacao">Erros das etapas de cálculo das tentativas submetidas nos últimos 7 dias, pelos 4 tipos de cálculo.</p>
+      @if (dieta) {
+        <p class="kpi-explicacao">Tentativas do período com a dieta fora das metas.</p>
+      } @else {
+        <p class="kpi-explicacao">Erros das etapas de cálculo do período, pelos 4 tipos de cálculo.</p>
+      }
     </mat-card-content>
   </mat-card>
 </section>
 
-@if (semSubmissoes) {
+@if (semNenhuma()) {
   <p class="sem-submissoes">
     Você ainda não submeteu nenhuma resolução. <a class="ir-catalogo" routerLink="/casos">Escolha um caso no catálogo</a> para começar.
   </p>

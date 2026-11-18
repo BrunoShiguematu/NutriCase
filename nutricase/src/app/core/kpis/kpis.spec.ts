@@ -1,5 +1,5 @@
 import { Classificacao, Resolucao, RespostaEtapa, ResumoErros, TIPOS_ERRO, TipoErro } from '../models';
-import { calcularKpis, conquistas, EntradaKpis, FiltroKpis, Kpis, maiorOfensiva, nivel, ofensiva, serieAproveitamento, TIPOS_ERRO_CALCULO, ultimosDias } from './kpis';
+import { calcularKpis, conquistas, EntradaKpis, FiltroKpis, Kpis, maiorOfensiva, MENSAGEM_PERIODO_INVERTIDO, MENSAGEM_PERIODO_LONGO, nivel, ofensiva, periodoEntreDatas, serieAproveitamento, TIPOS_ERRO_CALCULO, ultimosDias, validarPeriodo } from './kpis';
 
 let contador = 0;
 const DIA_10 = '2026-11-10T15:00:00.000Z';
@@ -509,5 +509,30 @@ describe('serieAproveitamento', () => {
 
   it('fim antes do início: sem pontos', () => {
     expect(serieAproveitamento(com(), periodo('calculos', new Date(2026, 10, 18), new Date(2026, 10, 10)))).toEqual([]);
+  });
+});
+
+describe('período escolhido por datas', () => {
+  const dia = (ano: number, mes: number, d: number, hora = 0) => new Date(ano, mes - 1, d, hora);
+
+  it('início igual ao fim vale (1 dia); início depois do fim é recusado', () => {
+    expect(validarPeriodo(dia(2026, 11, 18), dia(2026, 11, 18))).toBeNull();
+    expect(validarPeriodo(dia(2026, 11, 18, 23), dia(2026, 11, 18, 1))).toBeNull(); // só o dia conta, não a hora
+    expect(validarPeriodo(dia(2026, 11, 19), dia(2026, 11, 18))).toBe(MENSAGEM_PERIODO_INVERTIDO);
+  });
+
+  it('no máximo 1 ano: até o mesmo dia do ano seguinte vale, o dia depois é recusado', () => {
+    expect(validarPeriodo(dia(2026, 11, 18), dia(2027, 11, 18))).toBeNull();
+    expect(validarPeriodo(dia(2026, 11, 18), dia(2027, 11, 19))).toBe(MENSAGEM_PERIODO_LONGO);
+    expect(validarPeriodo(dia(2027, 1, 1), dia(2028, 1, 1))).toBeNull();
+    expect(validarPeriodo(dia(2024, 2, 29), dia(2025, 3, 1))).toBeNull(); // 29/02 + 1 ano cai em 01/03
+    expect(validarPeriodo(dia(2024, 2, 29), dia(2025, 3, 2))).toBe(MENSAGEM_PERIODO_LONGO);
+  });
+
+  it('periodoEntreDatas vai do começo do primeiro dia ao último instante do segundo', () => {
+    expect(periodoEntreDatas(dia(2026, 11, 10, 15), dia(2026, 11, 12, 8))).toEqual({
+      inicio: new Date(2026, 10, 10, 0, 0, 0, 0),
+      fim: new Date(2026, 10, 12, 23, 59, 59, 999),
+    });
   });
 });

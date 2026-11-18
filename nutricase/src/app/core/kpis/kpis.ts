@@ -284,3 +284,23 @@ export function serieAproveitamento(entrada: EntradaKpis, filtro: FiltroKpis): P
   }
   return pontos;
 }
+
+// ---------- Período escolhido por datas ----------
+
+export const MENSAGEM_PERIODO_INVERTIDO = 'A data inicial não pode ser depois da data final.';
+export const MENSAGEM_PERIODO_LONGO = 'O período pode ter no máximo 1 ano.';
+
+/** `null` se o período entre as duas datas (dias locais, as duas valem) está certo; senão, o que corrigir. */
+export function validarPeriodo(inicio: Date, fim: Date): string | null {
+  if (indiceDoDia(inicio) > indiceDoDia(fim)) {
+    return MENSAGEM_PERIODO_INVERTIDO;
+  }
+  // No máximo 1 ano: do dia inicial até o mesmo dia do ano seguinte.
+  const limite = new Date(inicio.getFullYear() + 1, inicio.getMonth(), inicio.getDate());
+  return indiceDoDia(fim) > indiceDoDia(limite) ? MENSAGEM_PERIODO_LONGO : null;
+}
+
+/** Do começo do dia `de` ao último instante do dia `ate`, no horário local. */
+export function periodoEntreDatas(de: Date, ate: Date): Pick<FiltroKpis, 'inicio' | 'fim'> {
+  return { inicio: new Date(de.getFullYear(), de.getMonth(), de.getDate()), fim: fimDoDia(ate) };
+}

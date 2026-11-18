@@ -18,23 +18,37 @@ import { ResolucaoService } from './resolucao.service';
  * `filtro` é o tipo e o período escolhidos (padrão: cálculos, últimos 7 dias, até o fim de hoje) e `kpis`
  * recalcula sozinho quando o filtro ou as tentativas mudam. `ofensiva`, `nivel` e `conquistas` ignoram o filtro
  * (hábito e progresso acumulado); `serie` é o aproveitamento do gráfico, no tipo e no período do filtro.
- * Dia e hora de "hoje" são lidos quando o valor é calculado; abrir o Dashboard de novo traz o dia certo.
+ * "Hoje" é o signal `hoje`: a ofensiva e o filtro padrão partem dele. `atualizarHoje` o põe no dia de agora e
+ * volta o filtro ao padrão; o Dashboard o chama ao abrir, então quem deixa o app aberto passando da meia-noite
+ * vê o dia certo na próxima visita.
  */
 @Injectable({ providedIn: 'root' })
 export class KpiService {
   constructor(private readonly resolucoes: ResolucaoService) {}
 
-  readonly filtro = signal<FiltroKpis>({ tipo: 'calculos', ...ultimosDias(7) });
+  readonly hoje = signal(new Date());
+
+  readonly filtro = signal<FiltroKpis>(this.filtroPadrao());
 
   readonly kpis = computed(() => calcularKpis(this.entrada(), this.filtro()));
 
-  readonly ofensiva = computed(() => calcularOfensiva(new Date(), this.entrada().resolucoes));
+  readonly ofensiva = computed(() => calcularOfensiva(this.hoje(), this.entrada().resolucoes));
 
   readonly nivel = computed(() => calcularNivel(casosConcluidos(this.entrada().resolucoes)));
 
   readonly conquistas = computed(() => calcularConquistas(this.entrada()));
 
   readonly serie = computed(() => serieAproveitamento(this.entrada(), this.filtro()));
+
+  /** Põe `hoje` no instante de agora e volta ao filtro padrão (cálculos, últimos 7 dias, até o fim de hoje). */
+  atualizarHoje(): void {
+    this.hoje.set(new Date());
+    this.filtro.set(this.filtroPadrao());
+  }
+
+  private filtroPadrao(): FiltroKpis {
+    return { tipo: 'calculos', ...ultimosDias(7, this.hoje()) };
+  }
 
   private entrada(): EntradaKpis {
     const tentativas = this.resolucoes.listar();

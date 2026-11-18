@@ -213,6 +213,20 @@ describe('KpiService', () => {
     expect(s.kpis.serie()).toEqual([{ rotulo: '01/01', percentual: null, casos: 0 }]);
   });
 
+  it('atualizarHoje põe o dia de agora, usa na ofensiva e volta ao filtro padrão', async () => {
+    const s = abrir();
+    await submeter(s); // submetida agora
+    s.kpis.hoje.set(new Date(2000, 0, 1)); // o app "ficou aberto" e o relógio do serviço ficou para trás
+    s.kpis.filtro.set({ tipo: 'dieta', inicio: new Date(2000, 0, 1), fim: new Date(2000, 0, 1, 23) });
+    expect(s.kpis.ofensiva()).toBe(0); // hoje (2000) e ontem não têm submissão
+
+    s.kpis.atualizarHoje();
+
+    expect(s.kpis.ofensiva()).toBe(1);
+    expect(s.kpis.filtro().tipo).toBe('calculos');
+    expect(s.kpis.kpis().casosResolvidos.tentativas).toBe(1); // o padrão (7 dias até o fim de hoje) pega a submissão
+  });
+
   it('não grava nada no navegador ao calcular', async () => {
     const s = abrir();
     await submeter(s);

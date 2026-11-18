@@ -4,7 +4,6 @@ import { calcularKpis, conquistas, EntradaKpis, FiltroKpis, Kpis, maiorOfensiva,
 let contador = 0;
 const DIA_10 = '2026-11-10T15:00:00.000Z';
 
-/** Um período largo que contém o dia 10: o recorte não atrapalha os testes que não são sobre ele. */
 const NOVEMBRO: Pick<FiltroKpis, 'inicio' | 'fim'> = { inicio: new Date('2026-11-01T00:00:00.000Z'), fim: new Date('2026-11-30T23:59:59.999Z') };
 const CALCULOS: FiltroKpis = { tipo: 'calculos', ...NOVEMBRO };
 const DIETA: FiltroKpis = { tipo: 'dieta', ...NOVEMBRO };
@@ -38,7 +37,6 @@ function entrada(parcial: Partial<EntradaKpis> = {}): EntradaKpis {
   return { resolucoes: [], respostas: [], resumosErros: new Map(), ...parcial };
 }
 
-/** Os 4 números do cartão de aproveitamento, ou `null` quando ele mostra "—". */
 const aproveitamento = (k: Kpis) =>
   k.aproveitamento === null ? null : { percentual: k.aproveitamento, corretas: k.corretas, aceitaveis: k.aceitaveis, total: k.total, errosDeFato: k.errosDeFato };
 
@@ -163,11 +161,11 @@ describe('calcularKpis, tipo "calculos"', () => {
     it.each([
       [1, 3, 33],
       [2, 3, 67],
-      [1, 8, 13], // 12,5 sobe
-      [3, 8, 38], // 37,5 sobe
+      [1, 8, 13],
+      [3, 8, 38],
       [5, 5, 100],
       [0, 5, 0],
-      [1, 200, 1], // 0,5 sobe
+      [1, 200, 1],
       [1, 201, 0],
     ])('%i de %i etapas: %i%', (corretas, total, esperado) => {
       expect(percentual(corretas, total)).toBe(esperado);
@@ -176,7 +174,6 @@ describe('calcularKpis, tipo "calculos"', () => {
 });
 
 describe('calcularKpis, tipo "dieta"', () => {
-  /** Uma submetida cuja dieta ficou dentro (`false`) ou fora (`true`) das metas. */
   function tentativa(casoId: string, fora: boolean, submetidaEm = DIA_10): [Resolucao, ResumoErros] {
     return [resolucao(casoId, 'submetida', submetidaEm), resumo({ 'dieta fora das metas': fora ? 1 : 0 })];
   }
@@ -236,7 +233,6 @@ describe('período do filtro (por submetidaEm)', () => {
   const inicio = new Date('2026-11-10T00:00:00.000Z');
   const fim = new Date('2026-11-12T23:59:59.999Z');
 
-  /** Uma submetida em `quando`, toda correta, com a dieta dentro das metas. */
   function submetidaEm(quando: string) {
     const r = resolucao(`caso-${quando}`, 'submetida', quando);
     return { r, respostas: respostas(r, 'correta'), resumo: [r.id, resumo()] as [string, ResumoErros] };
@@ -306,17 +302,13 @@ it('calcularKpis não altera os dados recebidos', () => {
   expect({ ...original, resumosErros: [...original.resumosErros] }).toEqual(copia);
 });
 
-// ---------- D4: ofensiva, nível, conquistas e série ----------
-
-/** Um instante no horário LOCAL (o fuso da máquina que roda o teste), como texto ISO, que é o que a submissão guarda. */
 const em = (ano: number, mes: number, dia: number, hora = 12, min = 0, seg = 0, ms = 0): string =>
   new Date(ano, mes - 1, dia, hora, min, seg, ms).toISOString();
 
-/** Uma tentativa submetida em cada instante dado. */
 const submetidasEm = (...instantes: string[]): Resolucao[] => instantes.map((i) => resolucao(`caso-${i}`, 'submetida', i));
 
 describe('ofensiva', () => {
-  const hoje = new Date(2026, 10, 18, 15, 0); // 18/11/2026
+  const hoje = new Date(2026, 10, 18, 15, 0);
 
   it('sem submissões: 0', () => {
     expect(ofensiva(hoje, [])).toBe(0);
@@ -438,7 +430,6 @@ describe('conquistas', () => {
 });
 
 describe('serieAproveitamento', () => {
-  /** Uma submetida em `quando`: 2 etapas corretas e 1 com erro de fato (67%), dieta dentro das metas. */
   function com(...instantes: string[]): EntradaKpis {
     const feitas = submetidasEm(...instantes);
     return entrada({
@@ -468,7 +459,7 @@ describe('serieAproveitamento', () => {
     const quinze = serieAproveitamento(com(), { tipo: 'calculos', ...ultimosDias(15, new Date(2026, 10, 18)) });
 
     expect(quatorze).toHaveLength(14);
-    expect(quinze.map((p) => p.rotulo)).toEqual(['04/11 – 10/11', '11/11 – 17/11', '18/11']); // a última semana tem 1 dia: só a data
+    expect(quinze.map((p) => p.rotulo)).toEqual(['04/11 – 10/11', '11/11 – 17/11', '18/11']);
   });
 
   it('30 dias: 5 pontos, 4 semanas de 7 dias e a última com 2', () => {
@@ -517,7 +508,7 @@ describe('período escolhido por datas', () => {
 
   it('início igual ao fim vale (1 dia); início depois do fim é recusado', () => {
     expect(validarPeriodo(dia(2026, 11, 18), dia(2026, 11, 18))).toBeNull();
-    expect(validarPeriodo(dia(2026, 11, 18, 23), dia(2026, 11, 18, 1))).toBeNull(); // só o dia conta, não a hora
+    expect(validarPeriodo(dia(2026, 11, 18, 23), dia(2026, 11, 18, 1))).toBeNull();
     expect(validarPeriodo(dia(2026, 11, 19), dia(2026, 11, 18))).toBe(MENSAGEM_PERIODO_INVERTIDO);
   });
 
@@ -525,7 +516,7 @@ describe('período escolhido por datas', () => {
     expect(validarPeriodo(dia(2026, 11, 18), dia(2027, 11, 18))).toBeNull();
     expect(validarPeriodo(dia(2026, 11, 18), dia(2027, 11, 19))).toBe(MENSAGEM_PERIODO_LONGO);
     expect(validarPeriodo(dia(2027, 1, 1), dia(2028, 1, 1))).toBeNull();
-    expect(validarPeriodo(dia(2024, 2, 29), dia(2025, 3, 1))).toBeNull(); // 29/02 + 1 ano cai em 01/03
+    expect(validarPeriodo(dia(2024, 2, 29), dia(2025, 3, 1))).toBeNull();
     expect(validarPeriodo(dia(2024, 2, 29), dia(2025, 3, 2))).toBe(MENSAGEM_PERIODO_LONGO);
   });
 

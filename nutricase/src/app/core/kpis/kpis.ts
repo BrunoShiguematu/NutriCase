@@ -1,33 +1,21 @@
-// Cálculo dos KPIs do dashboard (requisito 6): função pura, sem Angular e sem estado.
-// Só as tentativas submetidas dentro do período contam (recorte por `submetidaEm`): a classificação só existe
-// depois da submissão (RF09). Os valores vêm das mesmas respostas e do mesmo `resumoErros` da tela de resultado.
-
 import { Resolucao, RespostaEtapa, ResumoErros, TIPOS_ERRO, TipoErro } from '../models';
 
-/** O que o cálculo recebe; o `KpiService` monta isto a partir do `ResolucaoService`. */
 export interface EntradaKpis {
-  /** Todas as tentativas; as em andamento são ignoradas. */
   resolucoes: readonly Resolucao[];
-  /** Respostas de qualquer tentativa; só as das submetidas contam. */
   respostas: readonly RespostaEtapa[];
-  /** O resumo de erros de cada tentativa submetida, pelo id da tentativa. */
   resumosErros: ReadonlyMap<string, ResumoErros>;
 }
 
-/** 'calculos': as 5 etapas de cálculo. 'dieta': a dieta de cada tentativa, dentro ou fora das metas. */
 export type TipoKpi = 'calculos' | 'dieta';
 
-/** Tipo de KPI e período; `inicio` e `fim` valem os dois (o limite de cada ponta entra). */
 export interface FiltroKpis {
   tipo: TipoKpi;
   inicio: Date;
   fim: Date;
 }
 
-/** Os 4 tipos de erro das etapas de cálculo; "dieta fora das metas" é do tipo 'dieta'. */
 export const TIPOS_ERRO_CALCULO: readonly TipoErro[] = TIPOS_ERRO.filter((t) => t !== 'dieta fora das metas');
 
-/** Quantas tentativas foram submetidas no período e em quantos casos diferentes. */
 export interface CasosResolvidos {
   tentativas: number;
   casosDistintos: number;
@@ -38,34 +26,23 @@ export interface ErrosDoTipo {
   quantidade: number;
 }
 
-/** Erros pelos tipos do filtro: os 4 de cálculo (mesmo com 0) ou só "dieta fora das metas". */
 export interface ErrosPorTipo {
   tipos: ErrosDoTipo[];
   total: number;
 }
 
-/**
- * Os números do dashboard. Os campos que podem faltar ficam `null` quando não há o que medir no período
- * (a tela mostra "—", não 0). `aceitaveis` é sempre `null` no tipo 'dieta': a dieta ou está dentro das metas ou não.
- */
 export interface Kpis {
   casosResolvidos: CasosResolvidos;
-  /** Inteiro de 0 a 100. Cálculos: (corretas + aceitáveis) / total de etapas. Dieta: tentativas com a dieta dentro das metas / tentativas. */
   aproveitamento: number | null;
-  /** Cálculos: etapas corretas. Dieta: tentativas com a dieta dentro das metas. */
   corretas: number | null;
-  /** Cálculos: etapas avaliadas. Dieta: tentativas. */
   total: number | null;
-  /** Etapas aceitáveis (classificação interna 'divergente'); só nos cálculos. */
   aceitaveis: number | null;
-  /** Cálculos: etapas com erro de fato. Dieta: tentativas com a dieta fora das metas. */
   errosDeFato: number | null;
   errosPorTipo: ErrosPorTipo;
 }
 
 type KpisDoTipo = Omit<Kpis, 'casosResolvidos'>;
 
-/** Os últimos `dias` dias, contando o de `agora`: do começo do primeiro dia ao fim do de `agora` (horário local). */
 export function ultimosDias(dias: number, agora = new Date()): Pick<FiltroKpis, 'inicio' | 'fim'> {
   return {
     inicio: new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() - (dias - 1)),
@@ -92,7 +69,6 @@ export function calcularKpis({ resolucoes, respostas, resumosErros }: EntradaKpi
 function kpisDosCalculos(submetidas: readonly Resolucao[], respostas: readonly RespostaEtapa[], resumos: ReadonlyMap<string, ResumoErros>): KpisDoTipo {
   const errosPorTipo = somarErros(TIPOS_ERRO_CALCULO, submetidas.map((r) => resumos.get(r.id)));
   const ids = new Set(submetidas.map((r) => r.id));
-  // Resposta sem classificação não foi avaliada; fica de fora, como na contagem da tela de resultado.
   const avaliadas = respostas.filter((r) => ids.has(r.resolucaoId) && r.classificacao !== undefined);
   if (avaliadas.length === 0) {
     return { aproveitamento: null, corretas: null, total: null, aceitaveis: null, errosDeFato: null, errosPorTipo };
@@ -112,7 +88,6 @@ function kpisDosCalculos(submetidas: readonly Resolucao[], respostas: readonly R
 }
 
 function kpisDaDieta(submetidas: readonly Resolucao[], resumos: ReadonlyMap<string, ResumoErros>): KpisDoTipo {
-  // Sem resumo (dado inconsistente) não dá para saber se a dieta ficou dentro das metas: a tentativa fica de fora.
   const comResumo = submetidas.map((r) => resumos.get(r.id)).filter((resumo): resumo is ResumoErros => resumo !== undefined);
   const fora = comResumo.filter((resumo) => resumo['dieta fora das metas'] > 0).length;
   const errosPorTipo: ErrosPorTipo = { tipos: [{ tipo: 'dieta fora das metas', quantidade: fora }], total: fora };
@@ -132,11 +107,6 @@ function somarErros(tiposDoFiltro: readonly TipoErro[], resumos: readonly (Resum
   return { tipos, total: tipos.reduce((soma, t) => soma + t.quantidade, 0) };
 }
 
-// ---------- Ofensiva, nível, conquistas e série do gráfico ----------
-// Todas puras e por data LOCAL (o dia que a pessoa vê), sem olhar o filtro do dashboard: ofensiva, nível e
-// conquistas são hábito e progresso acumulado; só a série do gráfico respeita o tipo e o período.
-
-/** Número inteiro do dia local (sem hora), para contar dias seguidos sem erro de horário de verão. */
 const indiceDoDia = (d: Date): number => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86_400_000;
 
 const somarDias = (d: Date, dias: number): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate() + dias);
@@ -146,19 +116,13 @@ const diaEMes = (d: Date): string => `${String(d.getDate()).padStart(2, '0')}/${
 const submetidasComData = (resolucoes: readonly Resolucao[]): Resolucao[] =>
   resolucoes.filter((r) => r.status === 'submetida' && !Number.isNaN(Date.parse(r.submetidaEm ?? '')));
 
-/** Os dias locais (como `indiceDoDia`) em que houve pelo menos uma submissão. */
 const diasComSubmissao = (resolucoes: readonly Resolucao[]): Set<number> =>
   new Set(submetidasComData(resolucoes).map((r) => indiceDoDia(new Date(r.submetidaEm!))));
 
-/** Quantos casos diferentes têm pelo menos uma tentativa submetida. */
 export function casosConcluidos(resolucoes: readonly Resolucao[]): number {
   return new Set(resolucoes.filter((r) => r.status === 'submetida').map((r) => r.casoId)).size;
 }
 
-/**
- * Dias seguidos com pelo menos uma submissão, de hoje para trás. Se hoje ainda não teve, conta a partir de
- * ontem: a sequência só se quebra quando o dia acaba sem submissão.
- */
 export function ofensiva(hoje: Date, resolucoes: readonly Resolucao[]): number {
   const dias = diasComSubmissao(resolucoes);
   let dia = indiceDoDia(hoje);
@@ -173,7 +137,6 @@ export function ofensiva(hoje: Date, resolucoes: readonly Resolucao[]): number {
   return seguidos;
 }
 
-/** A maior sequência de dias seguidos com submissão que já houve (a conquista da ofensiva fica para sempre). */
 export function maiorOfensiva(resolucoes: readonly Resolucao[]): number {
   let maior = 0;
   let atual = 0;
@@ -188,14 +151,12 @@ export function maiorOfensiva(resolucoes: readonly Resolucao[]): number {
 
 export type NomeNivel = 'Bronze' | 'Prata' | 'Ouro';
 
-/** O nível e o caminho até o próximo: `meta` é quantos casos pedem o próximo nível (`null` no último). */
 export interface Nivel {
   nome: NomeNivel;
   proximo: NomeNivel | null;
   casos: number;
   meta: number | null;
   faltam: number;
-  /** Inteiro de 0 a 100: casos / meta; 100 no último nível. */
   percentual: number;
 }
 
@@ -205,7 +166,6 @@ const NIVEIS: readonly { nome: NomeNivel; apartirDe: number }[] = [
   { nome: 'Ouro', apartirDe: 6 },
 ];
 
-/** Bronze de 0 a 2 casos distintos, Prata de 3 a 5, Ouro de 6 em diante. */
 export function nivel(casosDistintos: number): Nivel {
   const casos = Math.max(0, casosDistintos);
   let posicao = 0;
@@ -231,11 +191,6 @@ export interface Conquista {
   obtida: boolean;
 }
 
-/**
- * As 4 conquistas, sempre na mesma ordem. `ofensiva-3` vale se alguma sequência chegou a 3 dias, mesmo que já
- * tenha acabado. `cem-por-cento`: uma tentativa com pelo menos uma etapa avaliada e nenhuma com erro de fato
- * (a dieta não entra).
- */
 export function conquistas({ resolucoes, respostas }: Pick<EntradaKpis, 'resolucoes' | 'respostas'>): Conquista[] {
   const casos = casosConcluidos(resolucoes);
   const submetidas = resolucoes.filter((r) => r.status === 'submetida');
@@ -251,26 +206,19 @@ export function conquistas({ resolucoes, respostas }: Pick<EntradaKpis, 'resoluc
   ];
 }
 
-/** Um ponto do gráfico: o rótulo do dia ou da semana, o aproveitamento (`null` sem dados) e as tentativas submetidas. */
 export interface PontoDaSerie {
   rotulo: string;
   percentual: number | null;
   casos: number;
 }
 
-/** Quantos dias locais o período cobre (o primeiro e o último contam). */
 const diasDoPeriodo = (filtro: FiltroKpis): number =>
   indiceDoDia(filtro.fim) - indiceDoDia(new Date(filtro.inicio.getFullYear(), filtro.inicio.getMonth(), filtro.inicio.getDate())) + 1;
 
-/** Como a série agrupa os pontos: por dia até 14 dias, por semana acima disso (é o título do eixo X do gráfico). */
 export function unidadeDaSerie(filtro: FiltroKpis): 'Dias' | 'Semanas' {
   return diasDoPeriodo(filtro) <= 14 ? 'Dias' : 'Semanas';
 }
 
-/**
- * O aproveitamento ao longo do período do filtro, no tipo dele: um ponto por dia até 14 dias (e para 1 dia só),
- * um por semana acima disso. A semana é um bloco de 7 dias contado do início do período; o último pode ser menor.
- */
 export function serieAproveitamento(entrada: EntradaKpis, filtro: FiltroKpis): PontoDaSerie[] {
   const primeiro = new Date(filtro.inicio.getFullYear(), filtro.inicio.getMonth(), filtro.inicio.getDate());
   const dias = diasDoPeriodo(filtro);
@@ -281,12 +229,10 @@ export function serieAproveitamento(entrada: EntradaKpis, filtro: FiltroKpis): P
     const ultimoDia = somarDias(primeiro, Math.min(i + passo, dias) - 1);
     const kpis = calcularKpis(entrada, {
       tipo: filtro.tipo,
-      // A primeira e a última ponta respeitam a hora do filtro; as de dentro vão de 00:00 a 23:59:59.999.
       inicio: i === 0 ? filtro.inicio : primeiroDia,
       fim: i + passo >= dias ? filtro.fim : fimDoDia(ultimoDia),
     });
     pontos.push({
-      // Um dia só (o dia a dia, ou a última semana quando sobra 1 dia) leva só a data, não "18/11 – 18/11".
       rotulo: indiceDoDia(primeiroDia) === indiceDoDia(ultimoDia) ? diaEMes(primeiroDia) : `${diaEMes(primeiroDia)} – ${diaEMes(ultimoDia)}`,
       percentual: kpis.aproveitamento,
       casos: kpis.casosResolvidos.tentativas,
@@ -295,22 +241,17 @@ export function serieAproveitamento(entrada: EntradaKpis, filtro: FiltroKpis): P
   return pontos;
 }
 
-// ---------- Período escolhido por datas ----------
-
 export const MENSAGEM_PERIODO_INVERTIDO = 'A data inicial não pode ser depois da data final.';
 export const MENSAGEM_PERIODO_LONGO = 'O período pode ter no máximo 1 ano.';
 
-/** `null` se o período entre as duas datas (dias locais, as duas valem) está certo; senão, o que corrigir. */
 export function validarPeriodo(inicio: Date, fim: Date): string | null {
   if (indiceDoDia(inicio) > indiceDoDia(fim)) {
     return MENSAGEM_PERIODO_INVERTIDO;
   }
-  // No máximo 1 ano: do dia inicial até o mesmo dia do ano seguinte.
   const limite = new Date(inicio.getFullYear() + 1, inicio.getMonth(), inicio.getDate());
   return indiceDoDia(fim) > indiceDoDia(limite) ? MENSAGEM_PERIODO_LONGO : null;
 }
 
-/** Do começo do dia `de` ao último instante do dia `ate`, no horário local. */
 export function periodoEntreDatas(de: Date, ate: Date): Pick<FiltroKpis, 'inicio' | 'fim'> {
   return { inicio: new Date(de.getFullYear(), de.getMonth(), de.getDate()), fim: fimDoDia(ate) };
 }

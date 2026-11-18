@@ -1,10 +1,6 @@
 import { Atleta, EtapaCalculo, RespostaEtapa, TipoEtapa } from '../models';
 import { AvaliacaoEtapa, avaliarEtapas, FATOR_MILHAR, KJ_POR_KCAL, LIMITE_SEGURANCA_GET_SOBRE_TMB } from './avaliar-etapas';
 
-// Atleta de teste (o mesmo da T2): homem, 30 anos, 70 kg, 175 cm, 15 % de gordura.
-//   TMB Mifflin = 1648,75 | TMB Harris-Benedict revisada = 1695,667 | TMB Cunningham = 1809
-//   GET com fator 1,55 sobre a TMB Mifflin = 2555,5625
-//   carboidrato 6 g/kg = 420 g | proteína 1,8 g/kg = 126 g | gordura 1 g/kg = 70 g
 const HOMEM: Atleta = {
   id: 'atleta-teste',
   nome: 'Atleta de Teste',
@@ -29,7 +25,6 @@ const GET_REFERENCIA = 2555.5625;
 
 const TODAS_AS_EQUACOES = ['Harris-Benedict revisada', 'Mifflin-St Jeor', 'Cunningham'];
 
-/** As 5 etapas de um caso de teste, com tolerância de 5 % em todas (valores de exemplo). */
 function criarEtapas(opcoesTmb: string[] = TODAS_AS_EQUACOES): EtapaCalculo[] {
   const base = { casoId: 'caso-teste', tolerancia: 5, criterioReferencia: 'Critério de teste.' };
   return [
@@ -53,7 +48,6 @@ function responder(respostas: Resposta[]): RespostaEtapa[] {
   }));
 }
 
-/** Avalia e devolve o resultado de uma etapa pelo tipo. */
 function avaliar(respostas: Resposta[], atleta: Atleta = HOMEM, etapas: EtapaCalculo[] = criarEtapas()): Record<TipoEtapa, AvaliacaoEtapa> {
   const resultado = avaliarEtapas(etapas, responder(respostas), atleta);
   return Object.fromEntries(resultado.map((r) => [r.tipo, r])) as Record<TipoEtapa, AvaliacaoEtapa>;
@@ -93,14 +87,13 @@ describe('avaliarEtapas — correta', () => {
   });
 
   it('valor dentro da tolerância conta como certo, inclusive no limite exato (±5 %)', () => {
-    expect(avaliar([['CHO', 6, 441]]).CHO.classificacao).toBe('correta'); // 420 + 5 %
-    expect(avaliar([['CHO', 6, 399]]).CHO.classificacao).toBe('correta'); // 420 − 5 %
+    expect(avaliar([['CHO', 6, 441]]).CHO.classificacao).toBe('correta');
+    expect(avaliar([['CHO', 6, 399]]).CHO.classificacao).toBe('correta');
     expect(avaliar([['CHO', 6, 441.1]]).CHO.tipoErro).toBe('aritmética');
     expect(avaliar([['CHO', 6, 398.9]]).CHO.tipoErro).toBe('aritmética');
   });
 
   it('parâmetro numérico dentro da tolerância da referência ainda é a referência', () => {
-    // 6,2 g/kg está a 3,3 % de 6: correta (valor 6,2 × 70 = 434)
     expect(avaliar([['CHO', 6.2, 434]]).CHO.classificacao).toBe('correta');
   });
 
@@ -129,11 +122,10 @@ describe('avaliarEtapas — divergente (parâmetro aceitável, diferente da refe
     expect(r.TMB.classificacao).toBe('divergente');
     expect(r.TMB.tipoErro).toBeUndefined();
     expect(r.TMB.valorEsperado).toBeCloseTo(HARRIS, 3);
-    expect(r.TMB.motivo).toContain('Mifflin-St Jeor'); // cita a referência do caso
+    expect(r.TMB.motivo).toContain('Mifflin-St Jeor');
   });
 
   it('fator de atividade dentro da faixa, mas fora da tolerância da referência', () => {
-    // 1,7 está na faixa 1,4–1,8 e a 9,7 % de 1,55; GET coerente com a TMB do estudante: 1648,75 × 1,7 = 2802,875
     const r = avaliar([TMB_CORRETA, ['GET', 1.7, 2802.875]]);
 
     expect(r.GET.classificacao).toBe('divergente');
@@ -141,7 +133,7 @@ describe('avaliarEtapas — divergente (parâmetro aceitável, diferente da refe
   });
 
   it('a explicação mostra o parâmetro de referência com vírgula, como o resto da tela: "1,8", não "1.8"', () => {
-    const r = avaliar([['PTN', 1.5, 105]]); // referência 1,8 g/kg; 1,5 × 70 = 105
+    const r = avaliar([['PTN', 1.5, 105]]);
 
     expect(r.PTN.classificacao).toBe('divergente');
     expect(r.PTN.motivo).toContain('(1,8)');
@@ -149,7 +141,7 @@ describe('avaliarEtapas — divergente (parâmetro aceitável, diferente da refe
   });
 
   it('g/kg dentro da faixa e fora da tolerância da referência, com os gramas coerentes', () => {
-    const r = avaliar([['CHO', 7, 490]]); // 7 × 70 = 490
+    const r = avaliar([['CHO', 7, 490]]);
 
     expect(r.CHO.classificacao).toBe('divergente');
     expect(r.CHO.valorEsperado).toBe(490);
@@ -178,7 +170,7 @@ describe('avaliarEtapas — erro de fato: escolha de equação', () => {
 
     expect(r.TMB.classificacao).toBe('erro de fato');
     expect(r.TMB.tipoErro).toBe('escolha de equação');
-    expect(r.TMB.valorEsperado).toBeCloseTo(HARRIS, 3); // a equação existe, só não vale neste caso
+    expect(r.TMB.valorEsperado).toBeCloseTo(HARRIS, 3);
   });
 
   it('a referência do caso sempre vale, mesmo que a lista de opções não a repita', () => {
@@ -198,7 +190,7 @@ describe('avaliarEtapas — erro de fato: escolha de equação', () => {
     expect(desconhecida.motivo).toContain('não é reconhecida');
     expect(numero.tipoErro).toBe('escolha de equação');
     expect(numero.valorEsperado).toBeUndefined();
-    expect(numero.motivo).toContain('(1.648,75)'); // formato pt-BR, igual ao do resto das explicações
+    expect(numero.motivo).toContain('(1.648,75)');
   });
 
   it('vem antes de qualquer conferência do valor: valor absurdo com equação inaceitável continua sendo escolha de equação', () => {
@@ -232,7 +224,6 @@ describe('avaliarEtapas — Cunningham sem percentual de gordura', () => {
   });
 
   it('o GET seguinte continua sendo avaliado com a TMB que o estudante informou', () => {
-    // TMB informada: 1800 com Cunningham (inválida aqui); GET coerente: 1800 × 1,55 = 2790
     const r = avaliar([['TMB', 'Cunningham', 1800], ['GET', 1.55, 2790]], SEM_GORDURA);
 
     expect(r.TMB.tipoErro).toBe('escolha de equação');
@@ -297,11 +288,10 @@ describe('avaliarEtapas — RN08: limite de segurança energética', () => {
   it('GET igual à TMB ainda passa pelo limite (cai na conferência do valor)', () => {
     const r = avaliar([TMB_CORRETA, ['GET', 1.55, MIFFLIN]]);
 
-    expect(r.GET.tipoErro).toBe('aritmética'); // não é meta fora de faixa
+    expect(r.GET.tipoErro).toBe('aritmética');
   });
 
   it('compara com a TMB que o estudante informou, não com a esperada', () => {
-    // TMB informada: 1500 (errada). GET 1600 está acima dela (passa o limite), mas não bate com 1500 × 1,55 = 2325.
     const r = avaliar([['TMB', 'Mifflin-St Jeor', 1500], ['GET', 1.55, 1600]]);
 
     expect(r.GET.tipoErro).toBe('aritmética');
@@ -353,7 +343,6 @@ describe('avaliarEtapas — erro de fato: conversão de unidade', () => {
   });
 
   it('a conversão é sobre o esperado a partir do parâmetro do estudante, não da referência', () => {
-    // 7 g/kg × 70 = 490 g esperado; 490 mil mg é a troca de unidade desse parâmetro
     const r = avaliar([['CHO', 7, 490 * FATOR_MILHAR]]);
 
     expect(r.CHO.tipoErro).toBe('conversão de unidade');
@@ -366,7 +355,7 @@ describe('avaliarEtapas — erro de fato: conversão de unidade', () => {
 
 describe('avaliarEtapas — erro de fato: aritmética', () => {
   it('valor fora da tolerância do esperado para o parâmetro escolhido', () => {
-    const r = avaliar([['TMB', 'Mifflin-St Jeor', 1500]]); // 9 % abaixo de 1648,75
+    const r = avaliar([['TMB', 'Mifflin-St Jeor', 1500]]);
 
     expect(r.TMB.classificacao).toBe('erro de fato');
     expect(r.TMB.tipoErro).toBe('aritmética');
@@ -374,18 +363,16 @@ describe('avaliarEtapas — erro de fato: aritmética', () => {
   });
 
   it('parâmetro certo e conta errada é aritmética, não divergência', () => {
-    expect(avaliar([['PTN', 1.8, 150]]).PTN.tipoErro).toBe('aritmética'); // esperado 126
+    expect(avaliar([['PTN', 1.8, 150]]).PTN.tipoErro).toBe('aritmética');
   });
 
   it('parâmetro divergente e conta errada também é aritmética', () => {
-    expect(avaliar([['CHO', 7, 420]]).CHO.tipoErro).toBe('aritmética'); // 7 g/kg pediria 490 g
+    expect(avaliar([['CHO', 7, 420]]).CHO.tipoErro).toBe('aritmética');
   });
 });
 
 describe('avaliarEtapas — cadeia do estudante (RN04)', () => {
   it('TMB divergente: o GET é avaliado com a TMB do estudante, não com a de referência', () => {
-    // TMB por Harris-Benedict (1695,667): divergente. GET = 1695,667 × 1,55 = 2628,28385, que difere
-    // do GET de referência (2555,5625) em 2,8 %, mas é o que a cadeia dele pede.
     const r = avaliar([['TMB', 'Harris-Benedict revisada', HARRIS], ['GET', 1.55, 2628.28385]]);
 
     expect(r.TMB.classificacao).toBe('divergente');
@@ -394,7 +381,6 @@ describe('avaliarEtapas — cadeia do estudante (RN04)', () => {
   });
 
   it('a TMB do estudante é a que ele escreveu, mesmo errada: TMB com erro de aritmética e GET coerente com ela dá GET correto', () => {
-    // TMB 1500 (erro de aritmética). GET = 1500 × 1,55 = 2325: coerente com a TMB dele.
     const r = avaliar([['TMB', 'Mifflin-St Jeor', 1500], ['GET', 1.55, 2325]]);
 
     expect(r.TMB.tipoErro).toBe('aritmética');
@@ -404,7 +390,6 @@ describe('avaliarEtapas — cadeia do estudante (RN04)', () => {
   });
 
   it('o erro não se espalha às avessas: GET calculado com a TMB certa, depois de uma TMB errada, é incoerente com ela', () => {
-    // O estudante escreveu TMB 1500 e depois um GET de 2555,5625 (da TMB certa): 2325 era o esperado.
     const r = avaliar([['TMB', 'Mifflin-St Jeor', 1500], ['GET', 1.55, GET_REFERENCIA]]);
 
     expect(r.GET.tipoErro).toBe('aritmética');
@@ -412,7 +397,6 @@ describe('avaliarEtapas — cadeia do estudante (RN04)', () => {
   });
 
   it('os gramas usam o g/kg do estudante', () => {
-    // 7 g/kg × 70 kg = 490 g: coerente; 420 g seria o da referência (6 g/kg)
     const coerente = avaliar([['CHO', 7, 490]]).CHO;
     const dareferencia = avaliar([['CHO', 7, 420]]).CHO;
 

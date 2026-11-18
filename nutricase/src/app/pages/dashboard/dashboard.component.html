@@ -30,7 +30,6 @@
         </mat-date-range-input>
         <mat-datepicker-toggle matIconSuffix [for]="seletor" />
         <mat-date-range-picker #seletor />
-        <!-- Só o texto digitado fora de dd/mm/aaaa: as datas invertidas já têm o aviso role=alert, sem mensagem dupla. -->
         @if (campoInicio.hasError('matDatepickerParse') || campoFim.hasError('matDatepickerParse')) {
           <mat-error>Data inválida (use dd/mm/aaaa)</mat-error>
         }
@@ -42,7 +41,6 @@
 @if (erroDoPeriodo(); as erro) {
   <p class="periodo-erro" role="alert">{{ erro }}</p>
 }
-<!-- Região de status fixa no DOM: só o texto muda, para o leitor de tela anunciar o aviso quando ele aparece. -->
 <p class="periodo-aviso" role="status">{{ !erroDoPeriodo() && faltaData() ? 'Escolha a data inicial e a final. Enquanto isso, os números são os do período anterior.' : '' }}</p>
 
 <section class="kpis" aria-label="Indicadores das suas resoluções">
@@ -143,7 +141,6 @@
   <mat-card-content>
     <p class="evolucao-nivel">Nível atual: {{ n.nome }}</p>
     <div class="evolucao-progresso">
-      <!-- O anel só repete o que a barra e o texto já dizem: fica fora da leitura de tela. -->
       <div class="evolucao-anel" aria-hidden="true">
         <mat-progress-spinner mode="determinate" [diameter]="72" [value]="n.percentual" />
         <span class="evolucao-percentual">{{ n.percentual }}%</span>

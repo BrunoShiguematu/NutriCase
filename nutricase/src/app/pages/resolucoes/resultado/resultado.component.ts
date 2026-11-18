@@ -16,17 +16,8 @@ const NUTRIENTES: Record<NutrienteMeta, { rotulo: string; unidade: string }> = {
   lip: { rotulo: 'Gordura', unidade: 'g' },
 };
 
-/** "conversão de unidade" → "Conversão de unidade". */
 const comInicial = (texto: string): string => texto.charAt(0).toUpperCase() + texto.slice(1);
 
-/**
- * Resultado de uma tentativa submetida (UC08, RF21–RF27, RF32–RF36), em um bloco com título (RF33):
- * "Avaliação" (as etapas, a dieta, o resumo dos erros, a justificativa e o comentário do caso, quando o caso tem um).
- *
- * A classificação aparece sempre em texto, nunca só em cor (RNF04). As etapas vêm da avaliação gravada na
- * submissão; a dieta é recalculada agora (por isso espera a base de alimentos). Uma tentativa que ainda não foi
- * submetida volta para a tela de resolver, e um endereço que não existe mostra uma mensagem.
- */
 @Component({
   selector: 'app-resultado',
   standalone: false,
@@ -48,14 +39,12 @@ export class ResultadoComponent {
     return id ? this.service.buscar(id) : undefined;
   });
 
-  /** Só o status: o objeto da tentativa é novo a cada gravação, e o resultado não deve ser recarregado por isso. */
   private readonly status = computed(() => this.resolucao()?.status);
 
   protected readonly carregando = signal(true);
   protected readonly resultado = signal<ResultadoResolucao | undefined>(undefined);
   protected readonly estadoAlimentos = this.alimentos.estado;
 
-  /** `em-andamento`: ainda não foi submetida (volta para o resolver); `indisponivel`: não dá para montar o resultado. */
   protected readonly estado = computed<'nao-encontrada' | 'em-andamento' | 'carregando' | 'indisponivel' | 'pronto'>(() => {
     if (!this.resolucao()) {
       return 'nao-encontrada';
@@ -79,7 +68,6 @@ export class ResultadoComponent {
     return resolucao ? this.casos.buscarPorId(resolucao.casoId)?.caso.toleranciaDieta : undefined;
   });
 
-  /** As 5 etapas: o que o estudante respondeu, o esperado a partir disso e a classificação (RF21–RF23). */
   protected readonly etapas = computed(() =>
     (this.resultado()?.etapas ?? []).map(({ etapa, resposta, avaliacao }) => {
       const campos = CAMPOS_DA_ETAPA[etapa.tipo];
@@ -94,7 +82,7 @@ export class ResultadoComponent {
           classificacao === 'erro de fato'
             ? `Erro de fato: ${avaliacao.tipoErro ?? 'tipo não informado'}`
             : classificacao === 'divergente'
-              ? 'Aceitável' // o valor interno continua 'divergente'; só o texto da tela muda
+              ? 'Aceitável'
               : comInicial(classificacao ?? 'não avaliada'),
         classe: (classificacao ?? 'nao-avaliada').replace(/ /g, '-'),
         divergente: classificacao === 'divergente',
@@ -109,7 +97,6 @@ export class ResultadoComponent {
   protected readonly colunasComparativo = ['nutriente', 'total', 'meta', 'diferenca', 'situacao'];
   protected readonly colunasResumo = ['tipo', 'quantidade'];
 
-  /** Cada etapa é uma linha; a divergente ou com erro ganha logo depois uma linha de detalhe (critério e explicação). */
   protected readonly linhasEtapas = computed(() =>
     this.etapas().flatMap((etapa) =>
       etapa.divergente || etapa.erro ? [{ etapa, detalhe: false }, { etapa, detalhe: true }] : [{ etapa, detalhe: false }],
@@ -117,7 +104,6 @@ export class ResultadoComponent {
   );
   protected readonly ehDetalhe = (_indice: number, linha: { detalhe: boolean }): boolean => linha.detalhe;
 
-  /** O comparativo da dieta com as metas do estudante (RF24, RN05). */
   protected readonly comparativo = computed(() =>
     (this.resultado()?.dieta?.comparativo ?? []).map((c) => {
       const { rotulo, unidade } = NUTRIENTES[c.nutriente];
@@ -141,7 +127,6 @@ export class ResultadoComponent {
 
   protected readonly itensIncompletos = computed(() => this.resultado()?.dieta?.totais.itensIncompletos.length ?? 0);
 
-  /** Os 5 tipos de erro da RF34, cada um com a contagem (inclusive 0). */
   protected readonly resumo = computed(() => {
     const resumo = this.resultado()?.resumoErros;
     return TIPOS_ERRO.map((tipo) => ({ tipo: comInicial(tipo), quantidade: resumo ? resumo[tipo] : 0 }));
@@ -157,7 +142,6 @@ export class ResultadoComponent {
         return;
       }
       if (status === 'submetida') {
-        // O resultado lê signals dos serviços; dentro do effect isso viraria dependência dele.
         untracked(() => void this.carregar(id));
       } else if (status === 'em andamento') {
         void this.router.navigate(['/resolucoes', id], { replaceUrl: true });
@@ -165,7 +149,6 @@ export class ResultadoComponent {
     });
   }
 
-  /** Espera a base de alimentos (o serviço faz isso) e guarda o resultado; ignora a resposta se a tela já mudou de tentativa. */
   private async carregar(id: string): Promise<void> {
     this.carregando.set(true);
     const resultado = await this.service.resultado(id);
@@ -176,7 +159,6 @@ export class ResultadoComponent {
     this.carregando.set(false);
   }
 
-  /** Tenta carregar a base de alimentos de novo e recalcula a dieta. */
   protected async tentarDeNovo(): Promise<void> {
     const id = this.id();
     if (id) {
@@ -185,7 +167,6 @@ export class ResultadoComponent {
     }
   }
 
-  /** Começa uma nova tentativa do mesmo caso (RF35) e abre a tela de resolver dela. */
   protected refazer(): void {
     const id = this.id();
     const nova = id ? this.service.refazer(id) : undefined;

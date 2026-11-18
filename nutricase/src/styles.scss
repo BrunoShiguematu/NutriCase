@@ -1,6 +1,3 @@
-// Tema global do NutriCase: Angular Material 3 com a paleta e as fontes da marca (pasta brand/).
-// Como o tema é global, os painéis que abrem fora dos componentes (autocomplete, select, diálogo, snackbar)
-// também saem na cor da marca. As cores ficam em app/shared/styles/_marca.scss, uma fonte só.
 @use 'sass:map';
 @use '@angular/material' as mat;
 @use './app/shared/styles/theme-colors' as paleta;
@@ -9,8 +6,6 @@
 html {
   height: 100%;
 
-  // A paleta tonal vem do verde da marca (ng generate @angular/material:theme-color). O verde #174D38 fica entre
-  // os tons 30 e 40 dela, então as cores exatas da marca entram logo abaixo, nas variáveis de sistema.
   @include mat.theme(
     (
       color: (
@@ -29,8 +24,6 @@ html {
     )
   );
 
-  // Marca 60/30/10: o fundo da página é o cinza #F2F2F2 e tudo o que o Material desenha em cima (cartões, menus,
-  // diálogos, painéis) é branco. O verde é a cor de ação e o vinho só aparece nos erros.
   @include mat.theme-overrides(
     (
       primary: m.$verde,
@@ -61,16 +54,12 @@ html {
     )
   );
 
-  // Fonte dos títulos das telas (Figtree); o texto corrido usa a do tema (Noto Sans).
   --fonte-titulo: #{m.$fonte-titulo};
 
-  // Tabelas do Material: linhas na cor de borda da marca (o padrão é o contorno escuro) e cabeçalho em negrito.
   --mat-table-row-item-outline-color: #{m.$borda};
   --mat-table-header-headline-weight: 700;
 }
 
-// Erro de campo (mat-form-field inválido e tocado): vermelho vivo, só para isto; o vinho da marca segue nos outros usos.
-// #C62828 dá 5,6:1 sobre o branco e 4,8:1 sobre o fundo do campo (#E9EEEB), acima dos 4,5:1 do RNF04.
 $erro-campo: #c62828;
 
 html {
@@ -95,8 +84,6 @@ html {
   --mat-select-invalid-arrow-color: #{$erro-campo};
 }
 
-// Linha de baixo mais grossa (2 px) e fundo rosado da marca no campo em erro. Não há token de espessura só do erro: o
-// Material põe a classe .mat-form-field-invalid no campo e os tokens abaixo valem só dentro dele.
 .mat-form-field-invalid {
   --mat-form-field-filled-active-indicator-height: 2px;
   --mat-form-field-filled-hover-active-indicator-height: 2px;
@@ -104,8 +91,6 @@ html {
   --mat-form-field-filled-container-color: #{m.$vinho-claro};
 }
 
-// Texto do erro em negrito, com o ícone de erro antes (a cor não é a única pista: RNF04).
-// O Material já usa o ::before do erro (content vazio, para alinhar a linha), então o seletor leva a classe dele para vencer.
 mat-error.mat-mdc-form-field-error {
   font-weight: 600;
 
@@ -119,7 +104,6 @@ mat-error.mat-mdc-form-field-error {
   }
 }
 
-// O Material não tem token para o fundo do cabeçalho; Resultado e Dieta trocam esta cor no próprio .scss.
 table.mat-mdc-table .mat-mdc-header-cell {
   background-color: m.$fundo;
 }
@@ -130,13 +114,10 @@ body {
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
 
-  // Reset the user agent margin.
   margin: 0;
   height: 100%;
 }
 
-// Foco do teclado (RNF04): anel verde de 3 px nos botões do Material (classe .mat-focus-indicator). O menu
-// lateral é verde e tem o próprio anel branco, em layout.component.scss.
 @include mat.strong-focus-indicators(
   (
     border-color: m.$verde,
@@ -145,7 +126,6 @@ body {
   )
 );
 
-// A fonte de ícones vem do pacote npm (angular.json), mas o pacote não traz a classe que o mat-icon usa.
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
   font-weight: normal;

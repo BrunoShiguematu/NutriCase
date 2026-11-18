@@ -37,7 +37,6 @@
   color: m.$suave;
 }
 
-// Tabela e paginador formam um bloco só, com a mesma borda arredondada.
 .tabela-alimentos {
   width: 100%;
   border: 1px solid m.$borda;
@@ -50,7 +49,6 @@ mat-paginator {
   border-radius: 0 0 12px 12px;
 }
 
-// Números alinhados à direita, com algarismos de mesma largura, para comparar valores de cima para baixo.
 .mat-column-kcal,
 .mat-column-carboidrato,
 .mat-column-proteina,

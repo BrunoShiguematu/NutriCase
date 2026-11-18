@@ -4,7 +4,6 @@ import { MatTableDataSource } from '@angular/material/table';
 import { Alimento } from '../../core/models';
 import { AlimentoService, nomeContem } from '../../core/services/alimento.service';
 
-/** Valor da opção "Todos" do filtro de grupo. */
 const TODOS = '';
 
 @Component({
@@ -26,13 +25,11 @@ export class AlimentosComponent implements OnInit {
   protected busca = '';
   protected grupo = TODOS;
 
-  /** O paginador só existe com a base pronta: liga ao dataSource quando aparece. */
   @ViewChild(MatPaginator) set paginador(paginador: MatPaginator) {
     this.dataSource.paginator = paginador;
   }
 
   constructor() {
-    // Busca por nome (sem acento, todas as palavras) e grupo; o filtro vai como texto JSON porque o dataSource só aceita string.
     this.dataSource.filterPredicate = (alimento, filtro) => {
       const { busca, grupo } = JSON.parse(filtro) as { busca: string; grupo: string };
       return (grupo === TODOS || alimento.grupo === grupo) && nomeContem(alimento.nome, busca);
@@ -48,7 +45,6 @@ export class AlimentosComponent implements OnInit {
     void this.alimentoService.carregar();
   }
 
-  /** O botão some da tela ao clicar; o foco vai para o título para não se perder. */
   protected tentarDeNovo(titulo: HTMLElement): void {
     titulo.focus();
     void this.alimentoService.carregar();
@@ -59,7 +55,6 @@ export class AlimentosComponent implements OnInit {
     this.dataSource.paginator?.firstPage();
   }
 
-  /** Número no formato brasileiro, ex.: 25,8. */
   protected formatar(valor: number): string {
     return valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
   }

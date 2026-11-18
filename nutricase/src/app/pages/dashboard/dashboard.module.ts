@@ -23,7 +23,6 @@ import { DataBrasileiraAdapter } from './data-brasileira.adapter';
     MatProgressSpinnerModule,
     RouterModule.forChild([{ path: '', component: DashboardComponent }]),
   ],
-  // provideNativeDateAdapter traz os formatos; o adaptador em seguida o troca por um que lê dia/mês/ano.
   providers: [provideNativeDateAdapter(), { provide: DateAdapter, useClass: DataBrasileiraAdapter }, { provide: MAT_DATE_LOCALE, useValue: 'pt-BR' }],
 })
 export class DashboardModule {}

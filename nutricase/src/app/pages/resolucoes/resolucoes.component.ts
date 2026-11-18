@@ -10,15 +10,10 @@ import {
   DadosConfirmarExclusaoResolucao,
 } from './confirmar-exclusao-resolucao/confirmar-exclusao-resolucao.component';
 
-/** O que a tela mostra quando a data guardada não é uma data. */
 const SEM_DATA = '—';
 
 const doisDigitos = (n: number): string => String(n).padStart(2, '0');
 
-/**
- * "dd/MM/yyyy HH:mm" no fuso do navegador, ou um traço se a data guardada for inválida. Feito à mão de propósito: o `formatDate` do Angular, por estar
- * também no código do `main`, entraria inteiro no pacote inicial (+10 kB).
- */
 function formatarData(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) {
@@ -27,21 +22,15 @@ function formatarData(iso: string): string {
   return `${doisDigitos(d.getDate())}/${doisDigitos(d.getMonth() + 1)}/${d.getFullYear()} ${doisDigitos(d.getHours())}:${doisDigitos(d.getMinutes())}`;
 }
 
-/** Uma linha da tabela: a tentativa com o que a tela mostra dela. */
 export interface LinhaResolucao {
   resolucao: Resolucao;
-  /** Título do caso; "Caso excluído" quando o docente removeu o caso depois. */
   caso: string;
   casoExiste: boolean;
-  /** "dd/MM/yyyy HH:mm", no fuso do navegador; "—" se a data guardada for inválida. */
   dataTexto: string;
-  /** O caso e a data, para os rótulos das ações: tentativas do mesmo caso se distinguem pela data. */
   rotulo: string;
-  /** Contagem das etapas por classificação; só nas submetidas. */
   contagem?: ContagemEtapas;
 }
 
-/** Minhas resoluções (RF35): todas as tentativas do estudante, com as ações de cada uma. */
 @Component({
   selector: 'app-resolucoes',
   standalone: false,
@@ -57,7 +46,6 @@ export class ResolucoesComponent {
 
   protected readonly colunas = ['caso', 'data', 'status', 'etapas', 'acoes'];
 
-  /** Acompanha os signals dos serviços: refazer, excluir e iniciar atualizam a tabela sozinhos. */
   protected readonly linhas = computed<LinhaResolucao[]>(() =>
     this.service.listar().map((resolucao) => {
       const caso = this.casos.buscarPorId(resolucao.casoId);

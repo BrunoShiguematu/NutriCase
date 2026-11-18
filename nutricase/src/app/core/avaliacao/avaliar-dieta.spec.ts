@@ -10,7 +10,6 @@ import {
   totaisDaDieta,
 } from './avaliar-dieta';
 
-// Alimentos de teste, valores por 100 g (kcal, carboidrato, proteína, gordura).
 function alimento(id: string, nome: string, kcal: number, carboidrato: number, proteina: number, gordura: number): Alimento {
   return { id, nome, grupo: 'Teste', kcal, carboidrato, proteina, gordura, origem: 'TACO' };
 }
@@ -21,7 +20,6 @@ const FRANGO = alimento('a-frango', 'Peito de frango, grelhado', 159, 0, 32, 2.5
 const BANANA = alimento('a-banana', 'Banana, prata', 98, 26, 1.3, 0.1);
 const AVEIA = alimento('a-aveia', 'Aveia, flocos', 394, 66.6, 13.9, 8.5);
 const OVO = alimento('a-ovo', 'Ovo, cozido', 146, 0.6, 13.3, 9.5);
-/** 100 kcal por 100 g: os gramas do item viram as kcal. */
 const BASE100 = alimento('a-base', 'Alimento de teste', 100, 10, 5, 2);
 const QUEIJO = alimento('a-queijo', 'Queijo, minas, frescal', 264, 3.2, 17.4, 20.2);
 const IOGURTE = alimento('a-iogurte', 'IOGURTE natural', 51, 1.9, 4.1, 3);
@@ -44,7 +42,6 @@ const CASO = { toleranciaDieta: 10 };
 const SEM_RESTRICAO = { restricoes: [] as string[] };
 const SEM_METAS: MetasDoAluno = {};
 
-/** Dieta completa de exemplo: 4 refeições, pré e pós-treino, 6 alimentos, nenhuma passa de 40 %. */
 const DIETA_COMPLETA = {
   refeicoes: [
     refeicao('r1', 'pré-treino', 'Café da manhã'),
@@ -53,16 +50,15 @@ const DIETA_COMPLETA = {
     refeicao('r4', 'nenhum', 'Jantar'),
   ],
   itens: [
-    item('i1', 'r1', 'a-aveia', 50), // 197 kcal
-    item('i2', 'r1', 'a-banana', 100), // 98
-    item('i3', 'r2', 'a-arroz', 150), // 192
-    item('i4', 'r2', 'a-feijao', 100), // 76
-    item('i5', 'r2', 'a-frango', 100), // 159
-    item('i6', 'r3', 'a-ovo', 100), // 146
-    item('i7', 'r4', 'a-arroz', 150), // 192
-    item('i8', 'r4', 'a-frango', 100), // 159
+    item('i1', 'r1', 'a-aveia', 50),
+    item('i2', 'r1', 'a-banana', 100),
+    item('i3', 'r2', 'a-arroz', 150),
+    item('i4', 'r2', 'a-feijao', 100),
+    item('i5', 'r2', 'a-frango', 100),
+    item('i6', 'r3', 'a-ovo', 100),
+    item('i7', 'r4', 'a-arroz', 150),
+    item('i8', 'r4', 'a-frango', 100),
   ],
-  // Totais à mão: r1 295 / r2 427 / r3 146 / r4 351 kcal = 1219 kcal; cho 157,8; ptn 97,85; lip 19,95
   metasExatas: { kcal: 1219, cho: 157.8, ptn: 97.85, lip: 19.95 } as MetasDoAluno,
 };
 
@@ -70,10 +66,6 @@ const tipos = (alertas: { tipo: TipoAlerta }[]): TipoAlerta[] => alertas.map((a)
 
 describe('totaisDaDieta', () => {
   it('é a base por 100 g × gramas ÷ 100, por refeição e no dia', () => {
-    // r1: arroz 200 g = 256 kcal, 56,2 cho, 5 ptn, 0,4 lip; frango 150 g = 238,5 kcal, 0 cho, 48 ptn, 3,75 lip
-    //     → 494,5 kcal, 56,2 cho, 53 ptn, 4,15 lip
-    // r2: banana 120 g = 117,6 kcal, 31,2 cho, 1,56 ptn, 0,12 lip
-    // dia: 612,1 kcal, 87,4 cho, 54,56 ptn, 4,27 lip
     const t = totaisDaDieta(
       [refeicao('r1'), refeicao('r2')],
       [item('i1', 'r1', 'a-arroz', 200), item('i2', 'r1', 'a-frango', 150), item('i3', 'r2', 'a-banana', 120)],
@@ -125,7 +117,6 @@ describe('totaisDaDieta', () => {
 
       const t = totaisDaDieta(refeicoes, itens, [semKcal, semProteina, gorduraNaN, ARROZ]);
 
-      // só o arroz entra: os outros três não deixam "meio dado" nos totais
       expect(t.dia).toEqual({ kcal: 128, cho: 28.1, ptn: 2.5, lip: 0.2 });
       expect(t.itensIncompletos).toEqual(['i1', 'i2', 'i3']);
       expect(t.porRefeicao[0].itensIncompletos).toEqual(['i1', 'i2', 'i3']);
@@ -178,7 +169,7 @@ describe('avaliarDieta — comparativo contra as metas do aluno (RN05)', () => {
     const kcal = comparativo[0];
     expect(kcal.total).toBeCloseTo(1219, 6);
     expect(kcal.meta).toBe(1100);
-    expect(kcal.diferencaPercentual).toBeCloseTo(10.818, 3); // (1219 − 1100) ÷ 1100
+    expect(kcal.diferencaPercentual).toBeCloseTo(10.818, 3);
     expect(kcal.dentroDaTolerancia).toBe(false);
     expect(kcal.situacao).toBe('fora');
     expect(comparativo[1].diferencaPercentual).toBeCloseTo(0, 6);
@@ -193,8 +184,6 @@ describe('avaliarDieta — comparativo contra as metas do aluno (RN05)', () => {
   });
 
   it('usa as metas DO ALUNO, não as de referência: a mesma dieta está certa para uma cadeia errada e fora para a de referência', () => {
-    // O aluno errou a TMB e chegou a metas de 2325 kcal, 232,5 g CHO, 116,25 g PTN e 46,5 g LIP; a dieta fecha nelas.
-    // Com as de referência do atleta (2555,5625 kcal, 420 g, 126 g, 70 g) a mesma dieta ficaria fora, a 5 % de tolerância.
     const caso = { toleranciaDieta: 5 };
     const metasDoAluno: MetasDoAluno = { kcal: 2325, cho: 232.5, ptn: 116.25, lip: 46.5 };
     const metasDeReferencia: MetasDoAluno = { kcal: 2555.5625, cho: 420, ptn: 126, lip: 70 };
@@ -216,8 +205,8 @@ describe('avaliarDieta — comparativo contra as metas do aluno (RN05)', () => {
   it('a tolerância é a do caso, e o limite exato ainda está dentro (±5 %)', () => {
     const caso = { toleranciaDieta: 5 };
 
-    expect(um({ kcal: 100 }, 105, caso).comparativo[0].situacao).toBe('dentro'); // +5 % exato
-    expect(um({ kcal: 100 }, 95, caso).comparativo[0].situacao).toBe('dentro'); // −5 % exato
+    expect(um({ kcal: 100 }, 105, caso).comparativo[0].situacao).toBe('dentro');
+    expect(um({ kcal: 100 }, 95, caso).comparativo[0].situacao).toBe('dentro');
     expect(um({ kcal: 100 }, 105.1, caso).comparativo[0].situacao).toBe('fora');
     expect(um({ kcal: 100 }, 94.9, caso).comparativo[0].situacao).toBe('fora');
     expect(um({ kcal: 100 }, 107, { toleranciaDieta: 10 }).comparativo[0].situacao).toBe('dentro');
@@ -232,7 +221,7 @@ describe('avaliarDieta — comparativo contra as metas do aluno (RN05)', () => {
     const semTolerancia = {} as { toleranciaDieta: number };
 
     expect(() => um({ kcal: 100 }, 107, semTolerancia)).not.toThrow();
-    expect(um({ kcal: 100 }, 107, semTolerancia).comparativo[0].situacao).toBe('dentro'); // padrão 10 %
+    expect(um({ kcal: 100 }, 107, semTolerancia).comparativo[0].situacao).toBe('dentro');
     expect(um({ kcal: 100 }, 107, { toleranciaDieta: NaN }).comparativo[0].situacao).toBe('dentro');
     expect(um({ kcal: 100 }, 107, { toleranciaDieta: -5 }).comparativo[0].situacao).toBe('dentro');
   });
@@ -259,7 +248,7 @@ describe('avaliarDieta — comparativo contra as metas do aluno (RN05)', () => {
     });
 
     it('"sem meta" não esconde as outras: uma meta fora ainda marca a dieta como fora das metas', () => {
-      const r = um({ kcal: 100, cho: NaN, ptn: undefined, lip: 1 }, 100); // lip: 2 g contra meta 1 g
+      const r = um({ kcal: 100, cho: NaN, ptn: undefined, lip: 1 }, 100);
 
       expect(r.comparativo.map((c) => c.situacao)).toEqual(['dentro', 'sem meta', 'sem meta', 'fora']);
       expect(r.dietaForaDasMetas).toBe(true);
@@ -368,10 +357,8 @@ describe('avaliarDieta — alertas', () => {
     });
 
     it('compara sem acento e sem diferenciar maiúsculas, nos dois lados', () => {
-      // "IOGURTE natural" e "REQUEIJÃO, cremoso" contra palavras em minúsculas e com acento
       expect(comAlimento('a-iogurte', lactose).length).toBe(1);
       expect(comAlimento('a-requeijao', lactose).length).toBe(1);
-      // a restrição da ficha escrita sem acento e em maiúsculas também casa com a chave
       expect(comAlimento('a-leite', ['INTOLERANCIA A LACTOSE']).length).toBe(1);
       expect(comAlimento('a-leite', ['  intolerância   à lactose '])).toHaveLength(1);
     });
@@ -407,7 +394,7 @@ describe('avaliarDieta — alertas', () => {
 
       const alertas = avaliarDieta([refeicao('r1')], [item('i1', 'r1', 'a-composto', 30)], [creme], SEM_METAS, CASO, { restricoes: lactose }).alertas;
 
-      expect(alertas.filter((x) => x.tipo === 'restrição violada').length).toBe(1); // 1 por item e por restrição, não por palavra
+      expect(alertas.filter((x) => x.tipo === 'restrição violada').length).toBe(1);
     });
 
     it('o mesmo alimento em duas refeições gera um alerta em cada uma', () => {
@@ -437,7 +424,7 @@ describe('avaliarDieta — alertas', () => {
   describe('refeição com mais de 40 % das kcal do dia', () => {
     const dividir = (gramas: [number, number, number]) => {
       const refeicoes = [refeicao('r1', 'pré-treino', 'Almoço'), refeicao('r2', 'pós-treino'), refeicao('r3')];
-      const itens = gramas.map((g, i) => item(`i${i}`, `r${i + 1}`, 'a-base', g)); // 100 kcal por 100 g
+      const itens = gramas.map((g, i) => item(`i${i}`, `r${i + 1}`, 'a-base', g));
       return alertasDe(refeicoes, itens).filter((a) => a.tipo === 'refeição concentra kcal');
     };
 

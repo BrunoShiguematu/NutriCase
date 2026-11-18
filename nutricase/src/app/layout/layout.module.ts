@@ -11,7 +11,6 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { LayoutComponent } from './layout.component';
 
-// O shell importa só o que usa; o MaterialModule (shared/) fica nos módulos lazy para não pesar no bundle inicial.
 @NgModule({
   declarations: [LayoutComponent],
   imports: [

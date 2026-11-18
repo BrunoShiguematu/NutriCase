@@ -3,7 +3,6 @@ import { Atleta, Caso, EtapaCalculo } from '../models';
 import { ATLETAS_EXEMPLO, CASOS_EXEMPLO, ETAPAS_EXEMPLO, etapasPadrao } from '../data/casos-exemplo';
 import { StorageService } from './storage.service';
 
-/** Campos que o usuário preenche; o serviço gera `id` e `atletaId`. */
 export type DadosCaso = Omit<Caso, 'id' | 'atletaId'>;
 export type DadosAtleta = Omit<Atleta, 'id'>;
 
@@ -15,7 +14,6 @@ export interface CasoComAtleta {
 interface DadosSalvos {
   readonly casos: readonly Caso[];
   readonly atletas: readonly Atleta[];
-  /** As 5 etapas de todos os casos, ligadas a cada caso por `casoId`. */
   readonly etapas: readonly EtapaCalculo[];
 }
 
@@ -27,12 +25,6 @@ function gerarId(prefixo: string): string {
   return `${prefixo}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/**
- * Casos, fichas de atleta e as 5 etapas de cálculo de cada caso, guardados no navegador pelo StorageService.
- * `casos` é um signal: as telas que o leem atualizam sozinhas depois de criar, editar ou excluir.
- * Os modelos são `readonly` e o serviço nunca altera um objeto: cada mudança cria objetos novos. Por isso as
- * telas e a avaliação guardada de uma submissão (`ResolucaoService`) podem segurar os objetos sem copiar.
- */
 @Injectable({ providedIn: 'root' })
 export class CasoService {
   private readonly dados = signal<DadosSalvos>({ casos: [], atletas: [], etapas: [] });
@@ -66,7 +58,6 @@ export class CasoService {
     return { caso, atleta };
   }
 
-  /** Atualiza o caso e a ficha do atleta; devolve `undefined` se o id não existe. */
   atualizar(id: string, dadosCaso: DadosCaso, dadosAtleta: DadosAtleta): CasoComAtleta | undefined {
     const existente = this.buscarPorId(id);
     if (!existente) {
@@ -83,7 +74,6 @@ export class CasoService {
     return { caso, atleta };
   }
 
-  /** Exclui o caso, o atleta e as etapas dele; devolve `false` se o id não existe. */
   excluir(id: string): boolean {
     const existente = this.buscarPorId(id);
     if (!existente) {
@@ -98,20 +88,12 @@ export class CasoService {
     return true;
   }
 
-  /** As 5 etapas do caso, na ordem 1 a 5; vazio se o caso não existe. */
   listarEtapas(casoId: string): EtapaCalculo[] {
     return this.dados()
       .etapas.filter((e) => e.casoId === casoId)
       .sort(porOrdem);
   }
 
-  /**
-   * Troca os critérios das etapas do caso. Só aceita as 5 etapas que o caso já tem (mesmos `id`,
-   * `casoId`, `tipo` e `ordem`; só os valores de critério mudam). Devolve as etapas guardadas, ou
-   * `undefined` sem mudar nada quando o caso não existe ou a lista não é essa. A forma dos valores é
-   * conferida pelo formulário. As etapas antigas não são alteradas: a avaliação já gravada numa submissão
-   * continua com os critérios da época.
-   */
   atualizarEtapas(casoId: string, etapas: readonly EtapaCalculo[]): EtapaCalculo[] | undefined {
     const atual = this.dados();
     if (!atual.casos.some((c) => c.id === casoId)) {
@@ -138,7 +120,6 @@ export class CasoService {
     this.storage.gravar(CHAVE, novo);
   }
 
-  /** Com algo salvo, usa o salvo; na primeira abertura, grava os exemplos. */
   private carregar(): DadosSalvos {
     const salvos = this.storage.ler<DadosSalvos>(CHAVE);
     if (salvos) {

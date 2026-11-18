@@ -2,27 +2,16 @@ import { Inject, Injectable, InjectionToken, computed, signal } from '@angular/c
 import { Alimento } from '../models';
 import { StorageService } from './storage.service';
 
-/**
- * Número de versão da TACO que vai no app. Suba este número sempre que `core/data/taco.json`
- * mudar (por exemplo, depois de rodar `scripts/converter-taco.mjs` com outra fonte): no próximo
- * acesso, cada navegador troca os itens TACO e mantém os de outra origem.
- */
 export const VERSAO_TACO = 1;
 
 const CHAVE = 'nutricase.alimentos';
 
-/**
- * Como o app obtém a TACO. O `import()` dinâmico faz o bundler pôr o JSON (~125 kB) num chunk
- * à parte, fora do pacote inicial. Um import estático colocaria o JSON no pacote inicial.
- * Existe como token para os testes poderem trocar a TACO por uma pequena.
- */
 export type CarregadorTaco = () => Promise<readonly Alimento[]>;
 export const CARREGADOR_TACO = new InjectionToken<CarregadorTaco>('CARREGADOR_TACO', {
   providedIn: 'root',
   factory: () => async () => (await import('../data/taco.json')).default as Alimento[],
 });
 
-/** `nao-carregado` (ainda ninguém chamou `carregar`), `carregando`, `pronto` ou `erro`. */
 export type EstadoAlimentos = 'nao-carregado' | 'carregando' | 'pronto' | 'erro';
 
 interface DadosSalvos {
@@ -34,12 +23,10 @@ function copiar(alimento: Alimento): Alimento {
   return { ...alimento };
 }
 
-/** Minúsculas e sem acento: "Feijão" e "feijao" viram a mesma coisa. */
 function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
 }
 
-/** O nome tem todas as palavras do texto, sem olhar maiúsculas nem acentos. */
 export function nomeContem(nome: string, texto: string): boolean {
   const normal = normalizar(nome);
   return normalizar(texto).split(/\s+/).filter(Boolean).every((palavra) => normal.includes(palavra));
@@ -47,10 +34,6 @@ export function nomeContem(nome: string, texto: string): boolean {
 
 const palavrasDe = (texto: string): string[] => normalizar(texto).split(/[^a-z0-9]+/).filter(Boolean);
 
-/**
- * Quão bem o nome casa com o texto (de um nome que já contém todas as palavras do texto), para ordenar a busca:
- * 0 = o nome começa pela 1ª palavra digitada; 1 = cada palavra digitada começa alguma palavra do nome; 2 = só contém.
- */
 export function grauDaBusca(nome: string, texto: string): 0 | 1 | 2 {
   const digitadas = palavrasDe(texto);
   const doNome = palavrasDe(nome);
@@ -60,18 +43,6 @@ export function grauDaBusca(nome: string, texto: string): 0 | 1 | 2 {
   return digitadas.every((d) => doNome.some((p) => p.startsWith(d))) ? 1 : 2;
 }
 
-/**
- * Base de alimentos (RF13): a TACO, gravada no navegador na primeira abertura, e itens de outra origem.
- *
- * Carregamento (decisão): a TACO é pesada e vem por `import()` dinâmico, então o serviço não está
- * pronto ao ser criado. Quem usa chama `await carregar()` (ou lê o signal `estado`) antes de
- * consultar. Antes disso, `listar`, as buscas e `listarGrupos` devolvem lista vazia, e `carregar`
- * pode ser chamado várias vezes: só o primeiro faz o trabalho. Se o carregamento falhar,
- * `estado` fica `erro`, nenhum erro é lançado, e chamar `carregar` de novo tenta outra vez.
- *
- * Quando o navegador já tem a versão atual da TACO, o JSON nem é baixado.
- * Nada é entregue por referência: listas e itens saem como cópias.
- */
 @Injectable({ providedIn: 'root' })
 export class AlimentoService {
   private readonly dados = signal<Alimento[]>([]);
@@ -79,7 +50,6 @@ export class AlimentoService {
   private carga: Promise<void> | null = null;
 
   readonly estado = this._estado.asReadonly();
-  /** Os alimentos como signal, para as telas atualizarem sozinhas quando a carga terminar. */
   readonly alimentos = computed(() => this.dados().map(copiar));
 
   constructor(
@@ -87,11 +57,8 @@ export class AlimentoService {
     @Inject(CARREGADOR_TACO) private readonly carregarTaco: CarregadorTaco,
   ) {}
 
-  /** Garante que a base está no navegador e na memória. Nunca rejeita: veja `estado`. */
   carregar(): Promise<void> {
     if (!this.carga) {
-      // O reset da carga fica aqui, depois da atribuição: dentro de executarCarga ele seria
-      // sobrescrito se o carregador falhasse de forma síncrona (antes do primeiro await).
       this.carga = this.executarCarga().then(() => {
         if (this._estado() === 'erro') {
           this.carga = null;
@@ -110,11 +77,6 @@ export class AlimentoService {
     return achado ? copiar(achado) : undefined;
   }
 
-  /**
-   * Busca por nome sem diferenciar maiúscula nem acento. Com várias palavras, o nome precisa
-   * ter todas, em qualquer ordem ("arroz cozido" acha "Arroz, tipo 1, cozido").
-   * Texto vazio devolve todos.
-   */
   buscarPorNome(texto: string): Alimento[] {
     return this.dados()
       .filter((a) => nomeContem(a.nome, texto))
@@ -125,7 +87,6 @@ export class AlimentoService {
     return this.dados().filter((a) => a.grupo === grupo).map(copiar);
   }
 
-  /** Grupos existentes, sem repetição, em ordem alfabética (pt-BR). */
   listarGrupos(): string[] {
     return [...new Set(this.dados().map((a) => a.grupo))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }
@@ -145,7 +106,6 @@ export class AlimentoService {
       }
       this._estado.set('pronto');
     } catch {
-      // Sem a TACO nova, mostra o que o navegador já tinha, se tinha algo, e permite tentar de novo.
       this.dados.set(salvos?.alimentos ?? []);
       this._estado.set('erro');
     }
@@ -153,7 +113,6 @@ export class AlimentoService {
 
   private lerSalvos(): DadosSalvos | null {
     const lido = this.storage.ler<Partial<DadosSalvos>>(CHAVE);
-    // Lista vazia com a versão certa não serve (o serviço nunca grava vazio): vale como ilegível.
     if (lido && typeof lido.versao === 'number' && Array.isArray(lido.alimentos) && lido.alimentos.length > 0) {
       return { versao: lido.versao, alimentos: lido.alimentos };
     }

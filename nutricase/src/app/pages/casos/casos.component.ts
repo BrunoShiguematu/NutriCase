@@ -5,7 +5,6 @@ import { Nivel } from '../../core/models';
 import { CasoService } from '../../core/services/caso.service';
 import { ResolucaoService } from '../../core/services/resolucao.service';
 
-/** Valor da opção "Todos" dos filtros. */
 const TODOS = '';
 
 @Component({
@@ -26,7 +25,6 @@ export class CasosComponent {
   protected readonly nivelSelecionado = signal<Nivel | typeof TODOS>(TODOS);
   protected readonly modalidadeSelecionada = signal<string>(TODOS);
 
-  /** Modalidades dos casos existentes, sem repetição e em ordem alfabética. */
   protected readonly modalidades = computed(() =>
     [...new Set(this.casoService.casos().map((caso) => caso.modalidade))].sort((a, b) =>
       a.localeCompare(b, 'pt-BR'),
@@ -45,7 +43,6 @@ export class CasosComponent {
       );
   });
 
-  /** Começa uma tentativa do caso e abre a tela de resolução dela. */
   protected resolver(casoId: string): void {
     const resolucao = this.resolucaoService.iniciar(casoId);
     if (!resolucao) {

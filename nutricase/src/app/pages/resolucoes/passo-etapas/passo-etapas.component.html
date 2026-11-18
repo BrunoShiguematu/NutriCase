@@ -9,7 +9,6 @@
       <form class="etapa-form" [formGroup]="form" (ngSubmit)="avancar()" novalidate>
         <mat-form-field class="campo campo-parametro">
           <mat-label>{{ campo.parametroRotulo }}</mat-label>
-          <!-- Cada @if com um elemento só, direto no mat-form-field: dentro de um @else com vários itens, o hint e o sufixo não vão para o lugar deles. -->
           @if (etapa.tipo === 'TMB') {
             <mat-select formControlName="parametro">
               @for (equacao of equacoes; track equacao) {

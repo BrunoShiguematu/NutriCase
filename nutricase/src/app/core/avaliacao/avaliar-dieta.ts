@@ -1,34 +1,17 @@
-// Correção da dieta (RF16–RF17, RF24–RF27, RN05, RN09, RNF08): funções puras, sem Angular e sem estado.
-// Segue a parte "Dieta" da seção "Como a correção funciona" do plano. Nenhuma função lança erro:
-// dado ausente ou inválido é contado como zero e sinalizado, ou vira "sem meta".
-//
-// Todas as constantes abaixo (3 refeições, 40 %, 5 alimentos, palavras de restrição) são exemplos
-// e aguardam validação docente.
-
 import { Alimento, Atleta, Caso, ItemRefeicao, Refeicao, TOLERANCIA_DIETA_PADRAO } from '../models';
 
-/** Número mínimo de refeições na dieta (RF27). Exemplo; aguarda validação docente. */
 export const MIN_REFEICOES = 3;
 
-/** Máximo de kcal do dia, em %, que uma única refeição pode ter (RF27). Exemplo; aguarda validação docente. */
 export const MAX_PERCENTUAL_KCAL_REFEICAO = 40;
 
-/** Número mínimo de alimentos diferentes na dieta (RF27). Exemplo; aguarda validação docente. */
 export const MIN_ALIMENTOS_DIFERENTES = 5;
 
-/**
- * Restrição alimentar → palavras que, no nome de um alimento, indicam que ele a viola (RN09).
- * A restrição da ficha é comparada com a chave sem acento e sem diferenciar maiúsculas; uma
- * restrição sem entrada aqui é ignorada. Tabela de exemplo; aguarda validação docente.
- */
 export const PALAVRAS_RESTRICAO: Readonly<Record<string, readonly string[]>> = {
   'Intolerância à lactose': ['leite', 'queijo', 'iogurte', 'requeijão', 'creme de leite'],
 };
 
-/** Folga mínima nas comparações, para o limite exato não falhar por erro de ponto flutuante. */
 const EPSILON = 1e-9;
 
-/** Energia (kcal) e macronutrientes (g). */
 export interface Totais {
   kcal: number;
   cho: number;
@@ -39,30 +22,15 @@ export interface Totais {
 export interface TotaisRefeicao {
   refeicaoId: string;
   totais: Totais;
-  /** Ids dos itens que contaram como zero por falta de dado (veja `TotaisDaDieta.itensIncompletos`). */
   itensIncompletos: string[];
 }
 
 export interface TotaisDaDieta {
-  /** Uma entrada por refeição, na ordem recebida; refeição sem itens tem totais zero. */
   porRefeicao: TotaisRefeicao[];
-  /** Soma das refeições. */
   dia: Totais;
-  /**
-   * Ids dos itens que contaram como zero: alimento que não está na base, alimento com algum dos
-   * quatro valores ausente ou não finito, ou quantidade inválida. Vazio quando tudo está completo.
-   */
   itensIncompletos: string[];
 }
 
-/**
- * Totais de cada refeição e do dia, pela base de alimentos (valores por 100 g × gramas ÷ 100).
- *
- * Um item sem dado completo (alimento fora da base, algum dos quatro valores do alimento ausente
- * ou não finito, ou quantidade não finita ou negativa) conta **inteiro como zero** e é sinalizado
- * em `itensIncompletos`: meio dado deixaria um total enganoso. Item de refeição que não existe na
- * lista é ignorado.
- */
 export function totaisDaDieta(
   refeicoes: readonly Refeicao[],
   itens: readonly ItemRefeicao[],
@@ -93,10 +61,8 @@ export function totaisDaDieta(
 
 export type NutrienteMeta = keyof Totais;
 
-/** Uma meta do estudante: ausente ou não finita vale "sem meta". */
 export type Meta = number | null | undefined;
 
-/** As metas que o estudante calculou nas etapas (RN05): kcal = GET; gramas = os valores de CHO, PTN e LIP. */
 export interface MetasDoAluno {
   kcal?: Meta;
   cho?: Meta;
@@ -107,14 +73,8 @@ export interface MetasDoAluno {
 export interface ComparativoMeta {
   nutriente: NutrienteMeta;
   total: number;
-  /** "sem meta": a meta do estudante falta ou não é finita, e nada é comparado. */
   situacao: 'dentro' | 'fora' | 'sem meta';
-  /** A meta **do estudante**, como ele a informou. */
   meta?: number;
-  /**
-   * (total − meta) ÷ |meta| × 100: negativo quando a dieta ficou abaixo. Indefinida quando a meta é 0
-   * e o total não (divisão por zero); vale 0 quando os dois são 0.
-   */
   diferencaPercentual?: number;
   dentroDaTolerancia?: boolean;
 }
@@ -129,31 +89,18 @@ export type TipoAlerta =
 
 export interface AlertaDieta {
   tipo: TipoAlerta;
-  /** Texto curto para a tela de resultado. */
   texto: string;
-  /** Refeição a que o alerta se refere, quando há uma. */
   refeicaoId?: string;
-  /** Alimento a que o alerta se refere, quando há um (restrição violada). */
   alimentoId?: string;
 }
 
 export interface AvaliacaoDieta {
   totais: TotaisDaDieta;
-  /** Na ordem kcal, cho, ptn, lip. */
   comparativo: ComparativoMeta[];
-  /** Na ordem: pré-treino, pós-treino, restrições, poucas refeições, concentração de kcal, variedade. */
   alertas: AlertaDieta[];
-  /** Alguma meta comparada ficou fora da tolerância (tipo de erro "dieta fora das metas", RF34). "Sem meta" não conta. */
   dietaForaDasMetas: boolean;
 }
 
-/**
- * Avalia a dieta (RF24–RF27, RN05, RN09).
- *
- * O comparativo é sempre contra as metas **do estudante** (`metasDoAluno`), nunca contra os valores
- * de referência do caso; a tolerância vem de `caso.toleranciaDieta`. Se ela faltar ou não for um
- * número finito não negativo (dado antigo), vale `TOLERANCIA_DIETA_PADRAO`.
- */
 export function avaliarDieta(
   refeicoes: readonly Refeicao[],
   itens: readonly ItemRefeicao[],
@@ -180,8 +127,6 @@ export function avaliarDieta(
   };
 }
 
-// ---------- totais ----------
-
 function totaisZerados(): Totais {
   return { kcal: 0, cho: 0, ptn: 0, lip: 0 };
 }
@@ -197,7 +142,6 @@ function numeroFinito(valor: unknown): valor is number {
   return typeof valor === 'number' && Number.isFinite(valor);
 }
 
-/** Contribuição de um item, ou `undefined` quando falta dado (o item conta zero e é sinalizado). */
 function parcelaDoItem(item: ItemRefeicao, alimento: Alimento | undefined): Totais | undefined {
   if (!alimento || !numeroFinito(item.quantidadeGramas) || item.quantidadeGramas < 0) {
     return undefined;
@@ -209,8 +153,6 @@ function parcelaDoItem(item: ItemRefeicao, alimento: Alimento | undefined): Tota
   const fator = item.quantidadeGramas / 100;
   return { kcal: kcal * fator, cho: carboidrato * fator, ptn: proteina * fator, lip: gordura * fator };
 }
-
-// ---------- comparativo ----------
 
 function toleranciaValida(tolerancia: number | undefined): number {
   return numeroFinito(tolerancia) && tolerancia > 0 ? tolerancia : TOLERANCIA_DIETA_PADRAO;
@@ -236,8 +178,6 @@ function compararComMeta(nutriente: NutrienteMeta, total: number, meta: Meta, to
   return comparativo;
 }
 
-// ---------- alertas ----------
-
 function alertasDeTreino(refeicoes: readonly Refeicao[]): AlertaDieta[] {
   const alertas: AlertaDieta[] = [];
   if (!refeicoes.some((r) => r.marcador === 'pré-treino')) {
@@ -249,7 +189,6 @@ function alertasDeTreino(refeicoes: readonly Refeicao[]): AlertaDieta[] {
   return alertas;
 }
 
-/** Minúsculas, sem acento e com espaços simples, para comparar texto. */
 function normalizar(texto: string): string {
   return texto
     .normalize('NFD')
@@ -259,13 +198,11 @@ function normalizar(texto: string): string {
     .trim();
 }
 
-/** A palavra aparece no início de alguma palavra do nome ("queijo" casa com "Queijos", não com "requeijão"). */
 function nomeContemPalavra(nomeNormalizado: string, palavra: string): boolean {
   const escapada = palavra.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp(`(^|[^a-z0-9])${escapada}`).test(nomeNormalizado);
 }
 
-/** RN09: alimento cujo nome bate com as palavras de uma restrição da ficha. Restrição sem mapeamento é ignorada. */
 function alertasDeRestricao(
   refeicoes: readonly Refeicao[],
   itens: readonly ItemRefeicao[],

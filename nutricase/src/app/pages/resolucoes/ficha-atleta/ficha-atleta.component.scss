@@ -14,7 +14,6 @@
   color: m.$verde;
 }
 
-// Duas colunas para o que é curto; o resto ocupa a linha toda.
 .ficha-dados {
   display: grid;
   grid-template-columns: 1fr 1fr;

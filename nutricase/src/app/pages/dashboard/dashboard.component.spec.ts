@@ -5,7 +5,6 @@ import { KpiService } from '../../core/services/kpi.service';
 import { DashboardComponent } from './dashboard.component';
 import { DashboardModule } from './dashboard.module';
 
-/** Os métodos de escolha são `protected`; o teste os chama como a tela chama. */
 interface Tela {
   trocarPeriodo(periodo: 'hoje' | '7' | '30' | 'especifico'): void;
   trocarTipo(tipo: 'calculos' | 'dieta'): void;
@@ -51,13 +50,13 @@ describe('DashboardComponent: filtros', () => {
     const antes = service.filtro();
 
     tela.escolherInicio(new Date(2026, 10, 10));
-    expect(service.filtro()).toBe(antes); // falta a data final
+    expect(service.filtro()).toBe(antes);
 
     tela.escolherFim(new Date(2026, 10, 5));
-    expect(service.filtro()).toBe(antes); // invertido
+    expect(service.filtro()).toBe(antes);
 
     tela.escolherFim(new Date(2028, 0, 1));
-    expect(service.filtro()).toBe(antes); // mais de 1 ano
+    expect(service.filtro()).toBe(antes);
 
     tela.escolherFim(new Date(2026, 10, 12));
     expect(service.filtro().inicio).toEqual(new Date(2026, 10, 10, 0, 0, 0, 0));
@@ -73,16 +72,15 @@ describe('DashboardComponent: filtros', () => {
 
     tela.trocarPeriodo('7');
     expect(service.filtro()).not.toBe(doEspecifico);
-    tela.trocarPeriodo('especifico'); // os campos voltam vazios
+    tela.trocarPeriodo('especifico');
 
-    expect(service.filtro().fim.getTime()).toBeGreaterThan(doEspecifico.fim.getTime()); // continua o período de 7 dias, não o de 10 a 12/11
-    tela.escolherFim(new Date(2026, 10, 13)); // só a data final: ainda falta a inicial
+    expect(service.filtro().fim.getTime()).toBeGreaterThan(doEspecifico.fim.getTime());
+    tela.escolherFim(new Date(2026, 10, 13));
     expect(duracaoEmDias(service)).toBe(7);
   });
 });
 
 describe('DashboardComponent: Minha evolução e conquistas', () => {
-  /** Grava `casos` tentativas submetidas, uma em cada caso diferente, antes de abrir a tela. */
   function abrirComCasos(casos: number) {
     localStorage.clear();
     const agora = new Date().toISOString();
@@ -121,7 +119,7 @@ describe('DashboardComponent: Minha evolução e conquistas', () => {
   });
 
   it('Ver conquistas abre o diálogo com as 4 conquistas (obtidas e não) e Fechar fecha', async () => {
-    const { fixture, el } = abrirComCasos(5); // 5 casos: primeiro caso e 5 casos distintos obtidos
+    const { fixture, el } = abrirComCasos(5);
     const botao = el.querySelector<HTMLButtonElement>('.evolucao-conquistas')!;
     botao.focus();
 
@@ -138,11 +136,11 @@ describe('DashboardComponent: Minha evolução e conquistas', () => {
 
     dialogo.querySelector<HTMLButtonElement>('.conquistas-fechar')!.click();
     await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 400)); // animação de saída
+    await new Promise((r) => setTimeout(r, 400));
 
     expect(document.querySelector('mat-dialog-container')).toBeNull();
     expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(0);
-    expect(document.activeElement).toBe(botao); // o foco volta ao botão que abriu
+    expect(document.activeElement).toBe(botao);
   });
 });
 
@@ -178,9 +176,9 @@ describe('DashboardComponent: Evolução do aproveitamento', () => {
     expect(textos('.grafico-titulo-x')).toEqual(['Dias']);
     expect(textos('.grafico-rotulo-x')).toHaveLength(7);
     expect(textos('.grafico-marca-y')).toEqual(['0%', '50%', '100%']);
-    expect(textos('.grafico-valor')).toEqual(['75%']); // os outros 6 dias não têm dado: sem ponto
+    expect(textos('.grafico-valor')).toEqual(['75%']);
     expect(el.querySelectorAll('.grafico-ponto')).toHaveLength(1);
-    expect(el.querySelectorAll('.grafico-linha')).toHaveLength(0); // um ponto só não faz linha
+    expect(el.querySelectorAll('.grafico-linha')).toHaveLength(0);
     expect(el.querySelector('svg.grafico')?.getAttribute('role')).toBe('img');
     expect(el.querySelector('svg.grafico')?.getAttribute('aria-label')).toMatch(/^Evolução do aproveitamento, em %, por dias\. .*: 75%$/);
   });
@@ -199,7 +197,7 @@ describe('DashboardComponent: Evolução do aproveitamento', () => {
     expect(textos('.grafico-valor').at(-1)).toBe('1');
     const aria = el.querySelector('svg.grafico')!.getAttribute('aria-label')!;
     expect(aria).toMatch(/^Evolução do aproveitamento, em número de casos, por semanas\. /);
-    expect(aria).toMatch(/: 1 caso$/); // a última semana tem a tentativa de hoje
+    expect(aria).toMatch(/: 1 caso$/);
   });
 
   it('a barra de nível diz "Nível máximo" no Ouro', () => {
@@ -257,7 +255,7 @@ describe('DashboardComponent: data digitada inválida no Período específico', 
     digitar('input[matEndDate]', '05/11/2026');
 
     expect(erro() ?? '').not.toContain('dd/mm/aaaa');
-    expect(erro()).toBeNull(); // nem texto nenhum: sem mensagem dupla
+    expect(erro()).toBeNull();
     expect((fixture.nativeElement as HTMLElement).querySelector('.periodo-erro')?.textContent).toContain('A data inicial não pode ser depois da data final.');
     expect(service.filtro()).toBe(antes);
   });
@@ -283,7 +281,7 @@ describe('DashboardComponent: data digitada inválida no Período específico', 
     expect(erro()).not.toBeNull();
 
     tela.trocarPeriodo('7');
-    fixture.detectChanges(); // o campo de data some, como na tela real
+    fixture.detectChanges();
     tela.trocarPeriodo('especifico');
     fixture.detectChanges();
     expect(erro()).toBeNull();

@@ -12,11 +12,6 @@ import { DestinoDaPendencia } from '../etapas-ui';
 import { PassoJustificativaComponent } from '../passo-justificativa/passo-justificativa.component';
 import { ResolucaoService } from '../../../core/services/resolucao.service';
 
-/**
- * Material de referência (RF06): as três equações de TMB, com a fonte e a fórmula em texto. Todas aparecem
- * do mesmo jeito: qual vale como referência do caso só aparece no resultado. Equações e valores aguardam
- * validação docente.
- */
 const EQUACOES_REFERENCIA: Record<EquacaoTmb, { fonte: string; formulas: string[] }> = {
   'Harris-Benedict revisada': {
     fonte: 'Roza e Shizgal, 1984',
@@ -38,7 +33,6 @@ const EQUACOES_REFERENCIA: Record<EquacaoTmb, { fonte: string; formulas: string[
   },
 };
 
-/** Posição dos passos no stepper. */
 const PASSO_ETAPAS = 0;
 const PASSO_JUSTIFICATIVA = 2;
 
@@ -49,7 +43,6 @@ const ROTULO_FAIXA: Partial<Record<TipoEtapa, string>> = {
   LIP: 'Gordura (g/kg/dia)',
 };
 
-/** Tela de resolução de um caso (`/resolucoes/:id`): ficha do atleta, material de referência e o passo a passo. */
 @Component({
   selector: 'app-resolver',
   standalone: false,
@@ -62,7 +55,6 @@ export class ResolverComponent {
   private readonly resolucaoService = inject(ResolucaoService);
   private readonly casoService = inject(CasoService);
 
-  /** Ids das rotas vêm do `paramMap`, que muda se a mesma tela abrir outra tentativa. */
   private readonly id = toSignal(this.route.paramMap.pipe(map((params) => params.get('id'))), { requireSync: true });
 
   protected readonly equacoes = EQUACOES_TMB.map((nome) => ({ nome, ...EQUACOES_REFERENCIA[nome] }));
@@ -77,16 +69,11 @@ export class ResolverComponent {
     return resolucao ? this.casoService.buscarPorId(resolucao.casoId) : undefined;
   });
 
-  /** As 5 etapas do caso, na ordem; alimentam o passo Etapas e o material de referência. */
   protected readonly etapas = computed(() => {
     const doCaso = this.doCaso();
     return doCaso ? this.casoService.listarEtapas(doCaso.caso.id) : [];
   });
 
-  /**
-   * Faixas aceitáveis das etapas numéricas do caso, para o material de referência. Só a faixa: a referência
-   * do caso e o critério ficam para o resultado.
-   */
   protected readonly faixas = computed(() =>
     this.etapas()
       .filter((etapa) => etapa.faixaAceitavel !== undefined)
@@ -100,7 +87,6 @@ export class ResolverComponent {
   private readonly passoEtapas = viewChild(PassoEtapasComponent);
   private readonly passoJustificativa = viewChild(PassoJustificativaComponent);
 
-  /** `nao-encontrada`: id que não existe; `sem-caso`: o caso foi excluído; `submetida`: vai para o resultado. */
   protected readonly estado = computed<'nao-encontrada' | 'sem-caso' | 'submetida' | 'pronta'>(() => {
     const resolucao = this.resolucao();
     if (!resolucao) {
@@ -113,7 +99,6 @@ export class ResolverComponent {
   });
 
   constructor() {
-    // Tentativa submetida não se edita: abre o resultado no lugar (e o botão Voltar não volta para cá).
     effect(() => {
       const resolucao = this.resolucao();
       if (resolucao?.status === 'submetida') {
@@ -122,7 +107,6 @@ export class ResolverComponent {
     });
   }
 
-  /** Ao sair de um passo que tem rascunho (Etapas ou Justificativa), salva o que estava na tela. */
   protected aoMudarPasso(evento: StepperSelectionEvent): void {
     if (evento.previouslySelectedIndex === PASSO_ETAPAS) {
       this.passoEtapas()?.salvarAtual();
@@ -131,7 +115,6 @@ export class ResolverComponent {
     }
   }
 
-  /** Leva ao passo pedido e, numa pendência de etapa, abre essa etapa (as pendências do passo Revisar usam isto). */
   protected irParaPasso(destino: DestinoDaPendencia): void {
     const stepper = this.stepper();
     if (stepper) {

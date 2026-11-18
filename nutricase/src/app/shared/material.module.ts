@@ -37,7 +37,6 @@ const MATERIAL_MODULES = [
   MatToolbarModule,
 ];
 
-/** Reexporta os módulos do Angular Material usados no app, para os módulos de área importarem um só. */
 @NgModule({
   imports: MATERIAL_MODULES,
   exports: MATERIAL_MODULES,

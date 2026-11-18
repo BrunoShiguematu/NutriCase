@@ -16,7 +16,6 @@ export class GestaoCasosComponent {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
-  /** O signal do serviço muda a cada criar/editar/excluir, e a tabela acompanha sozinha. */
   protected readonly casos = this.casoService.casos;
   protected readonly colunas = ['titulo', 'nivel', 'modalidade', 'acoes'];
 

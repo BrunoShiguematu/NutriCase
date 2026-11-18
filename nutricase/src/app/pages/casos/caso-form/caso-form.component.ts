@@ -9,16 +9,13 @@ import { EtapaCalculo, Nivel, Sexo, TipoEtapa, TOLERANCIA_DIETA_PADRAO } from '.
 import { CasoComAtleta, CasoService, DadosAtleta, DadosCaso } from '../../../core/services/caso.service';
 import { CAMPOS_DA_ETAPA, dentroDaFaixa, FAIXAS_USUAIS, formatarNumero, mensagemNumero, numeroPositivo } from '../../resolucoes/etapas-ui';
 
-/** Texto obrigatório: espaços sozinhos não valem. */
 function textoObrigatorio(controle: AbstractControl): ValidationErrors | null {
   return String(controle.value ?? '').trim() === '' ? { required: true } : null;
 }
 
-/** Idade plausível de um atleta do catálogo, em anos inteiros (decisão da A5: de 10 a 100). */
 export const IDADE_MINIMA = 10;
 export const IDADE_MAXIMA = 100;
 
-/** Número preenchido tem que ser inteiro (vazio é com o `required`). */
 function inteiro(controle: AbstractControl): ValidationErrors | null {
   const valor = controle.value;
   return valor !== null && valor !== '' && !Number.isInteger(Number(valor)) ? { inteiro: true } : null;
@@ -27,7 +24,6 @@ function inteiro(controle: AbstractControl): ValidationErrors | null {
 const numeroOuNulo = (controle: AbstractControl | null | undefined): number | null =>
   typeof controle?.value === 'number' && Number.isFinite(controle.value) ? controle.value : null;
 
-/** No campo da referência: tem que estar entre o mínimo e o máximo da mesma etapa (RN02). */
 function referenciaNaFaixa(controle: AbstractControl): ValidationErrors | null {
   const referencia = numeroOuNulo(controle);
   const min = numeroOuNulo(controle.parent?.get('min'));
@@ -38,11 +34,6 @@ function referenciaNaFaixa(controle: AbstractControl): ValidationErrors | null {
   return (min !== null && referencia < min) || (max !== null && referencia > max) ? { foraDoIntervalo: true } : null;
 }
 
-/**
- * No campo da referência de CHO, PTN e LIP: com o peso do atleta, o valor esperado (g/kg × kg) tem que caber na faixa
- * usual do valor da etapa. Senão o estudante, com a referência certa, não conseguiria digitar a resposta (a faixa
- * do formulário das etapas barra o valor fora dela). Sem peso válido, não há o que conferir.
- */
 function valorEsperadoNaFaixa(tipo: TipoEtapa): ValidatorFn {
   return (controle) => {
     const referencia = numeroOuNulo(controle);
@@ -56,21 +47,18 @@ function valorEsperadoNaFaixa(tipo: TipoEtapa): ValidatorFn {
   };
 }
 
-/** No campo do mínimo: não pode passar do máximo. */
 function minimoAteMaximo(controle: AbstractControl): ValidationErrors | null {
   const min = numeroOuNulo(controle);
   const max = numeroOuNulo(controle.parent?.get('max'));
   return min !== null && max !== null && min > max ? { minMaiorQueMax: true } : null;
 }
 
-/** No campo do máximo: não pode ficar abaixo do mínimo. */
 function maximoDesdeMinimo(controle: AbstractControl): ValidationErrors | null {
   const max = numeroOuNulo(controle);
   const min = numeroOuNulo(controle.parent?.get('min'));
   return min !== null && max !== null && max < min ? { maxMenorQueMin: true } : null;
 }
 
-/** O que o formulário guarda de cada etapa; TMB usa `opcoes`, as outras usam `min` e `max`. */
 interface ValoresEtapa {
   referencia: string | number | null;
   opcoes: string[];
@@ -80,7 +68,6 @@ interface ValoresEtapa {
   criterio: string;
 }
 
-/** "a, b ,, c" vira ["a", "b", "c"]. */
 function listaDeTexto(texto: string): string[] {
   return texto
     .split(',')
@@ -90,7 +77,6 @@ function listaDeTexto(texto: string): string[] {
 
 const AVISO_ETAPAS = 'Caso salvo, mas não foi possível salvar as etapas';
 
-/** Formulário de cadastro (`/casos/gestao/novo`) e edição (`/casos/gestao/:id/editar`) de caso e ficha do atleta. */
 @Component({
   selector: 'app-caso-form',
   standalone: false,
@@ -111,22 +97,18 @@ export class CasoFormComponent {
     { valor: 'masculino', rotulo: 'Masculino' },
   ];
 
-  /** Id do caso em edição; `null` no cadastro. */
   protected readonly idEmEdicao = signal<string | null>(null);
 
-  /** A rota de edição pediu um id que não existe: a tela mostra a mensagem em vez do formulário. */
   protected readonly naoEncontrado = signal(false);
 
   protected readonly idadeMinima = IDADE_MINIMA;
   protected readonly idadeMaxima = IDADE_MAXIMA;
 
-  /** As 5 etapas, sempre nesta ordem (a mesma de `etapas` no formulário). */
   protected readonly tipos: readonly TipoEtapa[] = TIPOS_ETAPA;
   protected readonly campos = CAMPOS_DA_ETAPA;
   protected readonly equacoes: readonly string[] = EQUACOES_TMB;
 
   protected readonly form = this.fb.group({
-    // Caso
     titulo: ['', textoObrigatorio],
     modalidade: ['', textoObrigatorio],
     nivel: this.fb.control<Nivel | ''>('', Validators.required),
@@ -134,9 +116,7 @@ export class CasoFormComponent {
     descricao: ['', textoObrigatorio],
     comentarioReferencia: [''],
     toleranciaDieta: this.fb.control<number | null>(TOLERANCIA_DIETA_PADRAO, [Validators.required, numeroPositivo]),
-    // Etapas de cálculo (um grupo por tipo, na ordem de `tipos`)
     etapas: this.fb.array(TIPOS_ETAPA.map((tipo) => this.criarGrupoDaEtapa(tipo))),
-    // Ficha do atleta
     nome: ['', textoObrigatorio],
     idade: this.fb.control<number | null>(null, [Validators.required, inteiro, Validators.min(IDADE_MINIMA), Validators.max(IDADE_MAXIMA)]),
     sexo: this.fb.control<Sexo | ''>('', Validators.required),
@@ -157,7 +137,6 @@ export class CasoFormComponent {
 
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => this.carregar(params.get('id')));
-    // O peso entra na conta da referência de CHO, PTN e LIP: mudou o peso, confere de novo (sem onlySelf, para o formulário todo se atualizar).
     this.form.controls.peso.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.etapas.controls.forEach((grupo) => grupo.get('referencia')?.updateValueAndValidity({ emitEvent: false })));
@@ -203,14 +182,13 @@ export class CasoFormComponent {
     return 'Valor inválido';
   }
 
-  /** Mensagem de erro de um campo da etapa `indice`; só fala de formato e de coerência da faixa. */
   protected mensagemEtapa(indice: number, campo: keyof ValoresEtapa): string {
     const controle = this.etapas.at(indice).get(campo);
     if (!controle || !controle.errors) {
       return '';
     }
     if (controle.hasError('foraDaFaixa')) {
-      return mensagemNumero(controle); // a faixa usual do parâmetro vem antes das regras entre os campos
+      return mensagemNumero(controle);
     }
     if (controle.hasError('foraDoIntervalo')) {
       return 'A referência deve estar entre o mínimo e o máximo';
@@ -235,7 +213,6 @@ export class CasoFormComponent {
     return mensagemNumero(controle) || 'Valor inválido';
   }
 
-  /** Leva o foco ao primeiro campo com erro, na ordem em que aparecem na tela. */
   private focarPrimeiroErro(): void {
     this.elemento.nativeElement
       .querySelector<HTMLElement>('input.ng-invalid, textarea.ng-invalid, mat-select.ng-invalid')
@@ -246,10 +223,6 @@ export class CasoFormComponent {
     this.snackBar.open(texto, 'Fechar', { duration: 4000 });
   }
 
-  /**
-   * Um grupo de campos para a etapa. Na TMB: equação de referência e equações aceitas. Nas outras: referência
-   * e faixa (mín e máx). Em todas: tolerância e critério em texto. Os campos da faixa se revalidam entre si.
-   */
   private criarGrupoDaEtapa(tipo: TipoEtapa): FormGroup {
     const tolerancia = this.fb.control<number | null>(null, [Validators.required, numeroPositivo]);
     const criterio = this.fb.control('', textoObrigatorio);
@@ -272,7 +245,6 @@ export class CasoFormComponent {
     const min = this.fb.control<number | null>(null, [Validators.required, numeroPositivo, usual, minimoAteMaximo]);
     const max = this.fb.control<number | null>(null, [Validators.required, numeroPositivo, usual, maximoDesdeMinimo]);
     const grupo = this.fb.group({ referencia, min, max, tolerancia, criterio });
-    // Mudar a faixa muda o que vale para a referência e para o outro limite.
     const revalidar = (...outros: AbstractControl[]) => () =>
       outros.forEach((c) => c.updateValueAndValidity({ onlySelf: true, emitEvent: false }));
     min.valueChanges.subscribe(revalidar(referencia, max));
@@ -281,7 +253,6 @@ export class CasoFormComponent {
     return grupo;
   }
 
-  /** Põe nos campos os critérios das etapas (o que o caso já tem, ou o padrão num caso novo). */
   private preencherEtapas(etapas: readonly EtapaCalculo[]): void {
     this.tipos.forEach((tipo, i) => {
       const etapa = etapas.find((e) => e.tipo === tipo);
@@ -294,7 +265,6 @@ export class CasoFormComponent {
           ? {
               ...comum,
               referencia: String(etapa.parametroReferencia),
-              // Só as equações que a tela conhece: um texto estranho no dado salvo não vira opção fantasma.
               opcoes: EQUACOES_TMB.filter((e) => etapa.opcoesAceitaveis?.includes(e)),
             }
           : {
@@ -307,7 +277,6 @@ export class CasoFormComponent {
     });
   }
 
-  /** Guarda os critérios do formulário nas 5 etapas que o caso já tem; `false` se o serviço recusar. */
   private gravarEtapas(casoId: string, valores: readonly ValoresEtapa[]): boolean {
     const novas = this.casoService.listarEtapas(casoId).map((etapa): EtapaCalculo => {
       const v = valores[this.tipos.indexOf(etapa.tipo)];
@@ -325,7 +294,6 @@ export class CasoFormComponent {
     if (id === null) {
       this.idEmEdicao.set(null);
       this.form.reset();
-      // Caso novo começa com as 5 etapas padrão e a tolerância padrão da dieta (o serviço gera as mesmas).
       this.form.controls.toleranciaDieta.setValue(TOLERANCIA_DIETA_PADRAO);
       this.preencherEtapas(etapasPadrao('novo'));
       return;
@@ -365,7 +333,6 @@ export class CasoFormComponent {
     });
   }
 
-  /** Devolve os dados prontos para o serviço, ou `null` se ainda falta algum campo obrigatório. */
   private lerFormulario(): { caso: DadosCaso; atleta: DadosAtleta; etapas: ValoresEtapa[] } | null {
     const v = this.form.getRawValue();
     if (

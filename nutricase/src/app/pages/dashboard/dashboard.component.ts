@@ -10,7 +10,6 @@ const comInicial = (texto: string): string => texto.charAt(0).toUpperCase() + te
 
 type Periodo = 'hoje' | '7' | '30' | 'especifico';
 
-/** Um tipo de erro pronto para a lista: rótulo, contagem e a largura da barra (% do total de erros). */
 export interface LinhaErro {
   tipo: string;
   quantidade: number;
@@ -39,33 +38,26 @@ export class DashboardComponent implements OnInit {
   protected readonly nivel = this.service.nivel;
   private readonly conquistas = this.service.conquistas;
 
-  /** O gráfico de evolução: o que o eixo Y mede, e a série (que já respeita o tipo e o período) desenhada em SVG. */
   protected readonly modoGrafico = signal<ModoGrafico>('percentual');
   protected readonly grafico = computed<Grafico>(() => montarGrafico(this.service.serie(), this.modoGrafico(), this.service.unidadeSerie()));
   protected readonly unidadeGrafico = this.service.unidadeSerie;
 
-  /** A escolha na tela; o padrão é o mesmo do serviço (cálculos, últimos 7 dias). */
   protected readonly tipo = signal<TipoKpi>('calculos');
   protected readonly periodo = signal<Periodo>('7');
-  /** Os campos de data têm controle só para o Material mostrar o erro de data digitada que não é dd/mm/aaaa; os valores seguem pelos signals. */
   protected readonly campoInicio = new FormControl<Date | null>(null);
   protected readonly campoFim = new FormControl<Date | null>(null);
   private readonly dataInicial = signal<Date | null>(null);
   private readonly dataFinal = signal<Date | null>(null);
 
-  /** O que está errado no "Período específico" (datas invertidas ou mais de 1 ano); `null` se está certo ou incompleto. */
   protected readonly erroDoPeriodo = computed(() => {
     const [inicio, fim] = [this.dataInicial(), this.dataFinal()];
     return this.periodo() === 'especifico' && inicio && fim ? validarPeriodo(inicio, fim) : null;
   });
 
-  /** O "Período específico" escolhido e ainda sem as duas datas: os números continuam os do período anterior. */
   protected readonly faltaData = computed(() => this.periodo() === 'especifico' && (!this.dataInicial() || !this.dataFinal()));
 
-  /** Sem nenhuma tentativa submetida no período os cartões mostram "—", não 0%. */
   protected readonly semDados = computed(() => this.kpis().casosResolvidos.tentativas === 0);
 
-  /** Sem nenhuma tentativa submetida em tempo algum (o período não importa). */
   protected readonly semNenhuma = computed(() => this.nivel().casos === 0);
 
   protected readonly linhasErro = computed<LinhaErro[]>(() => {
@@ -76,12 +68,10 @@ export class DashboardComponent implements OnInit {
   protected readonly casosTexto = computed(() => this.plural(this.kpis().casosResolvidos.casosDistintos, 'caso', 'casos'));
   protected readonly errosTexto = computed(() => this.plural(this.kpis().errosPorTipo.total, 'erro', 'erros'));
 
-  /** Cada visita ao Dashboard parte do dia de agora e do filtro padrão, que é o que a tela mostra ao abrir. */
   ngOnInit(): void {
     this.service.atualizarHoje();
   }
 
-  /** As conquistas ignoram o filtro; ao fechar, o MatDialog devolve o foco ao botão que abriu. */
   protected abrirConquistas(): void {
     this.dialog.open(ConquistasDialogComponent, { data: this.conquistas() });
   }
@@ -97,7 +87,6 @@ export class DashboardComponent implements OnInit {
 
   protected trocarPeriodo(periodo: Periodo): void {
     this.periodo.set(periodo);
-    // Os campos de data somem e voltam vazios ao sair e voltar para o "Período específico": as datas guardadas vão junto.
     this.dataInicial.set(null);
     this.dataFinal.set(null);
     this.campoInicio.reset();
@@ -115,7 +104,6 @@ export class DashboardComponent implements OnInit {
     this.aplicar();
   }
 
-  /** Passa ao serviço o tipo e o período escolhidos; com o "Período específico" incompleto ou errado, deixa o filtro como está. */
   private aplicar(): void {
     const hoje = this.service.hoje();
     const periodo = this.periodo();

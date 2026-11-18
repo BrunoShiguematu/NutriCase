@@ -1,18 +1,10 @@
 @use '../shared/styles/marca' as m;
 
-// Altura do cabeçalho fixo (barra superior + aviso). As telas que fixam algo na janela, como a ficha do atleta
-// do resolver, descontam esse valor por --altura-cabecalho.
 $barra: 3.5rem;
-// O aviso tem altura mínima de 1 linha (2,25 rem); se o texto quebrar em duas (janela estreita ou zoom de 200%),
-// ele cresce e --altura-cabecalho passa para o valor de 2 linhas (2 × 13 px × 1,3 + 1 rem de padding).
 $aviso: 2.25rem;
 $aviso-duas-linhas: 3.1rem;
-// Largura da janela abaixo da qual o texto do aviso quebra, com o menu aberto (menu 16 rem + 2 × 2 rem de
-// margem + o texto, de cerca de 24 rem).
 $janela-aviso-quebra: 44rem;
 
-// Shell com altura total: o container ocupa a janela inteira. O menu fica fixo na lateral; no conteúdo,
-// a barra e o aviso ficam parados no topo e só a página (main) rola.
 :host {
   display: block;
   height: 100%;
@@ -22,8 +14,6 @@ $janela-aviso-quebra: 44rem;
   height: 100%;
 }
 
-// Menu lateral: 256 px, verde da marca (30%), texto e ícones brancos (9,74:1). O item da página atual fica
-// com fundo mais claro e texto em negrito, para não depender só da cor.
 .side {
   --mat-sidenav-container-width: 16rem;
   --mat-sidenav-container-background-color: #{m.$verde};
@@ -38,8 +28,6 @@ $janela-aviso-quebra: 44rem;
   --mat-list-list-item-hover-state-layer-color: #fff;
   --mat-list-list-item-focus-state-layer-color: #fff;
   --mat-list-active-indicator-color: rgba(255, 255, 255, 0.2);
-  // O anel verde de foco do Material (styles.scss) não apareceria sobre o menu verde: aqui ele fica desligado
-  // e vale o contorno branco abaixo.
   --mat-focus-indicator-display: none;
   --mat-icon-button-icon-color: #fff;
 
@@ -47,14 +35,12 @@ $janela-aviso-quebra: 44rem;
     --mat-list-list-item-label-text-weight: 700;
   }
 
-  // Foco do teclado (RNF04): contorno branco de 3 px dentro do item.
   a:focus-visible,
   button:focus-visible {
     outline: 3px solid #fff;
     outline-offset: -3px;
   }
 
-  // Título de grupo do menu: pequeno, em minúsculas e com pouca ênfase (branco a 70%: 6:1 sobre o verde).
   [mat-subheader] {
     height: auto;
     margin: 1.25rem 0 0.25rem;
@@ -70,7 +56,6 @@ $janela-aviso-quebra: 44rem;
   }
 }
 
-// Topo do menu: logo à esquerda e o botão de abrir/fechar à direita, na altura da barra do conteúdo.
 .side-topo {
   display: flex;
   align-items: center;
@@ -80,7 +65,6 @@ $janela-aviso-quebra: 44rem;
   margin-bottom: 0.5rem;
   padding: 0 0.5rem 0 1rem;
 
-  // O SVG da logo tem folga vazia à direita: o recorte (cover) deixa a logo maior sem empurrar o botão para fora.
   .brand {
     width: 11.5rem;
     height: 3rem;
@@ -109,9 +93,6 @@ $janela-aviso-quebra: 44rem;
   border-bottom: 1px solid m.$borda;
 }
 
-// Pesquisa de telas: centrada na barra (absoluta, para o botão do menu não empurrar), em pílula e com borda verde.
-// A borda fica no próprio mat-form-field (o contorno interno do Material só existe no modo outline); o preenchimento
-// do Material fica com formato de pílula, sem a linha de baixo, e a altura total é 36 px + 2 × 2 px de borda = 40 px.
 .pesquisa {
   --mat-form-field-container-height: 36px;
   --mat-form-field-container-vertical-padding: 6px;
@@ -129,16 +110,13 @@ $janela-aviso-quebra: 44rem;
   transform: translate(-50%, -50%);
   border: 2px solid m.$verde;
   border-radius: 999px;
-  // O preenchimento do Material tem os cantos de baixo retos: o overflow recorta pela pílula.
   overflow: hidden;
 
-  // Foco do teclado (RNF04): anel de 2 px por fora da borda.
   &:focus-within {
     box-shadow: 0 0 0 2px m.$verde;
   }
 }
 
-// Perfil (sem login): pílula com borda, círculo verde com as iniciais, nome e seta; fica à direita da barra.
 .perfil {
   --mat-button-text-container-height: 2.5rem;
   --mat-button-text-container-shape: 999px;
@@ -164,14 +142,11 @@ $janela-aviso-quebra: 44rem;
   }
 }
 
-// Item desabilitado do menu do perfil: o Material usa opacidade 0,38 (contraste baixo); aqui fica opaco, em cinza escuro
-// da marca (7,6:1 sobre o branco). O painel abre fora do componente, mas o item leva o atributo do componente.
 button[mat-menu-item][disabled] {
   --mat-menu-item-label-text-color: #{m.$suave};
   opacity: 1;
 }
 
-// Aviso educacional (RNF06): fixo abaixo da barra, na mesma margem lateral do conteúdo.
 .disclaimer {
   display: flex;
   flex: none;
@@ -186,7 +161,6 @@ button[mat-menu-item][disabled] {
   line-height: 1.3;
 }
 
-// Área da página: rola sozinha e dá o respiro lateral e inferior a todas as telas.
 .page {
   flex: 1;
   min-height: 0;

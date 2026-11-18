@@ -1,9 +1,3 @@
-// Valores de exemplo, aguardam validação docente antes de publicação.
-// Isto vale para os casos, as fichas e também para as etapas de cálculo (referências, faixas e
-// tolerâncias): são exemplos, não critério validado.
-//
-// O CasoService só grava estes exemplos na primeira abertura. Para ver exemplos novos, limpe o localStorage.
-
 import { EQUACOES_TMB } from '../avaliacao/formulas';
 import { Atleta, Caso, EtapaCalculo, TipoEtapa, TOLERANCIA_DIETA_PADRAO } from '../models';
 
@@ -98,7 +92,6 @@ export const CASOS_EXEMPLO: Caso[] = [
   },
 ];
 
-/** Atletas fictícios, ligados aos casos por `Caso.atletaId`. */
 export const ATLETAS_EXEMPLO: Atleta[] = [
   {
     id: 'exemplo-atleta-1',
@@ -222,34 +215,17 @@ export const ATLETAS_EXEMPLO: Atleta[] = [
   },
 ];
 
-// ---------- Etapas de cálculo ----------
-
-/** As 5 etapas de todo caso, sempre nesta ordem (ordem 1 a 5). */
 export const TIPOS_ETAPA: readonly TipoEtapa[] = ['TMB', 'GET', 'CHO', 'PTN', 'LIP'];
 
-/** Tolerância (%) padrão das 5 etapas. Valor de exemplo; aguarda validação docente. */
 const TOLERANCIA_ETAPA_PADRAO = 5;
 
-/** O que muda de um caso para outro: só a referência de cada parâmetro numérico. */
 export interface AjustesEtapas {
-  /** Fator de atividade de referência (padrão 1,7). */
   fatorAtividade?: number;
-  /** Carboidrato de referência em g/kg/dia (padrão 6). */
   choGPorKg?: number;
-  /** Proteína de referência em g/kg/dia (padrão 1,6). */
   ptnGPorKg?: number;
-  /** Gordura de referência em g/kg/dia (padrão 1). */
   lipGPorKg?: number;
 }
 
-/**
- * Ajustes dos casos de exemplo, só onde o volume de treino ou a modalidade deixa evidente.
- * Valores de exemplo; aguardam validação docente.
- *   caso 1 (90 min/dia, 5x): GET 1,8        caso 5 (60 min/dia, 4x): GET 1,6
- *   caso 2 (dois treinos/dia, 6x): GET 1,9  caso 6 (90 min/dia, 4x): padrão
- *   caso 3 (2 h/dia, 6x): GET 2,0           caso 7 (10 h/semana): GET 1,9 e CHO 8 (treino longo)
- *   caso 4 (musculação): CHO 5 (força)      caso 8 (60 min, 3x): GET 1,5
- */
 const AJUSTES_EXEMPLO: Readonly<Record<string, AjustesEtapas>> = {
   'exemplo-caso-1': { fatorAtividade: 1.8 },
   'exemplo-caso-2': { fatorAtividade: 1.9 },
@@ -262,18 +238,6 @@ const AJUSTES_EXEMPLO: Readonly<Record<string, AjustesEtapas>> = {
 
 const numero = (n: number): string => n.toLocaleString('pt-BR');
 
-/**
- * As 5 etapas de um caso, com os valores padrão (todos de exemplo; aguardam validação docente):
- *  - TMB: referência Mifflin-St Jeor, as 3 equações aceitas, tolerância de 5 %;
- *  - GET: fator 1,7, faixa 1,4 a 2,2, tolerância de 5 %;
- *  - CHO: 6 g/kg, faixa 4 a 10, tolerância de 5 %;
- *  - PTN: 1,6 g/kg, faixa 1,2 a 2,2, tolerância de 5 %;
- *  - LIP: 1 g/kg, faixa 0,5 a 1,5, tolerância de 5 %.
- *
- * `ajustes` troca só a referência dos parâmetros numéricos. Sem ele, os ids dos casos de exemplo
- * (`exemplo-caso-N`) usam os ajustes de `AJUSTES_EXEMPLO` e qualquer outro caso fica com o padrão.
- * O id de cada etapa é `<casoId>-etapa-<ordem>`.
- */
 export function etapasPadrao(casoId: string, ajustes: AjustesEtapas = AJUSTES_EXEMPLO[casoId] ?? {}): EtapaCalculo[] {
   const fator = ajustes.fatorAtividade ?? 1.7;
   const cho = ajustes.choGPorKg ?? 6;
@@ -330,5 +294,4 @@ export function etapasPadrao(casoId: string, ajustes: AjustesEtapas = AJUSTES_EX
   ];
 }
 
-/** As 5 etapas de cada caso de exemplo, na ordem dos casos. */
 export const ETAPAS_EXEMPLO: EtapaCalculo[] = CASOS_EXEMPLO.flatMap((caso) => etapasPadrao(caso.id));

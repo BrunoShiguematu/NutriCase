@@ -1,7 +1,3 @@
-// Fonte única das cores e peças de estilo da marca, usada pelo tema global (styles.scss) e pelos componentes.
-// Paleta da marca (60/30/10): fundo #F2F2F2, verde #174D38, vinho #4D1717 (só para erro). Só variáveis do Sass
-// e mixins: o que não é incluído não vira CSS, então este arquivo não pesa no orçamento de cada componente.
-
 $fundo: #f2f2f2;
 $card: #ffffff;
 $verde: #174d38;
@@ -18,14 +14,12 @@ $suave: #4a5750;
 $campo: #e9eeeb;
 $contorno: #6b756f;
 
-// Barras de indicador: trilha clara com contorno (3,19:1 sobre branco) e a barra em $verde por cima.
 $trilha: #dde5e0;
 $trilha-contorno: #8a928d;
 
 $fonte-titulo: 'Figtree', 'Noto Sans', sans-serif;
 $fonte-texto: 'Noto Sans', sans-serif;
 
-// Página inteira: bloco e título. O respiro em volta (padding) é do shell, em layout.component.scss.
 @mixin pagina {
   display: block;
 
@@ -46,7 +40,6 @@ $fonte-texto: 'Noto Sans', sans-serif;
   color: $verde;
 }
 
-// Faixa de aviso: o texto sempre diz o que é, a cor só reforça.
 @mixin aviso($cor, $fundo-aviso) {
   margin: 0 0 1rem;
   padding: 0.625rem 0.875rem;
@@ -57,7 +50,6 @@ $fonte-texto: 'Noto Sans', sans-serif;
   font-size: 0.875rem;
 }
 
-// "Etapa N: título" com a resposta ao lado, usado no resumo do passo Etapas e na revisão.
 @mixin resumo {
   .resumo {
     margin: 0 0 1rem;
@@ -84,7 +76,6 @@ $fonte-texto: 'Noto Sans', sans-serif;
     }
   }
 
-  // Parâmetro, valor e botão em colunas, para as linhas ficarem alinhadas entre si.
   .resumo-resposta {
     display: grid;
     flex: 1;

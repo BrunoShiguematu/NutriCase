@@ -34,8 +34,8 @@ describe('montarGrafico', () => {
 
     expect(g.marcasY.map((m) => m.rotulo)).toEqual(['0', '4', '8']);
     expect(g.pontos.map((p) => p.texto)).toEqual(['3', '7', '0']);
-    expect(g.pontos[2].y).toBe(g.base); // 0 casos é um valor: fica na base, com ponto
-    expect(g.trechos).toHaveLength(1); // no modo Nº todos têm valor: uma linha só
+    expect(g.pontos[2].y).toBe(g.base);
+    expect(g.trechos).toHaveLength(1);
   });
 
   it('ponto sem dado (percentual null) não desenha e corta a linha', () => {
@@ -43,7 +43,7 @@ describe('montarGrafico', () => {
 
     expect(g.pontos.map((p) => p.y !== null)).toEqual([true, false, true, true, false]);
     expect(g.pontos[1].texto).toBeNull();
-    expect(g.trechos).toHaveLength(1); // só c-d; o 'a' é um ponto solto, sem linha
+    expect(g.trechos).toHaveLength(1);
     expect(g.trechos[0]).toBe(`M${g.pontos[2].x} ${g.pontos[2].y} L${g.pontos[3].x} ${g.pontos[3].y}`);
   });
 
@@ -92,14 +92,14 @@ describe('rótulos do eixo X em períodos longos', () => {
 
     expect(indices[0]).toBe(0);
     expect(indices.at(-1)).toBe(52);
-    expect(indices).toEqual([0, 11, 22, 33, 52]); // passo 11; o 44 sai porque o 52 (o último) ficaria a 8 dele
+    expect(indices).toEqual([0, 11, 22, 33, 52]);
     for (let i = 1; i < indices.length; i++) {
       expect(indices[i] - indices[i - 1], `${indices[i - 1]} e ${indices[i]}`).toBeGreaterThanOrEqual(2);
     }
   });
 
   it('o último que cairia colado no anterior toma o lugar dele, e o primeiro nunca sai', () => {
-    expect(visiveis(8, 'Semanas')).toEqual([0, 2, 4, 7]); // passo 2: o 6 sai e entra o 7
+    expect(visiveis(8, 'Semanas')).toEqual([0, 2, 4, 7]);
     expect(visiveis(7, 'Semanas')).toEqual([0, 2, 4, 6]);
     expect(visiveis(2, 'Semanas')).toEqual([0, 1]);
   });
@@ -110,7 +110,7 @@ describe('rótulos do eixo X em períodos longos', () => {
     expect(g.pontos.filter((p) => p.mostrarRotulo).map((p) => p.rotulo)).toEqual(visiveis(53, 'Semanas').map((i) => `S${i + 1}`));
     expect(g.pontos.some((p) => p.mostrarValor)).toBe(false);
     expect(g.descricao.split('; ')).toHaveLength(53);
-    expect(g.pontos[0].texto).toBe('50%'); // o texto existe; só não é desenhado
+    expect(g.pontos[0].texto).toBe('50%');
   });
 
   it('com até 20 pontos o valor aparece; com 21, não', () => {

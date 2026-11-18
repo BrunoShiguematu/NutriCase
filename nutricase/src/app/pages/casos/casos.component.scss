@@ -4,7 +4,6 @@
   @include m.pagina;
 }
 
-// Título à esquerda e o atalho da Gestão à direita.
 .page-header {
   display: flex;
   align-items: center;
@@ -35,7 +34,6 @@
   text-align: center;
 }
 
-// Cartões do mesmo tamanho: 3 colunas a 1366 px, 4 a 1920 px. O botão fica sempre no pé do cartão.
 .lista-casos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));

@@ -22,7 +22,6 @@ const MARCADORES: { valor: MarcadorRefeicao; rotulo: string }[] = [
   { valor: 'pós-treino', rotulo: 'Pós-treino' },
 ];
 
-/** Cada meta do estudante vem de uma etapa: GET → kcal; CHO, PTN e LIP → gramas (RN05). */
 const ETAPA_DA_META: Record<NutrienteMeta, TipoEtapa> = { kcal: 'GET', cho: 'CHO', ptn: 'PTN', lip: 'LIP' };
 const ROTULO_NUTRIENTE: Record<NutrienteMeta, { rotulo: string; unidade: string }> = {
   kcal: { rotulo: 'Energia', unidade: 'kcal' },
@@ -31,26 +30,15 @@ const ROTULO_NUTRIENTE: Record<NutrienteMeta, { rotulo: string; unidade: string 
   lip: { rotulo: 'Gordura', unidade: 'g' },
 };
 
-/** Horário "HH:mm", de 00:00 a 23:59. Vazio é com o `required`. */
 function horarioValido(controle: AbstractControl): ValidationErrors | null {
   const valor = String(controle.value ?? '');
   return valor === '' || HORARIO.test(valor) ? null : { horario: true };
 }
 
-/** Texto que não pode ser só espaços. */
 function textoObrigatorio(controle: AbstractControl): ValidationErrors | null {
   return String(controle.value ?? '').trim() === '' ? { required: true } : null;
 }
 
-/**
- * Passo "Dieta" da resolução: o estudante monta as refeições (nome, horário e marcador), inclui alimentos da
- * TACO com a quantidade em gramas, vê os totais por refeição e do dia (RF16) e compara o total do dia com as
- * metas que ele mesmo calculou nas etapas (RF17).
- *
- * Nada aqui diz se a dieta está certa (RF09): o comparativo mostra só números e a diferença, e os alertas e a
- * tolerância do caso ficam para o resultado. Tudo é salvo no `ResolucaoService` na hora; a tela só reflete o
- * que está salvo.
- */
 @Component({
   selector: 'app-passo-dieta',
   standalone: false,
@@ -69,7 +57,6 @@ export class PassoDietaComponent {
   protected readonly marcadores = MARCADORES;
   protected readonly estadoAlimentos = this.alimentos.estado;
 
-  /** Formulário de nova refeição; vira o de edição quando `editandoId` tem uma refeição. */
   protected readonly formRefeicao = new FormGroup({
     nome: new FormControl('', { nonNullable: true, validators: [textoObrigatorio] }),
     horario: new FormControl('', { nonNullable: true, validators: [Validators.required, horarioValido] }),
@@ -78,7 +65,6 @@ export class PassoDietaComponent {
   protected readonly editandoId = signal<string | null>(null);
   private readonly formularioRefeicao = viewChild<FormGroupDirective>('formularioRefeicao');
 
-  /** Um formulário por item, para a quantidade poder ser editada no lugar e mostrar o seu erro. */
   private readonly formulariosDosItens = new Map<string, FormGroup<{ quantidade: FormControl<number | null> }>>();
 
   private readonly resolucaoId = computed(() => this.resolucao().id);
@@ -86,10 +72,8 @@ export class PassoDietaComponent {
   private readonly itens = computed(() => this.service.listarItensDaResolucao(this.resolucaoId()));
   private readonly etapas = computed(() => this.casos.listarEtapas(this.resolucao().casoId));
 
-  /** Totais por refeição e do dia, a cada mudança (RF16). */
   protected readonly totais = computed(() => totaisDaDieta(this.refeicoes(), this.itens(), this.alimentos.alimentos()));
 
-  /** As refeições por horário, cada uma com os itens (já com o alimento) e os totais dela. */
   protected readonly cartoes = computed(() => {
     const totais = this.totais();
     const incompletos = new Set(totais.itensIncompletos);
@@ -107,7 +91,6 @@ export class PassoDietaComponent {
       }));
   });
 
-  /** As metas do estudante, das respostas salvas nas etapas; ausente se a etapa ainda não foi respondida. */
   private readonly metas = computed<MetasDoAluno>(() => {
     const respostas = this.service.listarRespostas(this.resolucaoId());
     const etapas = this.etapas();
@@ -120,11 +103,6 @@ export class PassoDietaComponent {
 
   protected readonly colunasComparativo = ['nutriente', 'total', 'meta', 'diferenca'];
 
-  /**
-   * Total do dia contra a meta do estudante (RF17): só números e a diferença. Usa o mesmo motor do resultado,
-   * então os números aqui e lá são os mesmos, mas lê apenas total, meta e diferença: a situação ("dentro" ou
-   * "fora"), os alertas e a tolerância do caso não passam daqui (RF09).
-   */
   protected readonly comparativo = computed(() => {
     const doCaso = this.casos.buscarPorId(this.resolucao().casoId);
     const avaliacao = avaliarDieta(
@@ -146,22 +124,18 @@ export class PassoDietaComponent {
         meta: c.meta,
         diferenca: c.meta === undefined ? undefined : c.total - c.meta,
         percentual: c.diferencaPercentual,
-        /** Número da etapa que o estudante ainda precisa preencher para ter a meta. */
         etapaFaltante: c.meta === undefined ? etapa?.ordem : undefined,
       };
     });
   });
 
   constructor() {
-    // A base de alimentos vem por import dinâmico; chamar de novo é barato (só o primeiro faz o trabalho).
     void this.alimentos.carregar();
   }
 
   protected tentarDeNovo(): void {
     void this.alimentos.carregar();
   }
-
-  // ---------- refeições ----------
 
   protected salvarRefeicao(): void {
     this.formRefeicao.markAllAsTouched();
@@ -208,8 +182,6 @@ export class PassoDietaComponent {
       });
   }
 
-  // ---------- itens ----------
-
   protected incluirItem(refeicaoId: string, inclusao: InclusaoDeItem): void {
     if (!this.service.criarItem(refeicaoId, inclusao)) {
       this.snackBar.open('Não foi possível incluir o alimento', 'Fechar', { duration: 4000 });
@@ -227,7 +199,6 @@ export class PassoDietaComponent {
     return formulario;
   }
 
-  /** Salva a quantidade editada; com formato inválido não salva e o erro fica na tela. */
   protected alterarQuantidade(item: ItemRefeicao): void {
     const controle = this.formularioDoItem(item).controls.quantidade;
     controle.markAsTouched();
@@ -245,13 +216,10 @@ export class PassoDietaComponent {
     }
   }
 
-  // ---------- apresentação ----------
-
   protected mensagemQuantidade(controle: AbstractControl): string {
     return mensagemNumero(controle);
   }
 
-  /** Números e diferenças como o resultado os mostra: as funções são as de `etapas-ui`. */
   protected readonly numero = formatarNumero;
   protected readonly comSinal = comSinal;
 
@@ -269,7 +237,6 @@ export class PassoDietaComponent {
 
   private limparFormulario(): void {
     this.editandoId.set(null);
-    // resetForm também zera o "enviado" do formulário; só o reset do grupo deixaria os campos limpos com erro.
     this.formularioRefeicao()?.resetForm({ nome: '', horario: '', marcador: 'nenhum' });
   }
 }

@@ -4,8 +4,6 @@
   @include m.pagina;
 }
 
-// Cabeçalho: título à esquerda, filtros à direita e o subtítulo embaixo, com a linha divisória. O div do texto some da
-// grade (display: contents) para o título e o subtítulo ocuparem linhas diferentes sem mudar o HTML.
 .cabecalho {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -38,7 +36,6 @@
   gap: 0.75rem;
 }
 
-// Chaves Cálculos/Dieta e %/Nº de casos: o selecionado fica verde com texto branco (o texto diz qual é; a cor reforça).
 .filtro-tipo,
 .filtro-modo {
   --mat-button-toggle-shape: 8px;
@@ -57,7 +54,6 @@
   --mat-button-toggle-height: 2rem;
 }
 
-// Seletor de período: caixa branca com borda, 40 px. O rótulo "Período" continua no DOM (leitor de tela), só some da vista.
 .filtro-periodo,
 .filtro-datas {
   --mat-form-field-container-height: 2.375rem;
@@ -75,7 +71,6 @@
   border-radius: 8px;
   overflow: hidden;
 
-  // Foco do teclado (RNF04): anel verde por fora da borda.
   &:focus-within {
     border-color: m.$verde;
     box-shadow: 0 0 0 2px m.$verde;
@@ -97,13 +92,11 @@
     clip-path: inset(50%);
   }
 
-  // O Material sobe a seta 8 px para o caso do rótulo flutuante; sem rótulo à vista ela fica torta. Não há token para isso.
   ::ng-deep .mat-mdc-select-arrow-wrapper {
     transform: none;
   }
 }
 
-// O aviso de datas fica sempre no DOM (região de status); sem texto, não ocupa espaço.
 .periodo-erro,
 .periodo-aviso {
   margin: 0 0 1rem;
@@ -118,7 +111,6 @@
   color: m.$vinho;
 }
 
-// Cartões do painel: brancos, borda cinza, sem faixa no topo (como na print do protótipo).
 .kpi,
 .evolucao,
 .evolucao-grafico {
@@ -127,7 +119,6 @@
   --mat-card-outlined-container-shape: 12px;
 }
 
-// Seis cartões em grade 3 x 2.
 .kpis {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -140,8 +131,6 @@
   color: m.$verde;
 }
 
-// O número é a primeira coisa que se lê no cartão. Cor e texto dizem o mesmo: aceitáveis em âmbar, erros de fato em
-// vinho (o número é grande, então 3:1 de contraste basta).
 .kpi-valor {
   margin: 0.5rem 0 0.125rem;
   font: 700 2.25rem/1.1 var(--fonte-titulo);
@@ -186,7 +175,6 @@
   color: m.$suave;
 }
 
-// Minha evolução: anel com o % no centro, barra larga e o botão verde na largura toda.
 .evolucao,
 .evolucao-grafico {
   margin-bottom: 1.25rem;
@@ -223,7 +211,6 @@
   position: relative;
   display: inline-flex;
 
-  // O spinner do Material não tem trilha: este círculo cinza fica por baixo do arco.
   &::before {
     content: '';
     position: absolute;
@@ -262,8 +249,6 @@
   width: 100%;
 }
 
-// Gráfico: título à esquerda e o botão %/Nº à direita. O SVG ocupa a largura do cartão, com altura limitada para a
-// linha não esticar em telas largas (o desenho se centraliza).
 .grafico-cabecalho {
   display: flex;
   align-items: center;
@@ -278,7 +263,6 @@
   max-height: 22rem;
 }
 
-// Grade leve: só as linhas horizontais, em cinza claro.
 .grafico-grade {
   stroke: m.$borda;
   stroke-opacity: 0.6;
@@ -302,7 +286,6 @@
   font-size: 13px;
 }
 
-// O valor sobre o ponto leva um contorno branco: a linha que sobe para o ponto seguinte nunca encosta nas letras.
 .grafico-valor {
   fill: m.$verde;
   font-size: 15px;
@@ -313,7 +296,6 @@
   stroke-linejoin: round;
 }
 
-// Erros por tipo: o total vira o subtítulo; cada tipo tem rótulo à esquerda, número à direita e a barra fina embaixo.
 .kpi-erros {
   --mat-card-outlined-outline-color: #{m.$borda};
   --mat-card-outlined-container-color: #{m.$card};
@@ -348,7 +330,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-// Trilha clara e barra na cor da marca; o número ao lado diz o mesmo, então a barra só reforça.
 .erro-barra {
   display: block;
   grid-column: 1 / -1;
@@ -367,7 +348,6 @@
   background: m.$verde;
 }
 
-// Aparece depois dos cartões, então ganha corpo de faixa para não passar despercebida.
 .sem-submissoes {
   @include m.aviso(m.$verde, m.$verde-claro);
   margin: 1.5rem 0 0;

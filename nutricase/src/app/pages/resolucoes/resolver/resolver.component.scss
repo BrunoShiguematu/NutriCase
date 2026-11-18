@@ -4,8 +4,6 @@
   @include m.pagina;
 }
 
-// Ficha fixa na lateral (acompanha a rolagem) e o passo a passo ao lado. A coluna encolhe de 22 rem a 15 rem
-// conforme a janela, para o stepper caber inteiro em 1260 px.
 .resolver-layout {
   display: grid;
   grid-template-columns: clamp(15rem, 20vw, 22rem) minmax(0, 1fr);
@@ -19,8 +17,6 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  // A janela menos o cabeçalho fixo do shell (--altura-cabecalho, em layout.component.scss), menos 1 rem
-  // de folga em cima (top) e 2,5 rem de padding embaixo da página, para a ficha não passar do fim do contêiner.
   max-height: calc(100vh - var(--altura-cabecalho, 0rem) - 3.5rem);
   overflow-y: auto;
 }
@@ -36,8 +32,6 @@
   --mat-stepper-container-color: transparent;
 }
 
-// Os cabeçalhos dos passos têm 24 px de folga de cada lado e cortavam "Justificativa" a 1260 px.
-// Não existe token do Material para essa folga, por isso é o único ::ng-deep desta tela.
 .resolver-stepper ::ng-deep {
   .mat-step-header {
     padding-inline: 8px;

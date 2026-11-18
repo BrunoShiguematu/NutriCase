@@ -6,7 +6,6 @@ import { MatPaginatorIntl } from '@angular/material/paginator';
 import { MaterialModule } from '../../shared/material.module';
 import { AlimentosComponent } from './alimentos.component';
 
-/** Textos do paginador em português (o padrão do Angular Material é em inglês). */
 @Injectable()
 export class PaginadorPtBr extends MatPaginatorIntl {
   override itemsPerPageLabel = 'Itens por página';

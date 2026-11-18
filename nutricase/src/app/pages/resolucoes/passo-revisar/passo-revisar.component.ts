@@ -9,21 +9,11 @@ import { Pendencia, ResolucaoService } from '../../../core/services/resolucao.se
 import { CAMPOS_DA_ETAPA, DestinoDaPendencia } from '../etapas-ui';
 import { ConfirmarSubmissaoComponent } from './confirmar-submissao/confirmar-submissao.component';
 
-/** Posição dos passos no stepper do resolver: para onde cada pendência leva. */
 export const PASSO_ETAPAS = 0;
 export const PASSO_DIETA = 1;
 
 const ROTULO_MARCADOR: Record<string, string> = { 'pré-treino': 'Pré-treino', 'pós-treino': 'Pós-treino' };
 
-/**
- * Passo "Revisar" e submissão (UC06). Mostra o que será corrigido (as 5 respostas, as refeições com o total do
- * dia e a justificativa) e as pendências (UC06, fluxo 2a): enquanto houver alguma, o botão Submeter fica
- * desativado e explica o motivo, e cada pendência tem um botão que leva ao passo onde ela se resolve.
- *
- * Submeter pede confirmação num diálogo e chama `ResolucaoService.submeter`. Com sucesso, abre o resultado. Se não
- * houver pendência e a submissão ainda assim falhar (por exemplo, a base de alimentos não carregou), mostra uma
- * mensagem própria e fica na tela, para tentar de novo. Nada aqui diz se alguma resposta está certa (RF09).
- */
 @Component({
   selector: 'app-passo-revisar',
   standalone: false,
@@ -39,10 +29,6 @@ export class PassoRevisarComponent {
 
   readonly resolucao = input.required<Resolucao>();
 
-  /**
-   * Emite para onde a pendência leva: o passo (0 = Etapas, 1 = Dieta) e, se for de etapa, o id da etapa;
-   * o resolver troca o passo e abre a etapa.
-   */
   @Output() readonly irPara = new EventEmitter<DestinoDaPendencia>();
 
   protected readonly estadoAlimentos = this.alimentos.estado;
@@ -94,7 +80,6 @@ export class PassoRevisarComponent {
   protected readonly justificativa = computed(() => this.service.buscar(this.id())?.justificativa.trim() ?? '');
 
   constructor() {
-    // Os totais dependem da base de alimentos; chamar de novo é barato (só o primeiro faz o trabalho).
     void this.alimentos.carregar();
   }
 
@@ -106,7 +91,6 @@ export class PassoRevisarComponent {
     void this.alimentos.carregar();
   }
 
-  /** Pede a confirmação; só com `true` a resolução é submetida. */
   protected submeter(): void {
     if (this.pendencias().length > 0 || this.submetendo()) {
       return;

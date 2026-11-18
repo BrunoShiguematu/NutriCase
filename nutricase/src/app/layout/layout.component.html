@@ -8,11 +8,13 @@
     </div>
     <nav aria-label="Navegação principal">
       <mat-nav-list>
+        <div mat-subheader>Visão geral</div>
         <a mat-list-item class="menu-dashboard" routerLink="/dashboard" routerLinkActive ariaCurrentWhenActive="page" #rlaDashboard="routerLinkActive"
            [activated]="rlaDashboard.isActive">
           <mat-icon matListItemIcon>dashboard</mat-icon>
           <span matListItemTitle>Dashboard</span>
         </a>
+        <div mat-subheader>Prática</div>
         <a mat-list-item class="menu-casos" routerLink="/casos" routerLinkActive ariaCurrentWhenActive="page" #rlaCasos="routerLinkActive"
            [routerLinkActiveOptions]="{ exact: true }" [activated]="rlaCasos.isActive">
           <mat-icon matListItemIcon>folder_open</mat-icon>
@@ -23,6 +25,7 @@
           <mat-icon matListItemIcon>assignment</mat-icon>
           <span matListItemTitle>Minhas resoluções</span>
         </a>
+        <div mat-subheader>Administração</div>
         <a mat-list-item class="menu-gestao" routerLink="/casos/gestao" routerLinkActive ariaCurrentWhenActive="page" #rlaGestao="routerLinkActive"
            [activated]="rlaGestao.isActive">
           <mat-icon matListItemIcon>edit_note</mat-icon>
@@ -65,6 +68,16 @@
           <mat-option disabled>Nenhuma tela encontrada</mat-option>
         }
       </mat-autocomplete>
+
+      <!-- O margin-left:auto leva o perfil para a direita; a Prisma troca por classe na D2. -->
+      <button mat-button type="button" class="perfil" style="margin-left: auto" [matMenuTriggerFor]="menuPerfil" aria-label="Menu do perfil de Bruno Shiguematu">
+        <span class="perfil-avatar" aria-hidden="true">BS</span>
+        <span class="perfil-nome">Bruno Shiguematu</span>
+        <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #menuPerfil="matMenu" xPosition="before">
+        <button mat-menu-item type="button" disabled>Perfil (sem login)</button>
+      </mat-menu>
     </mat-toolbar>
 
     <p class="disclaimer">Ferramenta educacional · casos fictícios · sem finalidade clínica</p>

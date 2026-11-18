@@ -3,10 +3,13 @@
     <mat-label>Buscar alimento</mat-label>
     <input matInput type="text" autocomplete="off" formControlName="busca" [matAutocomplete]="lista" />
     <mat-autocomplete #lista="matAutocomplete" [displayWith]="exibir">
-      @for (alimento of sugestoes(); track alimento.id) {
+      @for (alimento of sugestoes().itens; track alimento.id) {
         <mat-option [value]="alimento">
           {{ alimento.nome }} <span class="sugestao-grupo">({{ alimento.grupo }})</span>
         </mat-option>
+      }
+      @if (sugestoes().total > limite) {
+        <mat-option class="lista-cortada" [disabled]="true">Mostrando {{ limite }} de {{ sugestoes().total }}. Continue digitando para afinar.</mat-option>
       }
       @if (semResultado()) {
         <mat-option class="sem-resultado" [disabled]="true">Nenhum alimento encontrado</mat-option>

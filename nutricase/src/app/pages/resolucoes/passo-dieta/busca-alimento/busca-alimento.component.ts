@@ -63,20 +63,22 @@ export class BuscaAlimentoComponent {
     return typeof valor === 'string' && valor.trim().length >= MIN_LETRAS_BUSCA ? valor : null;
   });
 
+  protected readonly limite = LIMITE_SUGESTOES;
+
+  /** As sugestões (no máximo `limite`) e quantos alimentos casaram ao todo, para avisar quando a lista foi cortada. */
   protected readonly sugestoes = computed(() => {
     const consulta = this.consulta();
     if (consulta === null) {
-      return [];
+      return { itens: [], total: 0 };
     }
-    return this.alimentos
+    const achados = this.alimentos
       .buscarPorNome(consulta)
       .map((alimento) => ({ alimento, grau: grauDaBusca(alimento.nome, consulta) }))
-      .sort((a, b) => a.grau - b.grau || a.alimento.nome.localeCompare(b.alimento.nome, 'pt-BR'))
-      .slice(0, LIMITE_SUGESTOES)
-      .map(({ alimento }) => alimento);
+      .sort((a, b) => a.grau - b.grau || a.alimento.nome.localeCompare(b.alimento.nome, 'pt-BR'));
+    return { itens: achados.slice(0, LIMITE_SUGESTOES).map(({ alimento }) => alimento), total: achados.length };
   });
 
-  protected readonly semResultado = computed(() => this.consulta() !== null && this.sugestoes().length === 0);
+  protected readonly semResultado = computed(() => this.consulta() !== null && this.sugestoes().total === 0);
 
   /** Como o campo mostra o alimento escolhido. */
   protected readonly exibir = (valor: string | Alimento | null): string => (typeof valor === 'string' ? valor : (valor?.nome ?? ''));

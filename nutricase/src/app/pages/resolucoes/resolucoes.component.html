@@ -30,7 +30,7 @@
       <td mat-cell class="coluna-etapas" *matCellDef="let linha">
         @if (linha.contagem; as c) {
           <span class="etapas-corretas">{{ c.corretas }} {{ c.corretas === 1 ? 'correta' : 'corretas' }}</span>,
-          <span class="etapas-divergentes">{{ c.divergentes }} {{ c.divergentes === 1 ? 'divergente' : 'divergentes' }}</span>,
+          <span class="etapas-divergentes">{{ c.divergentes }} {{ c.divergentes === 1 ? 'aceitável' : 'aceitáveis' }}</span>,
           <span class="etapas-erro">{{ c.comErro }} com erro</span>
         } @else {
           <span class="etapas-pendente">Aguardando submissão</span>

@@ -142,15 +142,12 @@
         }
       </section>
 
-      <section class="avaliacao-comentario" aria-labelledby="avaliacao-comentario-titulo">
-        <h3 id="avaliacao-comentario-titulo" class="secao-titulo">Comentário de referência do caso</h3>
-        <p class="comentario-texto">{{ resultado()!.comentarioReferencia }}</p>
-      </section>
-    </section>
-
-    <section class="bloco bloco-sugestoes" aria-labelledby="sugestoes-titulo">
-      <h2 id="sugestoes-titulo" class="bloco-titulo">Sugestões</h2>
-      <p class="sugestoes-indisponiveis">Sugestões indisponíveis nesta versão. A avaliação acima está completa.</p>
+      @if (resultado()!.comentarioReferencia) {
+        <section class="avaliacao-comentario" aria-labelledby="avaliacao-comentario-titulo">
+          <h3 id="avaliacao-comentario-titulo" class="secao-titulo">Comentário de referência do caso</h3>
+          <p class="comentario-texto">{{ resultado()!.comentarioReferencia }}</p>
+        </section>
+      }
     </section>
 
     <div class="resultado-acoes">

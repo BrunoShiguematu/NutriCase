@@ -20,8 +20,8 @@ const NUTRIENTES: Record<NutrienteMeta, { rotulo: string; unidade: string }> = {
 const comInicial = (texto: string): string => texto.charAt(0).toUpperCase() + texto.slice(1);
 
 /**
- * Resultado de uma tentativa submetida (UC08, RF21–RF27, RF32–RF36), em dois blocos com título (RF33):
- * "Avaliação" (as etapas, a dieta, o resumo dos erros, a justificativa e o comentário do caso) e "Sugestões".
+ * Resultado de uma tentativa submetida (UC08, RF21–RF27, RF32–RF36), em um bloco com título (RF33):
+ * "Avaliação" (as etapas, a dieta, o resumo dos erros, a justificativa e o comentário do caso, quando o caso tem um).
  *
  * A classificação aparece sempre em texto, nunca só em cor (RNF04). As etapas vêm da avaliação gravada na
  * submissão; a dieta é recalculada agora (por isso espera a base de alimentos). Uma tentativa que ainda não foi
@@ -91,7 +91,11 @@ export class ResultadoComponent {
         valor: this.valorComUnidade(resposta.valor, campos.valorUnidade),
         esperado: avaliacao.valorEsperado === undefined ? undefined : this.valorComUnidade(avaliacao.valorEsperado, campos.valorUnidade, 2),
         classificacao:
-          classificacao === 'erro de fato' ? `Erro de fato: ${avaliacao.tipoErro ?? 'tipo não informado'}` : comInicial(classificacao ?? 'não avaliada'),
+          classificacao === 'erro de fato'
+            ? `Erro de fato: ${avaliacao.tipoErro ?? 'tipo não informado'}`
+            : classificacao === 'divergente'
+              ? 'Aceitável' // o valor interno continua 'divergente'; só o texto da tela muda
+              : comInicial(classificacao ?? 'não avaliada'),
         classe: (classificacao ?? 'nao-avaliada').replace(/ /g, '-'),
         divergente: classificacao === 'divergente',
         erro: classificacao === 'erro de fato',

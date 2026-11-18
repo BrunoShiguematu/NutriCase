@@ -7,9 +7,6 @@
 import { EQUACOES_TMB } from '../avaliacao/formulas';
 import { Atleta, Caso, EtapaCalculo, TipoEtapa, TOLERANCIA_DIETA_PADRAO } from '../models';
 
-const COMENTARIO_REFERENCIA =
-  'Comentário de referência de exemplo; o texto do docente entra aqui após a validação.';
-
 export const CASOS_EXEMPLO: Caso[] = [
   {
     id: 'exemplo-caso-1',
@@ -19,7 +16,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     nivel: 'Iniciante',
     competencia: 'Gasto energético total',
     descricao: 'Atleta de 28 anos treinando 90 min/dia para a primeira maratona.',
-    comentarioReferencia: COMENTARIO_REFERENCIA,
+    comentarioReferencia: '',
     toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
@@ -30,7 +27,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     nivel: 'Intermediário',
     competencia: 'Distribuição de macronutrientes',
     descricao: 'Volume alto de treinos em dois períodos por dia.',
-    comentarioReferencia: COMENTARIO_REFERENCIA,
+    comentarioReferencia: '',
     toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
@@ -41,7 +38,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     nivel: 'Avançado',
     competencia: 'Periodização nutricional',
     descricao: 'Provas de 200 m e treino às 05h00.',
-    comentarioReferencia: COMENTARIO_REFERENCIA,
+    comentarioReferencia: '',
     toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
@@ -52,7 +49,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     nivel: 'Intermediário',
     competencia: 'Ajuste de meta proteica',
     descricao: 'Treino de força cinco vezes por semana, com superávit calórico moderado.',
-    comentarioReferencia: COMENTARIO_REFERENCIA,
+    comentarioReferencia: '',
     toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
@@ -63,7 +60,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     nivel: 'Intermediário',
     competencia: 'Restrições alimentares',
     descricao: 'Prova de 10 km e intolerância à lactose.',
-    comentarioReferencia: COMENTARIO_REFERENCIA,
+    comentarioReferencia: '',
     toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
@@ -74,7 +71,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     nivel: 'Iniciante',
     competencia: 'Conversão de unidades',
     descricao: 'Adolescente em fase de crescimento.',
-    comentarioReferencia: COMENTARIO_REFERENCIA,
+    comentarioReferencia: '',
     toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
@@ -85,7 +82,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     nivel: 'Intermediário',
     competencia: 'Hidratação e carboidrato no treino',
     descricao: 'Treinos longos de até 4 h aos fins de semana.',
-    comentarioReferencia: COMENTARIO_REFERENCIA,
+    comentarioReferencia: '',
     toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
   {
@@ -96,7 +93,7 @@ export const CASOS_EXEMPLO: Caso[] = [
     nivel: 'Iniciante',
     competencia: 'Escolha de equação',
     descricao: 'Atleta de 45 anos que treina 3x por semana.',
-    comentarioReferencia: COMENTARIO_REFERENCIA,
+    comentarioReferencia: '',
     toleranciaDieta: TOLERANCIA_DIETA_PADRAO,
   },
 ];

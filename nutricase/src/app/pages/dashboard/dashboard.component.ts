@@ -30,7 +30,6 @@ export class DashboardComponent {
     largura: this.kpis.errosPorTipo.total === 0 ? 0 : (quantidade * 100) / this.kpis.errosPorTipo.total,
   }));
 
-  protected readonly tentativasTexto = this.plural(this.kpis.casosConcluidos.tentativas, 'tentativa submetida', 'tentativas submetidas');
   protected readonly casosTexto = this.plural(this.kpis.casosConcluidos.casosDistintos, 'caso', 'casos');
   protected readonly errosTexto = this.plural(this.kpis.errosPorTipo.total, 'erro', 'erros');
 

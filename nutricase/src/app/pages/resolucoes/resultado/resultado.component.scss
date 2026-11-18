@@ -4,8 +4,8 @@
   @include m.pagina;
 }
 
-// Cada parte do resultado é um painel com cor de faixa própria (etapas e dieta verde, sugestões
-// tracejado). A classificação de cada linha leva a cor E o texto escrito, e a linha ganha um símbolo (RNF04).
+// Cada parte do resultado é um painel com faixa verde no topo. A classificação de cada linha leva a cor E o
+// texto escrito, e a linha ganha um símbolo (RNF04).
 .bloco-titulo {
   margin: 0 0 1rem;
   font: 700 1.375rem/1.3 var(--fonte-titulo);
@@ -18,8 +18,7 @@
   gap: 1.25rem;
 }
 
-.bloco-avaliacao > section,
-.bloco-sugestoes {
+.bloco-avaliacao > section {
   padding: 1.25rem 1.5rem;
   border: 1px solid m.$borda;
   border-top: 4px solid m.$borda;
@@ -37,13 +36,6 @@
   .secao-titulo {
     color: m.$verde;
   }
-}
-
-.bloco-sugestoes {
-  margin-top: 1.5rem;
-  border-style: dashed;
-  border-top-color: m.$verde;
-  background: m.$verde-claro;
 }
 
 .secao-titulo {
@@ -150,7 +142,6 @@ table[mat-table] {
 
 .dieta-tolerancia,
 .justificativa-aviso,
-.sugestoes-indisponiveis,
 .sem-justificativa {
   margin: 0 0 0.75rem;
   color: m.$suave;

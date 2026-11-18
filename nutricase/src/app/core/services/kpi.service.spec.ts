@@ -2,6 +2,7 @@ import { Alimento, Resolucao } from '../models';
 import { AlimentoService, CarregadorTaco } from './alimento.service';
 import { CasoService } from './caso.service';
 import { KpiService } from './kpi.service';
+import { TipoKpi } from '../kpis/kpis';
 import { ResolucaoService, TIPOS_ERRO } from './resolucao.service';
 import { StorageService } from './storage.service';
 
@@ -32,6 +33,14 @@ function abrir() {
   return { casos, resolucoes, kpis: new KpiService(resolucoes) };
 }
 type Servicos = ReturnType<typeof abrir>;
+
+const TIPOS_CALCULO = TIPOS_ERRO.filter((t) => t !== 'dieta fora das metas');
+
+/** Lê os KPIs num período largo, para o teste não depender da data de hoje. */
+function ler({ kpis }: Servicos, tipo: TipoKpi = 'calculos') {
+  kpis.filtro.set({ tipo, inicio: new Date(2000, 0, 1), fim: new Date(2100, 0, 1) });
+  return kpis.kpis();
+}
 
 function responder({ resolucoes, casos }: Servicos, resolucao: Resolucao, respostas: Partial<Respostas> = {}): void {
   for (const etapa of casos.listarEtapas(resolucao.casoId)) {
@@ -70,14 +79,12 @@ describe('KpiService', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => localStorage.clear());
 
-  it('sem nenhuma resolução: sem casos, sem aproveitamento e os 5 tipos zerados', () => {
-    const { kpis } = abrir();
+  it('sem nenhuma resolução: sem casos, sem aproveitamento e os 4 tipos de cálculo zerados', () => {
+    const resultado = ler(abrir());
 
-    const resultado = kpis.calcular();
-
-    expect(resultado.casosConcluidos).toEqual({ tentativas: 0, casosDistintos: 0 });
+    expect(resultado.casosResolvidos).toEqual({ tentativas: 0, casosDistintos: 0 });
     expect(resultado.aproveitamento).toBeNull();
-    expect(resultado.errosPorTipo.tipos.map((t) => t.tipo)).toEqual([...TIPOS_ERRO]);
+    expect(resultado.errosPorTipo.tipos.map((t) => t.tipo)).toEqual(TIPOS_CALCULO);
     expect(resultado.errosPorTipo.total).toBe(0);
   });
 
@@ -85,9 +92,9 @@ describe('KpiService', () => {
     const s = abrir();
     responder(s, s.resolucoes.iniciar(CASO_1)!);
 
-    const resultado = s.kpis.calcular();
+    const resultado = ler(s);
 
-    expect(resultado.casosConcluidos.tentativas).toBe(0);
+    expect(resultado.casosResolvidos.tentativas).toBe(0);
     expect(resultado.aproveitamento).toBeNull();
   });
 
@@ -95,10 +102,11 @@ describe('KpiService', () => {
     const s = abrir();
     await submeter(s);
 
-    const resultado = s.kpis.calcular();
+    const resultado = ler(s);
 
-    expect(resultado.casosConcluidos).toEqual({ tentativas: 1, casosDistintos: 1 });
-    expect(resultado.aproveitamento).toEqual({ corretas: 5, divergentes: 0, total: 5, percentual: 100 });
+    expect(resultado.casosResolvidos).toEqual({ tentativas: 1, casosDistintos: 1 });
+    expect(resultado).toMatchObject({ aproveitamento: 100, corretas: 5, aceitaveis: 0, total: 5, errosDeFato: 0 });
+    expect(ler(s, 'dieta')).toMatchObject({ aproveitamento: expect.any(Number), total: 1 });
     expect(resultado.errosPorTipo.total).toBe(0);
   });
 
@@ -115,11 +123,14 @@ describe('KpiService', () => {
     const resumo = s.resolucoes.resumoErros(resolucao.id)!;
     const contagem = s.resolucoes.contagemEtapas(resolucao.id)!;
 
-    const resultado = s.kpis.calcular();
+    const resultado = ler(s);
 
-    expect(resultado.errosPorTipo.tipos).toEqual(TIPOS_ERRO.map((tipo) => ({ tipo, quantidade: resumo[tipo] })));
-    expect(resultado.errosPorTipo.total).toBe(4);
-    expect(resultado.aproveitamento).toEqual({ corretas: contagem.corretas, divergentes: contagem.divergentes, total: 5, percentual: 40 });
+    expect(resultado.errosPorTipo.tipos).toEqual(TIPOS_CALCULO.map((tipo) => ({ tipo, quantidade: resumo[tipo] })));
+    expect(resultado.errosPorTipo.total).toBe(3);
+    expect(resultado).toMatchObject({ aproveitamento: 40, corretas: contagem.corretas, aceitaveis: contagem.divergentes, total: 5, errosDeFato: 3 });
+    // A dieta fora das metas do aluno aparece no tipo 'dieta', não nos cálculos.
+    expect(resumo['dieta fora das metas']).toBe(1);
+    expect(ler(s, 'dieta')).toMatchObject({ aproveitamento: 0, corretas: 0, total: 1, aceitaveis: null, errosDeFato: 1 });
   });
 
   it('várias tentativas do mesmo caso: todas contam, o caso uma vez, e os erros se somam', async () => {
@@ -129,36 +140,59 @@ describe('KpiService', () => {
     await submeter(s, { CHO: [6, 420000] });
     s.resolucoes.iniciar(CASO_1); // em andamento: não entra
 
-    const resultado = s.kpis.calcular();
+    const resultado = ler(s);
 
-    expect(resultado.casosConcluidos).toEqual({ tentativas: 3, casosDistintos: 1 });
+    expect(resultado.casosResolvidos).toEqual({ tentativas: 3, casosDistintos: 1 });
     expect(resultado.errosPorTipo.tipos.find((t) => t.tipo === 'conversão de unidade')?.quantidade).toBe(2);
-    expect(resultado.aproveitamento).toEqual({ corretas: 13, divergentes: 0, total: 15, percentual: 87 }); // 86,67 → 87
+    expect(resultado).toMatchObject({ aproveitamento: 87, corretas: 13, aceitaveis: 0, total: 15 }); // 86,67 → 87
   });
 
   it('excluir uma submetida tira ela dos KPIs na próxima leitura', async () => {
     const s = abrir();
     const primeira = await submeter(s);
     await submeter(s, { CHO: [6, 420000] });
-    expect(s.kpis.calcular().casosConcluidos.tentativas).toBe(2);
+    expect(ler(s).casosResolvidos.tentativas).toBe(2);
 
     s.resolucoes.excluir(primeira.id);
 
-    const resultado = s.kpis.calcular();
-    expect(resultado.casosConcluidos.tentativas).toBe(1);
-    expect(resultado.aproveitamento?.total).toBe(5);
+    const resultado = ler(s);
+    expect(resultado.casosResolvidos.tentativas).toBe(1);
+    expect(resultado.total).toBe(5);
   });
 
   it('uma submetida cujo caso foi excluído depois continua contando: os KPIs não mudam', async () => {
     const s = abrir();
     await submeter(s, { CHO: [6, 420000] });
-    const antes = s.kpis.calcular();
-    expect(antes.casosConcluidos.tentativas).toBe(1);
+    const antes = ler(s);
+    expect(antes.casosResolvidos.tentativas).toBe(1);
 
     expect(s.casos.excluir(CASO_1)).toBe(true);
 
     expect(s.casos.buscarPorId(CASO_1)).toBeUndefined();
-    expect(s.kpis.calcular()).toEqual(antes);
+    expect(ler(s)).toEqual(antes);
+  });
+
+  it('o filtro padrão é cálculos nos últimos 7 dias, e os KPIs recalculam sozinhos com uma nova submissão', async () => {
+    const s = abrir();
+    const { tipo, inicio, fim } = s.kpis.filtro();
+
+    expect(tipo).toBe('calculos');
+    expect(fim.getTime() - inicio.getTime()).toBeGreaterThan(6 * 24 * 3600 * 1000);
+    expect(fim.getTime() - inicio.getTime()).toBeLessThan(7 * 24 * 3600 * 1000);
+    expect(s.kpis.kpis().casosResolvidos.tentativas).toBe(0);
+
+    await submeter(s); // agora: está dentro do padrão
+
+    expect(s.kpis.kpis().casosResolvidos.tentativas).toBe(1);
+  });
+
+  it('um período que não pega a submissão mostra tudo vazio', async () => {
+    const s = abrir();
+    await submeter(s);
+
+    s.kpis.filtro.set({ tipo: 'calculos', inicio: new Date(2000, 0, 1), fim: new Date(2000, 0, 2) });
+
+    expect(s.kpis.kpis()).toMatchObject({ casosResolvidos: { tentativas: 0, casosDistintos: 0 }, aproveitamento: null, total: null });
   });
 
   it('não grava nada no navegador ao calcular', async () => {
@@ -166,7 +200,7 @@ describe('KpiService', () => {
     await submeter(s);
     const antes = JSON.stringify({ ...localStorage });
 
-    s.kpis.calcular();
+    ler(s);
 
     expect(JSON.stringify({ ...localStorage })).toBe(antes);
   });

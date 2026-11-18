@@ -11,10 +11,10 @@
       @if (semSubmissoes) {
         <p class="kpi-valor kpi-vazio">—</p>
       } @else {
-        <p class="kpi-valor">{{ kpis.casosConcluidos.tentativas }}</p>
+        <p class="kpi-valor">{{ kpis.casosResolvidos.tentativas }}</p>
         <p class="kpi-detalhe">em {{ casosTexto }}</p>
       }
-      <p class="kpi-explicacao">Conta todas as tentativas submetidas, inclusive as refeitas.</p>
+      <p class="kpi-explicacao">Conta as tentativas submetidas nos últimos 7 dias, inclusive as refeitas.</p>
     </mat-card-content>
   </mat-card>
 
@@ -23,15 +23,15 @@
       <h2 mat-card-title class="kpi-titulo">Aproveitamento nos cálculos</h2>
     </mat-card-header>
     <mat-card-content>
-      @if (kpis.aproveitamento; as aproveitamento) {
-        <p class="kpi-valor">{{ aproveitamento.percentual }}%</p>
+      @if (kpis.aproveitamento !== null) {
+        <p class="kpi-valor">{{ kpis.aproveitamento }}%</p>
         <p class="kpi-detalhe">
-          {{ aproveitamento.corretas + aproveitamento.divergentes }} de {{ aproveitamento.total }} etapas corretas ou aceitáveis
+          {{ kpis.corretas! + kpis.aceitaveis! }} de {{ kpis.total }} etapas corretas ou aceitáveis
         </p>
       } @else {
         <p class="kpi-valor kpi-vazio">—</p>
       }
-      <p class="kpi-explicacao">Etapas corretas ou aceitáveis sobre o total de etapas respondidas nas tentativas submetidas.</p>
+      <p class="kpi-explicacao">Etapas corretas ou aceitáveis sobre o total de etapas respondidas nas tentativas submetidas nos últimos 7 dias.</p>
     </mat-card-content>
   </mat-card>
 
@@ -57,7 +57,7 @@
           }
         </ul>
       }
-      <p class="kpi-explicacao">Erros das tentativas submetidas pelos 5 tipos; a dieta fora das metas conta 1 por tentativa.</p>
+      <p class="kpi-explicacao">Erros das etapas de cálculo das tentativas submetidas nos últimos 7 dias, pelos 4 tipos de cálculo.</p>
     </mat-card-content>
   </mat-card>
 </section>

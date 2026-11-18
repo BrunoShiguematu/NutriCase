@@ -468,7 +468,7 @@ describe('serieAproveitamento', () => {
     const quinze = serieAproveitamento(com(), { tipo: 'calculos', ...ultimosDias(15, new Date(2026, 10, 18)) });
 
     expect(quatorze).toHaveLength(14);
-    expect(quinze.map((p) => p.rotulo)).toEqual(['04/11 – 10/11', '11/11 – 17/11', '18/11 – 18/11']);
+    expect(quinze.map((p) => p.rotulo)).toEqual(['04/11 – 10/11', '11/11 – 17/11', '18/11']); // a última semana tem 1 dia: só a data
   });
 
   it('30 dias: 5 pontos, 4 semanas de 7 dias e a última com 2', () => {

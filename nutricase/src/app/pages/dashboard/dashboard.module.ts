@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { DateAdapter, MAT_DATE_LOCALE, provideNativeDateAdapter } from '@angular/material/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -15,6 +16,7 @@ import { DataBrasileiraAdapter } from './data-brasileira.adapter';
   declarations: [DashboardComponent, ConquistasDialogComponent],
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     MaterialModule,
     MatButtonToggleModule,
     MatDatepickerModule,

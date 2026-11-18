@@ -214,3 +214,79 @@ describe('DashboardComponent: Evolução do aproveitamento', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('mat-progress-bar')?.getAttribute('aria-label')).toBe('Nível máximo');
   });
 });
+
+describe('DashboardComponent: data digitada inválida no Período específico', () => {
+  function abrir() {
+    localStorage.clear();
+    TestBed.configureTestingModule({ imports: [DashboardModule], providers: [provideRouter([])] });
+    const service = TestBed.inject(KpiService);
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const tela = fixture.componentInstance as unknown as { trocarPeriodo(p: string): void };
+    tela.trocarPeriodo('especifico');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const digitar = (seletor: string, texto: string) => {
+      const campo = el.querySelector<HTMLInputElement>(seletor)!;
+      campo.value = texto;
+      campo.dispatchEvent(new Event('input', { bubbles: true }));
+      campo.dispatchEvent(new Event('change', { bubbles: true }));
+      campo.dispatchEvent(new Event('blur', { bubbles: true }));
+      fixture.detectChanges();
+    };
+    const erro = () => el.querySelector('mat-error')?.textContent?.trim() ?? null;
+    return { service, tela, digitar, erro, fixture };
+  }
+  afterEach(() => localStorage.clear());
+
+  it.each(['07/11/26', '2026-11-18', '31/02/2026', 'abc'])('"%s" mostra "Data inválida (use dd/mm/aaaa)" e não muda o filtro', (texto) => {
+    const { service, digitar, erro } = abrir();
+    const antes = service.filtro();
+
+    digitar('input[matStartDate]', texto);
+
+    expect(erro()).toBe('Data inválida (use dd/mm/aaaa)');
+    expect(service.filtro()).toBe(antes);
+  });
+
+  it('datas certas porém invertidas: o mat-error não diz "dd/mm/aaaa" (o aviso role=alert já diz) e o filtro não muda', () => {
+    const { service, digitar, erro, fixture } = abrir();
+    const antes = service.filtro();
+
+    digitar('input[matStartDate]', '10/11/2026');
+    digitar('input[matEndDate]', '05/11/2026');
+
+    expect(erro() ?? '').not.toContain('dd/mm/aaaa');
+    expect(erro()).toBeNull(); // nem texto nenhum: sem mensagem dupla
+    expect((fixture.nativeElement as HTMLElement).querySelector('.periodo-erro')?.textContent).toContain('A data inicial não pode ser depois da data final.');
+    expect(service.filtro()).toBe(antes);
+  });
+
+  it('inicial digitada errada e final certa: o mat-error diz "Data inválida"; corrigindo a inicial, some', () => {
+    const { digitar, erro } = abrir();
+
+    digitar('input[matStartDate]', '07/11/26');
+    digitar('input[matEndDate]', '18/11/2026');
+    expect(erro()).toBe('Data inválida (use dd/mm/aaaa)');
+
+    digitar('input[matStartDate]', '07/11/2026');
+    expect(erro()).toBeNull();
+  });
+
+  it('data certa não mostra erro; trocar de período e voltar limpa o campo e o erro', () => {
+    const { digitar, erro, tela, fixture } = abrir();
+
+    digitar('input[matStartDate]', '07/11/2026');
+    expect(erro()).toBeNull();
+
+    digitar('input[matStartDate]', '07/11/26');
+    expect(erro()).not.toBeNull();
+
+    tela.trocarPeriodo('7');
+    fixture.detectChanges(); // o campo de data some, como na tela real
+    tela.trocarPeriodo('especifico');
+    fixture.detectChanges();
+    expect(erro()).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[matStartDate]').value).toBe('');
+  });
+});

@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { FiltroKpis, periodoEntreDatas, TipoKpi, ultimosDias, validarPeriodo } from '../../core/kpis/kpis';
 import { KpiService } from '../../core/services/kpi.service';
@@ -46,6 +47,9 @@ export class DashboardComponent implements OnInit {
   /** A escolha na tela; o padrão é o mesmo do serviço (cálculos, últimos 7 dias). */
   protected readonly tipo = signal<TipoKpi>('calculos');
   protected readonly periodo = signal<Periodo>('7');
+  /** Os campos de data têm controle só para o Material mostrar o erro de data digitada que não é dd/mm/aaaa; os valores seguem pelos signals. */
+  protected readonly campoInicio = new FormControl<Date | null>(null);
+  protected readonly campoFim = new FormControl<Date | null>(null);
   private readonly dataInicial = signal<Date | null>(null);
   private readonly dataFinal = signal<Date | null>(null);
 
@@ -96,6 +100,8 @@ export class DashboardComponent implements OnInit {
     // Os campos de data somem e voltam vazios ao sair e voltar para o "Período específico": as datas guardadas vão junto.
     this.dataInicial.set(null);
     this.dataFinal.set(null);
+    this.campoInicio.reset();
+    this.campoFim.reset();
     this.aplicar();
   }
 

@@ -25,11 +25,15 @@
     @if (periodo() === 'especifico') {
       <mat-form-field class="filtro-datas" subscriptSizing="dynamic">
         <mat-date-range-input [rangePicker]="seletor">
-          <input matStartDate placeholder="dd/mm/aaaa" aria-label="Data inicial" (dateChange)="escolherInicio($event.value)" />
-          <input matEndDate placeholder="dd/mm/aaaa" aria-label="Data final" (dateChange)="escolherFim($event.value)" />
+          <input matStartDate [formControl]="campoInicio" placeholder="dd/mm/aaaa" aria-label="Data inicial" (dateChange)="escolherInicio($event.value)" />
+          <input matEndDate [formControl]="campoFim" placeholder="dd/mm/aaaa" aria-label="Data final" (dateChange)="escolherFim($event.value)" />
         </mat-date-range-input>
         <mat-datepicker-toggle matIconSuffix [for]="seletor" />
         <mat-date-range-picker #seletor />
+        <!-- Só o texto digitado fora de dd/mm/aaaa: as datas invertidas já têm o aviso role=alert, sem mensagem dupla. -->
+        @if (campoInicio.hasError('matDatepickerParse') || campoFim.hasError('matDatepickerParse')) {
+          <mat-error>Data inválida (use dd/mm/aaaa)</mat-error>
+        }
       </mat-form-field>
     }
   </div>

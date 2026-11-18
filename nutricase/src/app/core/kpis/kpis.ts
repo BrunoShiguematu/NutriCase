@@ -286,7 +286,8 @@ export function serieAproveitamento(entrada: EntradaKpis, filtro: FiltroKpis): P
       fim: i + passo >= dias ? filtro.fim : fimDoDia(ultimoDia),
     });
     pontos.push({
-      rotulo: passo === 1 ? diaEMes(primeiroDia) : `${diaEMes(primeiroDia)} – ${diaEMes(ultimoDia)}`,
+      // Um dia só (o dia a dia, ou a última semana quando sobra 1 dia) leva só a data, não "18/11 – 18/11".
+      rotulo: indiceDoDia(primeiroDia) === indiceDoDia(ultimoDia) ? diaEMes(primeiroDia) : `${diaEMes(primeiroDia)} – ${diaEMes(ultimoDia)}`,
       percentual: kpis.aproveitamento,
       casos: kpis.casosResolvidos.tentativas,
     });

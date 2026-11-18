@@ -1,13 +1,13 @@
 import { Component, ElementRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormArray, FormGroup, NonNullableFormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EQUACOES_TMB } from '../../../core/avaliacao/formulas';
 import { etapasPadrao, TIPOS_ETAPA } from '../../../core/data/casos-exemplo';
 import { EtapaCalculo, Nivel, Sexo, TipoEtapa, TOLERANCIA_DIETA_PADRAO } from '../../../core/models';
 import { CasoComAtleta, CasoService, DadosAtleta, DadosCaso } from '../../../core/services/caso.service';
-import { CAMPOS_DA_ETAPA, mensagemNumero, numeroPositivo } from '../../resolucoes/etapas-ui';
+import { CAMPOS_DA_ETAPA, dentroDaFaixa, FAIXAS_USUAIS, formatarNumero, mensagemNumero, numeroPositivo } from '../../resolucoes/etapas-ui';
 
 /** Texto obrigatório: espaços sozinhos não valem. */
 function textoObrigatorio(controle: AbstractControl): ValidationErrors | null {
@@ -35,7 +35,25 @@ function referenciaNaFaixa(controle: AbstractControl): ValidationErrors | null {
   if (referencia === null) {
     return null;
   }
-  return (min !== null && referencia < min) || (max !== null && referencia > max) ? { foraDaFaixa: true } : null;
+  return (min !== null && referencia < min) || (max !== null && referencia > max) ? { foraDoIntervalo: true } : null;
+}
+
+/**
+ * No campo da referência de CHO, PTN e LIP: com o peso do atleta, o valor esperado (g/kg × kg) tem que caber na faixa
+ * usual do valor da etapa. Senão o estudante, com a referência certa, não conseguiria digitar a resposta (a faixa
+ * do formulário das etapas barra o valor fora dela). Sem peso válido, não há o que conferir.
+ */
+function valorEsperadoNaFaixa(tipo: TipoEtapa): ValidatorFn {
+  return (controle) => {
+    const referencia = numeroOuNulo(controle);
+    const peso = numeroOuNulo(controle.root.get('peso'));
+    if (referencia === null || peso === null || referencia <= 0 || peso <= 0) {
+      return null;
+    }
+    const { min, max } = FAIXAS_USUAIS[tipo].valor;
+    const esperado = referencia * peso;
+    return esperado < min || esperado > max ? { valorForaDaFaixa: { peso, esperado, min, max } } : null;
+  };
 }
 
 /** No campo do mínimo: não pode passar do máximo. */
@@ -139,6 +157,10 @@ export class CasoFormComponent {
 
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => this.carregar(params.get('id')));
+    // O peso entra na conta da referência de CHO, PTN e LIP: mudou o peso, confere de novo (sem onlySelf, para o formulário todo se atualizar).
+    this.form.controls.peso.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.etapas.controls.forEach((grupo) => grupo.get('referencia')?.updateValueAndValidity({ emitEvent: false })));
   }
 
   protected salvar(): void {
@@ -188,7 +210,15 @@ export class CasoFormComponent {
       return '';
     }
     if (controle.hasError('foraDaFaixa')) {
+      return mensagemNumero(controle); // a faixa usual do parâmetro vem antes das regras entre os campos
+    }
+    if (controle.hasError('foraDoIntervalo')) {
       return 'A referência deve estar entre o mínimo e o máximo';
+    }
+    const conta = controle.getError('valorForaDaFaixa') as { peso: number; esperado: number; min: number; max: number } | undefined;
+    if (conta) {
+      const unidade = this.campos[this.tipos[indice]].valorUnidade;
+      return `Com o peso do atleta (${formatarNumero(conta.peso, 2)} kg), o valor esperado (${formatarNumero(conta.esperado, 2)} ${unidade}) sai da faixa usual (entre ${formatarNumero(conta.min, 2)} e ${formatarNumero(conta.max, 2)} ${unidade}).`;
     }
     if (controle.hasError('minMaiorQueMax')) {
       return 'O mínimo não pode ser maior que o máximo';
@@ -231,9 +261,16 @@ export class CasoFormComponent {
         criterio,
       });
     }
-    const referencia = this.fb.control<number | null>(null, [Validators.required, numeroPositivo, referenciaNaFaixa]);
-    const min = this.fb.control<number | null>(null, [Validators.required, numeroPositivo, minimoAteMaximo]);
-    const max = this.fb.control<number | null>(null, [Validators.required, numeroPositivo, maximoDesdeMinimo]);
+    const usual = dentroDaFaixa(FAIXAS_USUAIS[tipo].parametro!);
+    const referencia = this.fb.control<number | null>(null, [
+      Validators.required,
+      numeroPositivo,
+      usual,
+      referenciaNaFaixa,
+      ...(tipo === 'GET' ? [] : [valorEsperadoNaFaixa(tipo)]),
+    ]);
+    const min = this.fb.control<number | null>(null, [Validators.required, numeroPositivo, usual, minimoAteMaximo]);
+    const max = this.fb.control<number | null>(null, [Validators.required, numeroPositivo, usual, maximoDesdeMinimo]);
     const grupo = this.fb.group({ referencia, min, max, tolerancia, criterio });
     // Mudar a faixa muda o que vale para a referência e para o outro limite.
     const revalidar = (...outros: AbstractControl[]) => () =>

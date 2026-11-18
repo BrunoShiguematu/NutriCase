@@ -4,7 +4,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { EQUACOES_TMB } from '../../../core/avaliacao/formulas';
 import { EtapaCalculo, Resolucao } from '../../../core/models';
 import { ResolucaoService } from '../../../core/services/resolucao.service';
-import { CAMPOS_DA_ETAPA, MENSAGEM_TEXTO_NAO_NUMERICO, mensagemNumero, numeroPositivo, textoNaoNumerico } from '../etapas-ui';
+import { CAMPOS_DA_ETAPA, dentroDaFaixa, FAIXAS_USUAIS, MENSAGEM_TEXTO_NAO_NUMERICO, mensagemNumero, numeroPositivo, textoNaoNumerico } from '../etapas-ui';
 
 type FormEtapa = FormGroup<{
   parametro: FormControl<string | number | null>;
@@ -198,11 +198,14 @@ export class PassoEtapasComponent {
     return this.ordenadas().map((etapa) => {
       const salva = respostas.find((r) => r.etapaId === etapa.id);
       const ehTmb = etapa.tipo === 'TMB';
+      const faixas = FAIXAS_USUAIS[etapa.tipo];
       return new FormGroup({
         parametro: new FormControl<string | number | null>(salva?.parametro ?? (ehTmb ? '' : null), {
-          validators: ehTmb ? [Validators.required] : [Validators.required, numeroPositivo],
+          validators: ehTmb ? [Validators.required] : [Validators.required, numeroPositivo, dentroDaFaixa(faixas.parametro!)],
         }),
-        valor: new FormControl<number | null>(salva?.valor ?? null, { validators: [Validators.required, numeroPositivo] }),
+        valor: new FormControl<number | null>(salva?.valor ?? null, {
+          validators: [Validators.required, numeroPositivo, dentroDaFaixa(faixas.valor)],
+        }),
       });
     });
   }

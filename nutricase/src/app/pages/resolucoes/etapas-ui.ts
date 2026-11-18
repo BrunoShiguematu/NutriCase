@@ -2,7 +2,7 @@
 // de formato dos campos numéricos. Fica aqui para os passos (etapas, dieta e revisar) e o resultado dizerem as
 // mesmas coisas do mesmo jeito. Nada aqui dá a conta pronta nem o valor esperado.
 
-import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { TipoEtapa } from '../../core/models';
 
 /** Para onde uma pendência leva: o passo do stepper e, nas de etapa, qual etapa abrir dentro do passo Etapas. */
@@ -41,6 +41,32 @@ export function numeroPositivo(controle: AbstractControl): ValidationErrors | nu
   return valor > 0 ? null : { positivo: true };
 }
 
+export interface Faixa {
+  min: number;
+  max: number;
+}
+
+/**
+ * Faixas de valores usuais de cada campo numérico das etapas, para barrar erro de digitação (vírgula ou unidade
+ * errada, como 18000 em vez de 1800). São fixas e não dependem do caso nem do atleta, então não entregam a
+ * resposta nem dizem se o cálculo está certo. Valores de exemplo, aguardam validação docente.
+ */
+export const FAIXAS_USUAIS: Record<TipoEtapa, { parametro?: Faixa; valor: Faixa }> = {
+  TMB: { valor: { min: 800, max: 3500 } },
+  GET: { parametro: { min: 1, max: 2.5 }, valor: { min: 1200, max: 7000 } },
+  CHO: { parametro: { min: 1, max: 12 }, valor: { min: 50, max: 1200 } },
+  PTN: { parametro: { min: 0.8, max: 3 }, valor: { min: 40, max: 400 } },
+  LIP: { parametro: { min: 0.3, max: 2.5 }, valor: { min: 20, max: 250 } },
+};
+
+/** Número positivo fora da faixa dá `foraDaFaixa`; o que não é número positivo é do `numeroPositivo`. */
+export function dentroDaFaixa({ min, max }: Faixa): ValidatorFn {
+  return (controle) => {
+    const valor = controle.value;
+    return typeof valor === 'number' && valor > 0 && (valor < min || valor > max) ? { foraDaFaixa: { min, max } } : null;
+  };
+}
+
 /** Mensagem de formato de um campo numérico; nunca fala se a resposta está certa. */
 export function mensagemNumero(controle: AbstractControl): string {
   if (controle.hasError('required')) {
@@ -51,6 +77,10 @@ export function mensagemNumero(controle: AbstractControl): string {
   }
   if (controle.hasError('positivo')) {
     return 'Informe um número maior que zero';
+  }
+  const faixa = controle.getError('foraDaFaixa') as Faixa | undefined;
+  if (faixa) {
+    return `Valor fora do usual (entre ${formatarNumero(faixa.min, 2)} e ${formatarNumero(faixa.max, 2)}). Confira a unidade e a vírgula.`;
   }
   return '';
 }

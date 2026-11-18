@@ -1,6 +1,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { FiltroKpis, periodoEntreDatas, TipoKpi, ultimosDias, validarPeriodo } from '../../core/kpis/kpis';
 import { KpiService } from '../../core/services/kpi.service';
+import { ConquistasDialogComponent } from './conquistas-dialog/conquistas-dialog.component';
 
 const comInicial = (texto: string): string => texto.charAt(0).toUpperCase() + texto.slice(1);
 
@@ -21,6 +23,7 @@ export interface LinhaErro {
 })
 export class DashboardComponent implements OnInit {
   private readonly service = inject(KpiService);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly periodos: { valor: Periodo; rotulo: string }[] = [
     { valor: 'hoje', rotulo: 'Hoje' },
@@ -32,6 +35,7 @@ export class DashboardComponent implements OnInit {
   protected readonly kpis = this.service.kpis;
   protected readonly ofensiva = this.service.ofensiva;
   protected readonly nivel = this.service.nivel;
+  private readonly conquistas = this.service.conquistas;
 
   /** A escolha na tela; o padrão é o mesmo do serviço (cálculos, últimos 7 dias). */
   protected readonly tipo = signal<TipoKpi>('calculos');
@@ -65,6 +69,11 @@ export class DashboardComponent implements OnInit {
   /** Cada visita ao Dashboard parte do dia de agora e do filtro padrão, que é o que a tela mostra ao abrir. */
   ngOnInit(): void {
     this.service.atualizarHoje();
+  }
+
+  /** As conquistas ignoram o filtro; ao fechar, o MatDialog devolve o foco ao botão que abriu. */
+  protected abrirConquistas(): void {
+    this.dialog.open(ConquistasDialogComponent, { data: this.conquistas() });
   }
 
   protected trocarTipo(tipo: TipoKpi): void {

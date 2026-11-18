@@ -161,6 +161,27 @@
   </mat-card>
 </section>
 
+@let n = nivel();
+<mat-card class="evolucao" appearance="outlined">
+  <mat-card-header>
+    <h2 mat-card-title class="kpi-titulo">Minha evolução</h2>
+  </mat-card-header>
+  <mat-card-content>
+    <p class="evolucao-nivel">Nível atual: {{ n.nome }}</p>
+    <div class="evolucao-progresso">
+      <!-- O anel só repete o que a barra e o texto já dizem: fica fora da leitura de tela. -->
+      <div class="evolucao-anel" aria-hidden="true">
+        <mat-progress-spinner mode="determinate" [diameter]="72" [value]="n.percentual" />
+        <span class="evolucao-percentual">{{ n.percentual }}%</span>
+      </div>
+      <p class="evolucao-proximo">{{ n.proximo ? 'até o nível ' + n.proximo : 'nível máximo' }}</p>
+    </div>
+    <mat-progress-bar class="evolucao-barra" mode="determinate" [value]="n.percentual" aria-label="Progresso até o próximo nível" />
+    <p class="evolucao-casos">{{ n.meta === null ? n.casos + ' casos' : n.casos + ' de ' + n.meta + ' casos · faltam ' + n.faltam }}</p>
+    <button mat-flat-button type="button" class="evolucao-conquistas" (click)="abrirConquistas()">Ver conquistas</button>
+  </mat-card-content>
+</mat-card>
+
 @if (semNenhuma()) {
   <p class="sem-submissoes">
     Você ainda não submeteu nenhuma resolução. <a class="ir-catalogo" routerLink="/casos">Escolha um caso no catálogo</a> para começar.

@@ -1,0 +1,20 @@
+<h2 mat-dialog-title>Conquistas</h2>
+
+<mat-dialog-content>
+  <ul class="conquistas">
+    @for (conquista of conquistas; track conquista.id) {
+      <li class="conquista" [class.conquista-obtida]="conquista.obtida">
+        <mat-icon class="conquista-icone" aria-hidden="true">{{ conquista.obtida ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+        <div class="conquista-texto">
+          <strong class="conquista-titulo">{{ conquista.titulo }}</strong>
+          <span class="conquista-status">{{ conquista.obtida ? 'Obtida' : 'Ainda não obtida' }}</span>
+          <p class="conquista-descricao">{{ conquista.descricao }}</p>
+        </div>
+      </li>
+    }
+  </ul>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-flat-button type="button" class="conquistas-fechar" mat-dialog-close cdkFocusInitial>Fechar</button>
+</mat-dialog-actions>

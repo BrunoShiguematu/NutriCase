@@ -40,6 +40,32 @@
   font-size: 1.5rem;
 }
 
+// Minha evolução: só o necessário para o anel mostrar o % no centro (o acabamento é da D8).
+.evolucao {
+  margin-top: 1.5rem;
+}
+
+.evolucao-progresso {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.evolucao-anel {
+  position: relative;
+  display: inline-flex;
+}
+
+.evolucao-percentual {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
 // Três cartões do mesmo tamanho, lado a lado.
 .kpis {
   display: grid;

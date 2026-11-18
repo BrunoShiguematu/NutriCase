@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
 import { KpiService } from '../../core/services/kpi.service';
 import { DashboardComponent } from './dashboard.component';
@@ -77,5 +78,70 @@ describe('DashboardComponent: filtros', () => {
     expect(service.filtro().fim.getTime()).toBeGreaterThan(doEspecifico.fim.getTime()); // continua o período de 7 dias, não o de 10 a 12/11
     tela.escolherFim(new Date(2026, 10, 13)); // só a data final: ainda falta a inicial
     expect(duracaoEmDias(service)).toBe(7);
+  });
+});
+
+describe('DashboardComponent: Minha evolução e conquistas', () => {
+  /** Grava `casos` tentativas submetidas, uma em cada caso diferente, antes de abrir a tela. */
+  function abrirComCasos(casos: number) {
+    localStorage.clear();
+    const agora = new Date().toISOString();
+    const resolucoes = Array.from({ length: casos }, (_, i) => ({ id: `r${i}`, casoId: `caso-${i}`, data: agora, status: 'submetida', justificativa: '', submetidaEm: agora }));
+    localStorage.setItem('nutricase.resolucoes', JSON.stringify({ versao: 1, resolucoes, respostas: [], refeicoes: [], itens: [], submissoes: [] }));
+    TestBed.configureTestingModule({ imports: [DashboardModule], providers: [provideRouter([])] });
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    return { fixture, el, texto: (seletor: string) => el.querySelector(seletor)?.textContent?.replace(/\s+/g, ' ').trim() };
+  }
+
+  afterEach(() => localStorage.clear());
+
+  it.each([
+    [0, 'Bronze', 'até o nível Prata', '0 de 3 casos · faltam 3', '0%'],
+    [2, 'Bronze', 'até o nível Prata', '2 de 3 casos · faltam 1', '67%'],
+    [3, 'Prata', 'até o nível Ouro', '3 de 6 casos · faltam 3', '50%'],
+    [5, 'Prata', 'até o nível Ouro', '5 de 6 casos · faltam 1', '83%'],
+  ])('%i casos distintos: nível %s, %s, "%s", anel %s', (casos, nome, proximo, frase, percentual) => {
+    const { texto } = abrirComCasos(casos);
+
+    expect(texto('.evolucao-nivel')).toBe(`Nível atual: ${nome}`);
+    expect(texto('.evolucao-proximo')).toBe(proximo);
+    expect(texto('.evolucao-casos')).toBe(frase);
+    expect(texto('.evolucao-percentual')).toBe(percentual);
+  });
+
+  it('Ouro: nível máximo, só "X casos" e a barra cheia', () => {
+    const { texto, el } = abrirComCasos(7);
+
+    expect(texto('.evolucao-nivel')).toBe('Nível atual: Ouro');
+    expect(texto('.evolucao-proximo')).toBe('nível máximo');
+    expect(texto('.evolucao-casos')).toBe('7 casos');
+    expect(el.querySelector('mat-progress-bar')?.getAttribute('aria-valuenow')).toBe('100');
+  });
+
+  it('Ver conquistas abre o diálogo com as 4 conquistas (obtidas e não) e Fechar fecha', async () => {
+    const { fixture, el } = abrirComCasos(5); // 5 casos: primeiro caso e 5 casos distintos obtidos
+    const botao = el.querySelector<HTMLButtonElement>('.evolucao-conquistas')!;
+    botao.focus();
+
+    botao.click();
+    await fixture.whenStable();
+    const dialogo = document.querySelector('mat-dialog-container')!;
+    const itens = [...dialogo.querySelectorAll('.conquista')].map((i) => i.textContent!.replace(/\s+/g, ' ').trim());
+
+    expect(itens).toHaveLength(4);
+    expect(itens[0]).toMatch(/Primeiro caso\s*Obtida/);
+    expect(itens[1]).toMatch(/5 casos distintos\s*Obtida/);
+    expect(itens[2]).toMatch(/Ofensiva de 3 dias\s*Ainda não obtida/);
+    expect(itens[3]).toMatch(/100% em um caso\s*Ainda não obtida/);
+
+    dialogo.querySelector<HTMLButtonElement>('.conquistas-fechar')!.click();
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 400)); // animação de saída
+
+    expect(document.querySelector('mat-dialog-container')).toBeNull();
+    expect(TestBed.inject(MatDialog).openDialogs).toHaveLength(0);
+    expect(document.activeElement).toBe(botao); // o foco volta ao botão que abriu
   });
 });

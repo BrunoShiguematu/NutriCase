@@ -1,0 +1,21 @@
+// Mínimo para a lista ler bem; o acabamento é da D8.
+.conquistas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conquista {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.conquista-titulo,
+.conquista-status {
+  display: block;
+}
+
+.conquista-descricao {
+  margin: 0.25rem 0 0;
+}

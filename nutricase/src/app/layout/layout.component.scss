@@ -53,6 +53,21 @@ $janela-aviso-quebra: 44rem;
     outline: 3px solid #fff;
     outline-offset: -3px;
   }
+
+  // Título de grupo do menu: pequeno, em minúsculas e com pouca ênfase (branco a 70%: 6:1 sobre o verde).
+  [mat-subheader] {
+    height: auto;
+    margin: 1.25rem 0 0.25rem;
+    padding: 0 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    text-transform: lowercase;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
 }
 
 // Topo do menu: logo à esquerda e o botão de abrir/fechar à direita, na altura da barra do conteúdo.
@@ -64,6 +79,14 @@ $janela-aviso-quebra: 44rem;
   height: $barra;
   margin-bottom: 0.5rem;
   padding: 0 0.5rem 0 1rem;
+
+  // O SVG da logo tem folga vazia à direita: o recorte (cover) deixa a logo maior sem empurrar o botão para fora.
+  .brand {
+    width: 11.5rem;
+    height: 3rem;
+    object-fit: cover;
+    object-position: left center;
+  }
 }
 
 .content {
@@ -113,6 +136,39 @@ $janela-aviso-quebra: 44rem;
   &:focus-within {
     box-shadow: 0 0 0 2px m.$verde;
   }
+}
+
+// Perfil (sem login): pílula com borda, círculo verde com as iniciais, nome e seta; fica à direita da barra.
+.perfil {
+  --mat-button-text-container-height: 2.5rem;
+  --mat-button-text-container-shape: 999px;
+  --mat-button-text-horizontal-padding: 0.25rem;
+  --mat-button-text-with-icon-horizontal-padding: 0.25rem;
+  --mat-button-text-label-text-color: #{m.$texto};
+  margin-left: auto;
+  padding-right: 0.5rem;
+  border: 1px solid m.$borda;
+
+  .perfil-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    margin-right: 0.75rem;
+    border-radius: 50%;
+    background: m.$verde;
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+}
+
+// Item desabilitado do menu do perfil: o Material usa opacidade 0,38 (contraste baixo); aqui fica opaco, em cinza escuro
+// da marca (7,6:1 sobre o branco). O painel abre fora do componente, mas o item leva o atributo do componente.
+button[mat-menu-item][disabled] {
+  --mat-menu-item-label-text-color: #{m.$suave};
+  opacity: 1;
 }
 
 // Aviso educacional (RNF06): fixo abaixo da barra, na mesma margem lateral do conteúdo.

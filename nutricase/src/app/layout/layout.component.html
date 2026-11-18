@@ -1,7 +1,7 @@
 <mat-sidenav-container class="shell">
   <mat-sidenav class="side" mode="side" opened #sidenav>
     <div class="side-topo">
-      <img class="brand" src="nutricase-logo-negativa.svg" alt="NutriCase" height="32" />
+      <img class="brand" src="nutricase-logo-negativa.svg" alt="NutriCase" />
       <button #botaoLateral mat-icon-button type="button" (click)="alternarMenu(sidenav)" [attr.aria-expanded]="sidenav.opened" aria-label="Abrir ou fechar o menu">
         <mat-icon>menu</mat-icon>
       </button>
@@ -69,8 +69,7 @@
         }
       </mat-autocomplete>
 
-      <!-- O margin-left:auto leva o perfil para a direita; a Prisma troca por classe na D2. -->
-      <button mat-button type="button" class="perfil" style="margin-left: auto" [matMenuTriggerFor]="menuPerfil" aria-label="Menu do perfil de Bruno Shiguematu">
+      <button mat-button type="button" class="perfil" [matMenuTriggerFor]="menuPerfil" aria-label="Menu do perfil de Bruno Shiguematu">
         <span class="perfil-avatar" aria-hidden="true">BS</span>
         <span class="perfil-nome">Bruno Shiguematu</span>
         <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>

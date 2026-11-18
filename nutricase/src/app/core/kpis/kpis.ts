@@ -258,14 +258,23 @@ export interface PontoDaSerie {
   casos: number;
 }
 
+/** Quantos dias locais o período cobre (o primeiro e o último contam). */
+const diasDoPeriodo = (filtro: FiltroKpis): number =>
+  indiceDoDia(filtro.fim) - indiceDoDia(new Date(filtro.inicio.getFullYear(), filtro.inicio.getMonth(), filtro.inicio.getDate())) + 1;
+
+/** Como a série agrupa os pontos: por dia até 14 dias, por semana acima disso (é o título do eixo X do gráfico). */
+export function unidadeDaSerie(filtro: FiltroKpis): 'Dias' | 'Semanas' {
+  return diasDoPeriodo(filtro) <= 14 ? 'Dias' : 'Semanas';
+}
+
 /**
  * O aproveitamento ao longo do período do filtro, no tipo dele: um ponto por dia até 14 dias (e para 1 dia só),
  * um por semana acima disso. A semana é um bloco de 7 dias contado do início do período; o último pode ser menor.
  */
 export function serieAproveitamento(entrada: EntradaKpis, filtro: FiltroKpis): PontoDaSerie[] {
   const primeiro = new Date(filtro.inicio.getFullYear(), filtro.inicio.getMonth(), filtro.inicio.getDate());
-  const dias = indiceDoDia(filtro.fim) - indiceDoDia(primeiro) + 1;
-  const passo = dias <= 14 ? 1 : 7;
+  const dias = diasDoPeriodo(filtro);
+  const passo = unidadeDaSerie(filtro) === 'Dias' ? 1 : 7;
   const pontos: PontoDaSerie[] = [];
   for (let i = 0; i < dias; i += passo) {
     const primeiroDia = somarDias(primeiro, i);

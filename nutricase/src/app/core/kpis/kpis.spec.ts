@@ -1,5 +1,5 @@
 import { Classificacao, Resolucao, RespostaEtapa, ResumoErros, TIPOS_ERRO, TipoErro } from '../models';
-import { calcularKpis, conquistas, EntradaKpis, FiltroKpis, Kpis, maiorOfensiva, MENSAGEM_PERIODO_INVERTIDO, MENSAGEM_PERIODO_LONGO, nivel, ofensiva, periodoEntreDatas, serieAproveitamento, TIPOS_ERRO_CALCULO, ultimosDias, validarPeriodo } from './kpis';
+import { calcularKpis, conquistas, EntradaKpis, FiltroKpis, Kpis, maiorOfensiva, MENSAGEM_PERIODO_INVERTIDO, MENSAGEM_PERIODO_LONGO, nivel, ofensiva, periodoEntreDatas, serieAproveitamento, TIPOS_ERRO_CALCULO, ultimosDias, unidadeDaSerie, validarPeriodo } from './kpis';
 
 let contador = 0;
 const DIA_10 = '2026-11-10T15:00:00.000Z';
@@ -534,5 +534,16 @@ describe('período escolhido por datas', () => {
       inicio: new Date(2026, 10, 10, 0, 0, 0, 0),
       fim: new Date(2026, 10, 12, 23, 59, 59, 999),
     });
+  });
+});
+
+describe('unidadeDaSerie', () => {
+  it('até 14 dias o eixo é por dia; com 15 ou mais, por semana', () => {
+    const doze = (dias: number): FiltroKpis => ({ tipo: 'calculos', ...ultimosDias(dias, new Date(2026, 10, 30)) });
+
+    expect(unidadeDaSerie(doze(1))).toBe('Dias');
+    expect(unidadeDaSerie(doze(14))).toBe('Dias');
+    expect(unidadeDaSerie(doze(15))).toBe('Semanas');
+    expect(unidadeDaSerie(doze(30))).toBe('Semanas');
   });
 });

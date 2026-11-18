@@ -145,3 +145,72 @@ describe('DashboardComponent: Minha evolução e conquistas', () => {
     expect(document.activeElement).toBe(botao); // o foco volta ao botão que abriu
   });
 });
+
+describe('DashboardComponent: Evolução do aproveitamento', () => {
+  function abrirComSubmissaoHoje() {
+    localStorage.clear();
+    const agora = new Date().toISOString();
+    const resposta = (i: number, classificacao: string) => ({ id: `x${i}`, resolucaoId: 'r0', etapaId: `e${i}`, parametro: 1, valor: 1, classificacao });
+    localStorage.setItem(
+      'nutricase.resolucoes',
+      JSON.stringify({
+        versao: 1,
+        resolucoes: [{ id: 'r0', casoId: 'caso-0', data: agora, status: 'submetida', justificativa: '', submetidaEm: agora }],
+        respostas: [resposta(0, 'correta'), resposta(1, 'correta'), resposta(2, 'correta'), resposta(3, 'erro de fato')],
+        refeicoes: [],
+        itens: [],
+        submissoes: [],
+      }),
+    );
+    TestBed.configureTestingModule({ imports: [DashboardModule], providers: [provideRouter([])] });
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const tela = fixture.componentInstance as unknown as { trocarPeriodo(p: string): void; trocarModoGrafico(m: string): void };
+    const textos = (seletor: string) => [...el.querySelectorAll(seletor)].map((t) => t.textContent!.trim());
+    return { fixture, el, tela, textos };
+  }
+  afterEach(() => localStorage.clear());
+
+  it('padrão: 7 pontos por dia, título "Dias", eixo em % e o valor de hoje (75%) sobre o último ponto', () => {
+    const { el, textos } = abrirComSubmissaoHoje();
+
+    expect(textos('.grafico-titulo-x')).toEqual(['Dias']);
+    expect(textos('.grafico-rotulo-x')).toHaveLength(7);
+    expect(textos('.grafico-marca-y')).toEqual(['0%', '50%', '100%']);
+    expect(textos('.grafico-valor')).toEqual(['75%']); // os outros 6 dias não têm dado: sem ponto
+    expect(el.querySelectorAll('.grafico-ponto')).toHaveLength(1);
+    expect(el.querySelectorAll('.grafico-linha')).toHaveLength(0); // um ponto só não faz linha
+    expect(el.querySelector('svg.grafico')?.getAttribute('role')).toBe('img');
+    expect(el.querySelector('svg.grafico')?.getAttribute('aria-label')).toMatch(/^Evolução do aproveitamento, em %, por dias\. .*: 75%$/);
+  });
+
+  it('Últimos 30 dias: por semana, título "Semanas"; "Nº de casos" troca o eixo e o valor', () => {
+    const { fixture, el, tela, textos } = abrirComSubmissaoHoje();
+
+    tela.trocarPeriodo('30');
+    fixture.detectChanges();
+    expect(textos('.grafico-titulo-x')).toEqual(['Semanas']);
+    expect(textos('.grafico-rotulo-x')).toHaveLength(5);
+
+    tela.trocarModoGrafico('casos');
+    fixture.detectChanges();
+    expect(textos('.grafico-marca-y')).toEqual(['0', '1', '2']);
+    expect(textos('.grafico-valor').at(-1)).toBe('1');
+    const aria = el.querySelector('svg.grafico')!.getAttribute('aria-label')!;
+    expect(aria).toMatch(/^Evolução do aproveitamento, em número de casos, por semanas\. /);
+    expect(aria).toMatch(/: 1 caso$/); // a última semana tem a tentativa de hoje
+  });
+
+  it('a barra de nível diz "Nível máximo" no Ouro', () => {
+    localStorage.clear();
+    const agora = new Date().toISOString();
+    const resolucoes = Array.from({ length: 6 }, (_, i) => ({ id: `r${i}`, casoId: `caso-${i}`, data: agora, status: 'submetida', justificativa: '', submetidaEm: agora }));
+    localStorage.setItem('nutricase.resolucoes', JSON.stringify({ versao: 1, resolucoes, respostas: [], refeicoes: [], itens: [], submissoes: [] }));
+    TestBed.configureTestingModule({ imports: [DashboardModule], providers: [provideRouter([])] });
+    const fixture = TestBed.createComponent(DashboardComponent);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('mat-progress-bar')?.getAttribute('aria-label')).toBe('Nível máximo');
+  });
+});

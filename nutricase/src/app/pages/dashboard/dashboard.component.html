@@ -176,9 +176,46 @@
       </div>
       <p class="evolucao-proximo">{{ n.proximo ? 'até o nível ' + n.proximo : 'nível máximo' }}</p>
     </div>
-    <mat-progress-bar class="evolucao-barra" mode="determinate" [value]="n.percentual" aria-label="Progresso até o próximo nível" />
+    <mat-progress-bar class="evolucao-barra" mode="determinate" [value]="n.percentual" [attr.aria-label]="n.proximo ? 'Progresso até o próximo nível' : 'Nível máximo'" />
     <p class="evolucao-casos">{{ n.meta === null ? n.casos + ' casos' : n.casos + ' de ' + n.meta + ' casos · faltam ' + n.faltam }}</p>
     <button mat-flat-button type="button" class="evolucao-conquistas" (click)="abrirConquistas()">Ver conquistas</button>
+  </mat-card-content>
+</mat-card>
+
+@let g = grafico();
+<mat-card class="evolucao-grafico" appearance="outlined">
+  <mat-card-header class="grafico-cabecalho">
+    <h2 mat-card-title class="kpi-titulo">Evolução do aproveitamento</h2>
+    <mat-button-toggle-group class="filtro-modo" hideSingleSelectionIndicator aria-label="O que o gráfico mostra" [value]="modoGrafico()" (change)="trocarModoGrafico($event.value)">
+      <mat-button-toggle value="percentual">%</mat-button-toggle>
+      <mat-button-toggle value="casos">Nº de casos</mat-button-toggle>
+    </mat-button-toggle-group>
+  </mat-card-header>
+  <mat-card-content>
+    <svg class="grafico" role="img" [attr.viewBox]="'0 0 ' + g.largura + ' ' + g.altura" [attr.aria-label]="g.descricao">
+      @for (marca of g.marcasY; track marca.y) {
+        <line class="grafico-grade" [attr.x1]="g.esquerda" [attr.x2]="g.direita" [attr.y1]="marca.y" [attr.y2]="marca.y" />
+        <text class="grafico-texto grafico-marca-y" [attr.x]="g.esquerda - 8" [attr.y]="marca.y" text-anchor="end" dominant-baseline="middle">{{ marca.rotulo }}</text>
+      }
+      @for (trecho of g.trechos; track trecho) {
+        <path class="grafico-linha" [attr.d]="trecho" />
+      }
+      @for (ponto of g.pontos; track ponto.x) {
+        @if (ponto.y !== null) {
+          <circle class="grafico-ponto" [attr.cx]="ponto.x" [attr.cy]="ponto.y" r="5" />
+          @if (ponto.mostrarValor) {
+            <text class="grafico-texto grafico-valor" [attr.x]="ponto.x" [attr.y]="ponto.y - 12" text-anchor="middle">{{ ponto.texto }}</text>
+          }
+        }
+        @if (ponto.mostrarRotulo) {
+          <text class="grafico-texto grafico-rotulo-x" [attr.x]="ponto.x" [attr.y]="g.base + 22" text-anchor="middle">{{ ponto.rotulo }}</text>
+        }
+      }
+      <text class="grafico-texto grafico-titulo-x" [attr.x]="(g.esquerda + g.direita) / 2" [attr.y]="g.altura - 8" text-anchor="middle">{{ unidadeGrafico() }}</text>
+    </svg>
+    @if (semDados()) {
+      <p class="kpi-explicacao grafico-vazio">Nenhuma tentativa submetida neste período.</p>
+    }
   </mat-card-content>
 </mat-card>
 

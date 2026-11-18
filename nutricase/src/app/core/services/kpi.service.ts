@@ -8,6 +8,7 @@ import {
   nivel as calcularNivel,
   ofensiva as calcularOfensiva,
   serieAproveitamento,
+  unidadeDaSerie,
   ultimosDias,
 } from '../kpis/kpis';
 import { ResumoErros } from '../models';
@@ -39,6 +40,9 @@ export class KpiService {
   readonly conquistas = computed(() => calcularConquistas(this.entrada()));
 
   readonly serie = computed(() => serieAproveitamento(this.entrada(), this.filtro()));
+
+  /** 'Dias' ou 'Semanas': como a `serie` agrupa os pontos. */
+  readonly unidadeSerie = computed(() => unidadeDaSerie(this.filtro()));
 
   /** Põe `hoje` no instante de agora e volta ao filtro padrão (cálculos, últimos 7 dias, até o fim de hoje). */
   atualizarHoje(): void {

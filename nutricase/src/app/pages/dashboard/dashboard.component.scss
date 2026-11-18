@@ -66,6 +66,50 @@
   font-weight: 700;
 }
 
+// Gráfico: o SVG ocupa a largura do cartão e a altura vem do viewBox; cores da marca (o acabamento é da D8).
+.evolucao-grafico {
+  margin-top: 1.5rem;
+}
+
+.grafico-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.grafico {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.grafico-grade {
+  stroke: m.$borda;
+  stroke-width: 1;
+}
+
+.grafico-linha {
+  fill: none;
+  stroke: m.$verde;
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.grafico-ponto {
+  fill: m.$verde;
+}
+
+.grafico-texto {
+  fill: m.$texto;
+  font-size: 13px;
+}
+
+.grafico-valor {
+  fill: m.$verde;
+  font-weight: 700;
+}
+
 // Três cartões do mesmo tamanho, lado a lado.
 .kpis {
   display: grid;

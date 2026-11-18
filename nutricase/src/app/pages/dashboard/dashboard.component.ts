@@ -3,6 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { FiltroKpis, periodoEntreDatas, TipoKpi, ultimosDias, validarPeriodo } from '../../core/kpis/kpis';
 import { KpiService } from '../../core/services/kpi.service';
 import { ConquistasDialogComponent } from './conquistas-dialog/conquistas-dialog.component';
+import { Grafico, ModoGrafico, montarGrafico } from './grafico-evolucao';
 
 const comInicial = (texto: string): string => texto.charAt(0).toUpperCase() + texto.slice(1);
 
@@ -36,6 +37,11 @@ export class DashboardComponent implements OnInit {
   protected readonly ofensiva = this.service.ofensiva;
   protected readonly nivel = this.service.nivel;
   private readonly conquistas = this.service.conquistas;
+
+  /** O gráfico de evolução: o que o eixo Y mede, e a série (que já respeita o tipo e o período) desenhada em SVG. */
+  protected readonly modoGrafico = signal<ModoGrafico>('percentual');
+  protected readonly grafico = computed<Grafico>(() => montarGrafico(this.service.serie(), this.modoGrafico(), this.service.unidadeSerie()));
+  protected readonly unidadeGrafico = this.service.unidadeSerie;
 
   /** A escolha na tela; o padrão é o mesmo do serviço (cálculos, últimos 7 dias). */
   protected readonly tipo = signal<TipoKpi>('calculos');
@@ -74,6 +80,10 @@ export class DashboardComponent implements OnInit {
   /** As conquistas ignoram o filtro; ao fechar, o MatDialog devolve o foco ao botão que abriu. */
   protected abrirConquistas(): void {
     this.dialog.open(ConquistasDialogComponent, { data: this.conquistas() });
+  }
+
+  protected trocarModoGrafico(modo: ModoGrafico): void {
+    this.modoGrafico.set(modo);
   }
 
   protected trocarTipo(tipo: TipoKpi): void {

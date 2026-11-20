@@ -4,6 +4,7 @@ import { AvaliacaoEtapa, avaliarEtapas } from '../avaliacao/avaliar-etapas';
 import { EtapaCalculo, ItemRefeicao, MarcadorRefeicao, Refeicao, Resolucao, RespostaEtapa, ResumoErros, TIPOS_ERRO } from '../models';
 import { AlimentoService } from './alimento.service';
 import { CasoService } from './caso.service';
+import { montarResolucoesDemo } from './resolucoes-demo';
 import { StorageService } from './storage.service';
 
 const CHAVE = 'nutricase.resolucoes';
@@ -458,7 +459,14 @@ export class ResolucaoService {
     this.storage.gravar(CHAVE, novo);
   }
 
+  /** Com algo salvo, usa o salvo; na primeira abertura (nada salvo), grava as tentativas de demonstração (temporárias, veja `resolucoes-demo.ts`). */
   private carregar(): DadosSalvos {
-    return this.storage.ler<DadosSalvos>(CHAVE) ?? dadosVazios();
+    const salvos = this.storage.ler<DadosSalvos>(CHAVE);
+    if (salvos) {
+      return salvos;
+    }
+    const demo = montarResolucoesDemo(VERSAO, new Date());
+    this.storage.gravar(CHAVE, demo);
+    return demo;
   }
 }

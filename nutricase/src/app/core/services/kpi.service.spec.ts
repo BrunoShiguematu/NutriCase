@@ -24,6 +24,8 @@ function alimento(id: string): Alimento {
 const ALIMENTOS = ['a1', 'a2', 'a3', 'a4', 'a5'].map(alimento);
 
 function abrir() {
+  // Sem nada salvo o ResolucaoService grava as tentativas de demonstração; aqui o ponto de partida é "vazio".
+  localStorage.setItem('nutricase.resolucoes', JSON.stringify({ versao: 1, resolucoes: [], respostas: [], refeicoes: [], itens: [], submissoes: [] }));
   const storage = new StorageService();
   const casos = new CasoService(storage);
   const carregador: CarregadorTaco = async () => ALIMENTOS.map((a) => ({ ...a }));

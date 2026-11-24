@@ -27,7 +27,7 @@ Os dados ficam salvos no navegador (localStorage). Para voltar ao estado inicial
 O fluxo principal é **resolver um caso de ponta a ponta e ver o resultado refletido no Dashboard**. Use como exemplo o caso **"Maratonista em fase de base"**.
 
 1. **Veja o Dashboard primeiro.** No menu lateral, clique em **Dashboard** e anote os números das KPIs. Eles já incluem as 5 resoluções de demonstração.
-2. **Escolha o caso.** No menu, clique em **Casos** e abra **"Maratonista em fase de base"**. A ficha mostra o atleta: Carlos Menezes, homem, 28 anos, 70 kg, 177 cm, 14% de gordura, treino de 90 min/dia.
+2. **Escolha o caso.** No menu, clique em **Casos** e depois em **Resolver** no card **"Maratonista em fase de base"**. A ficha mostra o atleta: Carlos Menezes, homem, 28 anos, 70 kg, 177 cm, 14% de gordura, treino de 90 min/dia.
 3. **Resolva as 5 etapas de cálculo.** Em cada etapa, escolha o parâmetro e informe o valor calculado. Para acertar todas, use:
 
    | Etapa | Parâmetro | Valor |
@@ -40,6 +40,9 @@ O fluxo principal é **resolver um caso de ponta a ponta e ver o resultado refle
 
    Para ver como o sistema corrige os erros, você também pode errar um valor de propósito (por exemplo, TMB = 1400).
 4. **Monte a dieta do dia.** Na etapa **Dieta**, crie as refeições (nome e horário, por exemplo "Café da manhã", 07:00). Depois use **Buscar alimento** para adicionar alimentos com a quantidade em gramas. A tabela **Dieta do dia** compara, enquanto você monta, o total da dieta com as metas que você calculou.
+
+   > **Observação:** neste caso, para a dieta ficar dentro da tolerância, é preciso adicionar alimentos até chegar perto de **3.008 kcal** (a meta de GET). Você também pode adicionar um alimento só: no resultado, a dieta aparece como "fora da tolerância". Isso é esperado e ajuda a ver as KPIs do Dashboard mudarem em tempo real com o erro.
+
 5. **Justificativa (opcional).** Explique suas escolhas ou deixe em branco. Esse campo não recebe nota.
 6. **Revise e submeta.** A tela de revisão lista as respostas e as pendências. Clique em **Submeter** e confirme.
 7. **Veja o resultado.** O sistema mostra cada etapa como correta, aceitável ou errada, com a explicação. Mostra também se a dieta ficou dentro da tolerância das suas metas.
